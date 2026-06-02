@@ -9,7 +9,9 @@
      - Forgot password flow
      - Session check on page load (redirect if already logged in)
 
-   Depends on: @supabase/supabase-js loaded via CDN in index.html
+   Depends on: @supabase/supabase-js loaded via CDN in index.html.
+   The CDN exposes the library as window.supabase — we alias our
+   client as supabaseClient to avoid the naming conflict.
    ========================================================== */
 
 
@@ -21,11 +23,12 @@
 const SUPABASE_URL      = 'https://rcmherydjpqgmpygwdic.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjbWhlcnlkanBxZ21weWd3ZGljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDY3NjgsImV4cCI6MjA5NTk4Mjc2OH0.xY-GvRr-PNtail8ZjI9gW4qWPAkGuRc84Tfo137nFak';
 
-// Initialize Supabase client — wrapped in a try/catch so that if
-// the CDN fails to load, tab switching and other UI still works.
-let supabase = null;
+// Named supabaseClient to avoid conflict with window.supabase
+// which is the global the CDN script declares.
+// Wrapped in try/catch so tab switching still works if CDN fails.
+let supabaseClient = null;
 try {
-  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 } catch (err) {
   console.error('Supabase failed to initialize:', err);
 }
@@ -86,9 +89,9 @@ tabBtns.forEach(tab => {
    Only runs if Supabase initialized successfully.
    ---------------------------------------------------------- */
 (async function checkSession() {
-  if (!supabase) return;
+  if (!supabaseClient) return;
   try {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await supabaseClient.auth.getSession();
     if (session) {
       window.location.href = '/pages/catalogue.html';
     }
@@ -134,7 +137,7 @@ signinForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   showError(signinError, '');
 
-  if (!supabase) {
+  if (!supabaseClient) {
     showError(signinError, 'Authentication unavailable. Please refresh and try again.');
     return;
   }
@@ -144,7 +147,7 @@ signinForm.addEventListener('submit', async (e) => {
   const email    = document.getElementById('signin-email').value.trim();
   const password = document.getElementById('signin-password').value;
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
   if (error) {
     showError(signinError, friendlyError(error.message));
@@ -153,7 +156,7 @@ signinForm.addEventListener('submit', async (e) => {
   }
 
   // Check subscription status before letting them in
-  const { data: member, error: memberError } = await supabase
+  const { data: member, error: memberError } = await supabaseClient
     .from('members')
     .select('subscription_status')
     .eq('auth_user_id', data.user.id)
@@ -186,7 +189,7 @@ signupForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   showError(signupError, '');
 
-  if (!supabase) {
+  if (!supabaseClient) {
     showError(signupError, 'Authentication unavailable. Please refresh and try again.');
     return;
   }
@@ -198,7 +201,7 @@ signupForm.addEventListener('submit', async (e) => {
   const password = document.getElementById('signup-password').value;
 
   // Create the Supabase auth account
-  const { data, error } = await supabase.auth.signUp({
+  const { data, error } = await supabaseClient.auth.signUp({
     email,
     password,
     options: {
@@ -243,7 +246,7 @@ signupForm.addEventListener('submit', async (e) => {
 forgotLink.addEventListener('click', async (e) => {
   e.preventDefault();
 
-  if (!supabase) return;
+  if (!supabaseClient) return;
 
   const email = document.getElementById('signin-email').value.trim();
 
@@ -252,7 +255,7 @@ forgotLink.addEventListener('click', async (e) => {
     return;
   }
 
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+  const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
     redirectTo: `${window.location.origin}/pages/reset-password.html`,
   });
 
