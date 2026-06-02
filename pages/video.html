@@ -1,1 +1,94 @@
-<!-- video.html — Single video player page. TODO: Phase 2 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading... — True Jiu Jitsu Online</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/webp" href="/img/tjj_favicon.webp">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body class="video-body">
+
+  <!-- Nav injected by nav.js -->
+
+  <!-- ======================================================
+       VIDEO PLAYER PAGE
+       ====================================================== -->
+  <main class="player-page" id="player-page">
+
+    <!-- Full-width video embed area -->
+    <div class="player-page__embed" id="player-embed">
+      <!-- Cloudflare iframe injected by player.js -->
+      <div class="player-placeholder" id="player-placeholder" aria-label="Loading video">
+        <div class="spinner"></div>
+      </div>
+    </div>
+
+    <!-- Content below the player -->
+    <div class="player-page__body wrapper">
+
+      <!-- Left: video info + description -->
+      <div class="player-page__meta" id="player-meta">
+
+        <!-- Breadcrumb back to playlist -->
+        <nav class="player-breadcrumb" id="player-breadcrumb" aria-label="Breadcrumb" style="display:none;">
+          <a href="/pages/catalogue.html" class="player-breadcrumb__link">Catalogue</a>
+          <span class="player-breadcrumb__sep" aria-hidden="true">›</span>
+          <a href="#" class="player-breadcrumb__link" id="breadcrumb-playlist-link">Playlist</a>
+        </nav>
+
+        <h1 class="player-page__title" id="player-title">Loading...</h1>
+
+        <div class="player-page__actions">
+          <!-- Mark as complete button -->
+          <button
+            class="btn btn--secondary btn--sm"
+            id="complete-btn"
+            style="display:none;"
+          >Mark as Complete</button>
+
+          <!-- Completed state -->
+          <div class="player-completed" id="player-completed" style="display:none;">
+            <div class="check-icon">
+              <svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg>
+            </div>
+            <span>Completed</span>
+          </div>
+        </div>
+
+        <p class="player-page__description" id="player-description"></p>
+
+      </div>
+
+      <!-- Right: Up Next card -->
+      <aside class="player-page__sidebar" id="player-sidebar">
+        <!-- Populated by player.js if a next item exists -->
+      </aside>
+
+    </div>
+
+  </main>
+
+  <!-- Supabase CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Scripts -->
+  <script src="/js/supabase-client.js"></script>
+  <script src="/js/nav.js"></script>
+  <script src="/js/player.js"></script>
+
+</body>
+</html>
