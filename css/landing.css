@@ -1,0 +1,247 @@
+/* ==========================================================
+   landing.css — Landing / login page styles
+   True Jiu Jitsu Online
+
+   Single-screen, no-scroll layout. Centered vertically
+   and horizontally. Gym photo background with dark overlay.
+   ========================================================== */
+
+
+/* ==========================
+   PAGE SHELL
+   ========================== */
+
+/* Prevent any scrolling on this page */
+.landing-body {
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* Gym photo background — very dark overlay so text is legible */
+.landing-bg {
+  position: fixed;
+  inset: 0;
+  background-image: url('../img/true_jiu_jitsu_gym.webp');
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+}
+
+/* Dark overlay on top of the photo */
+.landing-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 10, 10, 0.88);
+}
+
+/* Centers everything vertically and horizontally */
+.landing-main {
+  position: relative;
+  z-index: 1;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+  gap: var(--space-xl);
+}
+
+
+/* ==========================
+   LOGO
+   ========================== */
+.landing-logo {
+  display: block;
+  flex-shrink: 0;
+}
+
+.landing-logo img {
+  height: 52px;
+  width: auto;
+}
+
+
+/* ==========================
+   AUTH CARD
+   The form container
+   ========================== */
+.auth-card {
+  background: rgba(20, 20, 20, 0.95);
+  border: 1px solid var(--color-mid-gray);
+  border-radius: var(--border-radius-lg);
+  width: 100%;
+  max-width: 400px;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+}
+
+
+/* ==========================
+   AUTH TABS
+   Sign In / Create Account toggle
+   ========================== */
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--color-mid-gray);
+}
+
+.auth-tab {
+  padding: var(--space-md) var(--space-lg);
+  background: transparent;
+  border: none;
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-gray);
+  cursor: pointer;
+  transition: color var(--transition-fast),
+              background var(--transition-fast);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.auth-tab:hover {
+  color: var(--color-white);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Active tab — red underline indicator */
+.auth-tab--active {
+  color: var(--color-white);
+  border-bottom-color: var(--color-red);
+}
+
+
+/* ==========================
+   AUTH PANELS
+   Sign in and create account forms
+   ========================== */
+.auth-panel {
+  padding: var(--space-xl);
+}
+
+.auth-panel--hidden {
+  display: none;
+}
+
+
+/* ==========================
+   FORM EXTRAS
+   Error message, forgot password, terms
+   ========================== */
+
+/* Inline error message — only visible when populated */
+.auth-error {
+  font-size: var(--text-sm);
+  color: var(--color-red-accessible);
+  min-height: 20px;
+  margin: 0;
+  max-width: none;
+}
+
+.auth-forgot {
+  display: block;
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--color-gray);
+  margin-top: var(--space-md);
+  transition: color var(--transition-fast);
+}
+
+.auth-forgot:hover {
+  color: var(--color-white);
+}
+
+.auth-terms {
+  font-size: var(--text-xs);
+  color: var(--color-gray);
+  text-align: center;
+  margin-top: var(--space-md);
+  line-height: 1.5;
+  max-width: none;
+}
+
+.auth-terms a {
+  color: var(--color-gray);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.auth-terms a:hover {
+  color: var(--color-white);
+}
+
+
+/* ==========================
+   PITCH BLOCK
+   Below the form — headline, description, price
+   ========================== */
+.landing-pitch {
+  text-align: center;
+  max-width: 480px;
+}
+
+.landing-pitch__headline {
+  font-size: var(--text-xl);
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-white);
+  margin-bottom: var(--space-sm);
+}
+
+.landing-pitch__description {
+  font-size: var(--text-sm);
+  color: var(--color-gray);
+  margin-bottom: var(--space-sm);
+  max-width: none;
+}
+
+.landing-pitch__price {
+  font-size: var(--text-sm);
+  color: var(--color-gray);
+  max-width: none;
+}
+
+.landing-pitch__price strong {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  color: var(--color-white);
+  letter-spacing: 0.02em;
+}
+
+.landing-pitch__price strong span {
+  font-size: var(--text-base);
+  color: var(--color-gray);
+  font-family: var(--font-body);
+  font-weight: 400;
+}
+
+
+/* ==========================
+   RESPONSIVE
+   ========================== */
+@media (max-width: 480px) {
+
+  .landing-body {
+    overflow-y: auto;
+    height: auto;
+  }
+
+  .landing-main {
+    height: auto;
+    min-height: 100vh;
+    justify-content: flex-start;
+    padding-top: var(--space-2xl);
+    padding-bottom: var(--space-2xl);
+  }
+
+  .landing-logo img {
+    height: 44px;
+  }
+
+}

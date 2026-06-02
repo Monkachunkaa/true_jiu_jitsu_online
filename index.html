@@ -1,2 +1,187 @@
-<!-- index.html — True Jiu Jitsu Online
-     Landing page for non-members. Placeholder until built in Phase 7. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>True Jiu Jitsu Online — Train Anywhere</title>
+  <meta name="description" content="Unlimited access to True Jiu Jitsu instructional videos and articles. Train anywhere, anytime.">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/webp" href="img/tjj_favicon.webp">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/landing.css">
+</head>
+<body class="landing-body">
+
+  <!-- Background gym photo with dark overlay -->
+  <div class="landing-bg" aria-hidden="true"></div>
+
+  <!-- Main centered container -->
+  <main class="landing-main">
+
+    <!-- Logo -->
+    <a href="https://truebjj.academy" class="landing-logo" aria-label="Back to True Jiu Jitsu">
+      <img src="img/true_jiu_jitsu_logo_white.webp" alt="True Jiu Jitsu">
+    </a>
+
+    <!-- Auth card -->
+    <div class="auth-card">
+
+      <!-- Tab toggle: Sign In / Create Account -->
+      <div class="auth-tabs" role="tablist">
+        <button
+          class="auth-tab auth-tab--active"
+          id="tab-signin"
+          role="tab"
+          aria-selected="true"
+          aria-controls="panel-signin"
+          data-tab="signin"
+        >Sign In</button>
+        <button
+          class="auth-tab"
+          id="tab-signup"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-signup"
+          data-tab="signup"
+        >Create Account</button>
+      </div>
+
+      <!-- Sign In Panel -->
+      <div class="auth-panel" id="panel-signin" role="tabpanel" aria-labelledby="tab-signin">
+        <form class="form" id="signin-form" novalidate>
+
+          <div class="form__group">
+            <label class="form__label" for="signin-email">Email</label>
+            <input
+              class="form__input"
+              type="email"
+              id="signin-email"
+              name="email"
+              placeholder="you@example.com"
+              autocomplete="email"
+              required
+            >
+          </div>
+
+          <div class="form__group">
+            <label class="form__label" for="signin-password">Password</label>
+            <input
+              class="form__input"
+              type="password"
+              id="signin-password"
+              name="password"
+              placeholder="••••••••"
+              autocomplete="current-password"
+              required
+            >
+          </div>
+
+          <!-- Error message shown on failed login -->
+          <p class="auth-error" id="signin-error" aria-live="polite"></p>
+
+          <button type="submit" class="btn btn--primary btn--block" id="signin-btn">
+            Sign In
+          </button>
+
+          <a href="#" class="auth-forgot" id="forgot-password-link">Forgot your password?</a>
+
+        </form>
+      </div>
+
+      <!-- Create Account Panel (hidden by default) -->
+      <div class="auth-panel auth-panel--hidden" id="panel-signup" role="tabpanel" aria-labelledby="tab-signup">
+        <form class="form" id="signup-form" novalidate>
+
+          <div class="form__group">
+            <label class="form__label" for="signup-name">Full Name</label>
+            <input
+              class="form__input"
+              type="text"
+              id="signup-name"
+              name="name"
+              placeholder="Daniel Fredell"
+              autocomplete="name"
+              required
+            >
+          </div>
+
+          <div class="form__group">
+            <label class="form__label" for="signup-email">Email</label>
+            <input
+              class="form__input"
+              type="email"
+              id="signup-email"
+              name="email"
+              placeholder="you@example.com"
+              autocomplete="email"
+              required
+            >
+          </div>
+
+          <div class="form__group">
+            <label class="form__label" for="signup-password">Password</label>
+            <input
+              class="form__input"
+              type="password"
+              id="signup-password"
+              name="password"
+              placeholder="••••••••"
+              autocomplete="new-password"
+              required
+              minlength="8"
+            >
+            <span class="form__hint">Minimum 8 characters</span>
+          </div>
+
+          <!-- Error message shown on failed signup -->
+          <p class="auth-error" id="signup-error" aria-live="polite"></p>
+
+          <button type="submit" class="btn btn--primary btn--block" id="signup-btn">
+            Start Free Trial
+          </button>
+
+          <p class="auth-terms">
+            By creating an account you agree to our
+            <a href="#" target="_blank" rel="noopener">Terms of Service</a>.
+            You won't be charged during your 7-day free trial.
+          </p>
+
+        </form>
+      </div>
+
+    </div>
+    <!-- /auth-card -->
+
+    <!-- Pitch — below the form, brief and minimal -->
+    <div class="landing-pitch">
+      <h1 class="landing-pitch__headline">Train Anywhere. Level Up Every Day.</h1>
+      <p class="landing-pitch__description">
+        Unlimited access to True Jiu Jitsu instructional videos and articles — on your schedule.
+      </p>
+      <p class="landing-pitch__price">
+        <strong>$8.99<span>/mo</span></strong>
+        &nbsp;·&nbsp; 7-day free trial &nbsp;·&nbsp; Cancel anytime
+      </p>
+    </div>
+
+  </main>
+  <!-- /landing-main -->
+
+  <!-- Supabase JS client (loaded from CDN — no build step needed) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Auth logic -->
+  <script src="js/auth.js"></script>
+
+</body>
+</html>
