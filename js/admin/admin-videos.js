@@ -175,7 +175,7 @@ function showUploadStep2() {
 }
 
 async function uploadFileToClouflare(file) {
-  const { session } = await window.supabaseClient.auth.getSession();
+  const { data: { session } } = await window.supabaseClient.auth.getSession();
 
   // Get a direct upload URL from our Netlify function
   const res = await fetch('/.netlify/functions/admin-upload-video', {
