@@ -1,0 +1,32 @@
+# ==========================================================
+# netlify.toml — True Jiu Jitsu Online
+# ==========================================================
+
+[build]
+  functions = "netlify/functions"
+  publish   = "."
+
+[build.environment]
+  NODE_VERSION = "18"
+
+# Redirect /admin to the admin index page
+[[redirects]]
+  from = "/admin"
+  to   = "/pages/admin/index.html"
+  status = 200
+
+# Redirect all member pages cleanly
+[[redirects]]
+  from = "/catalogue"
+  to   = "/pages/catalogue.html"
+  status = 200
+
+[[redirects]]
+  from = "/subscribe"
+  to   = "/pages/subscribe.html"
+  status = 200
+
+[[redirects]]
+  from = "/account"
+  to   = "/pages/account.html"
+  status = 200

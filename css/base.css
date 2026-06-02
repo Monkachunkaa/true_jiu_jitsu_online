@@ -1,0 +1,267 @@
+/* ==========================================================
+   base.css — Reset, typography, and global styles
+   True Jiu Jitsu Online
+
+   Sets the dark-themed canvas everything else is built on.
+   Shared between member-facing pages and the admin panel.
+   ========================================================== */
+
+/* ---- Minimal Reset ---- */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: var(--nav-height);
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.6;
+  color: var(--color-off-white);
+  background-color: var(--color-black);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* ---- Typography ---- */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  line-height: 1.15;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-white);
+}
+
+h1 { font-size: var(--text-4xl); }
+h2 { font-size: var(--text-3xl); }
+h3 { font-size: var(--text-2xl); }
+h4 { font-size: var(--text-xl);  }
+
+p {
+  color: var(--color-light-gray);
+  max-width: 65ch;
+}
+
+a {
+  color: var(--color-red-accessible);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--color-white);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+ul, ol {
+  list-style: none;
+}
+
+button {
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+input, textarea, select {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+}
+
+
+/* ---- Layout Utilities ---- */
+
+/* Constrains content to max-width and centers it */
+.wrapper {
+  width: 90%;
+  max-width: var(--max-width);
+  margin-inline: auto;
+}
+
+/* Standard section vertical padding */
+.section {
+  padding: var(--space-4xl) 0;
+}
+
+
+/* ---- Section Labels ---- */
+/* Small red eyebrow text above section headings */
+.section-label {
+  display: inline-block;
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--color-red-accessible);   /* passes WCAG 4.5:1 on dark backgrounds */
+  margin-bottom: var(--space-sm);
+  position: relative;
+  padding-left: 2.5rem;
+}
+
+/* Decorative red line before the label */
+.section-label::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 1.75rem;
+  height: 2px;
+  background: var(--color-red);
+}
+
+.section-title {
+  margin-bottom: var(--space-lg);
+}
+
+
+/* ---- Status Badges ---- */
+.badge {
+  display: inline-block;
+  font-size: var(--text-xs);
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 10px;
+  border-radius: 100px;
+}
+
+.badge--active    { background: rgba(42, 157, 92, 0.2);  color: var(--color-success); }
+.badge--past-due  { background: rgba(224, 155, 42, 0.2); color: var(--color-warning); }
+.badge--cancelled { background: rgba(136, 136, 136, 0.2); color: var(--color-gray);  }
+.badge--draft     { background: rgba(136, 136, 136, 0.2); color: var(--color-gray);  }
+.badge--published { background: rgba(42, 157, 92, 0.2);  color: var(--color-success); }
+
+
+/* ---- Progress Ring ---- */
+/* SVG-based circular progress indicator for playlist completion */
+.progress-ring {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.progress-ring__track {
+  stroke: var(--progress-track);
+  fill: none;
+}
+
+.progress-ring__fill {
+  stroke: var(--progress-fill);
+  fill: none;
+  stroke-linecap: round;
+  transition: stroke-dashoffset var(--transition-med);
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
+
+.progress-ring__label {
+  position: absolute;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-white);
+}
+
+
+/* ---- Completion Checkmark ---- */
+.check-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-success);
+  flex-shrink: 0;
+}
+
+.check-icon svg {
+  width: 12px;
+  height: 12px;
+  stroke: var(--color-white);
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+
+/* ---- Loading Spinner ---- */
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--color-mid-gray);
+  border-top-color: var(--color-red);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+
+/* ---- Empty State ---- */
+/* Shown when a list or catalogue has no content yet */
+.empty-state {
+  text-align: center;
+  padding: var(--space-4xl) var(--space-xl);
+  color: var(--color-gray);
+}
+
+.empty-state__icon {
+  font-size: 3rem;
+  margin-bottom: var(--space-md);
+  opacity: 0.4;
+}
+
+.empty-state p {
+  max-width: 40ch;
+  margin-inline: auto;
+  color: var(--color-gray);
+}
+
+
+/* ---- Toast Notifications ---- */
+/* Temporary feedback messages (saved, error, etc.) */
+.toast-container {
+  position: fixed;
+  bottom: var(--space-xl);
+  right: var(--space-xl);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.toast {
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--border-radius);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  box-shadow: var(--shadow-md);
+  animation: toast-in var(--transition-fast) ease;
+  max-width: 320px;
+}
+
+.toast--success { background: var(--color-success);  color: var(--color-white); }
+.toast--error   { background: var(--color-red);       color: var(--color-white); }
+.toast--info    { background: var(--color-dark-gray); color: var(--color-off-white); border: 1px solid var(--color-mid-gray); }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}

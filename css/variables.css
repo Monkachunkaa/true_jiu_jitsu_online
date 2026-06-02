@@ -1,0 +1,69 @@
+/* ==========================================================
+   variables.css — Design tokens for True Jiu Jitsu Online
+   All colors, fonts, spacing, and sizing live here so the
+   entire platform's look can be tuned from one place.
+   ========================================================== */
+
+:root {
+
+  /* ---- Brand Colors ---- */
+  --color-black:          #0a0a0a;
+  --color-dark:           #141414;
+  --color-dark-gray:      #1e1e1e;
+  --color-mid-gray:       #2a2a2a;
+  --color-gray:           #888888;
+  --color-light-gray:     #cccccc;
+  --color-off-white:      #f0f0f0;
+  --color-white:          #ffffff;
+  --color-red:            #c41e2a;       /* Primary brand red */
+  --color-red-dark:       #9a1620;
+  --color-red-glow:       rgba(196, 30, 42, 0.35);
+  --color-red-accessible: #e8404d;       /* Passes WCAG 4.5:1 on dark backgrounds */
+  --color-success:        #2a9d5c;       /* Completion states, active status */
+  --color-warning:        #e09b2a;       /* Past due, alerts */
+
+  /* ---- Typography ---- */
+  --font-heading: 'Oswald', sans-serif;
+  --font-body:    'Barlow', sans-serif;
+
+  /* ---- Font Sizes ---- */
+  --text-xs:   0.75rem;
+  --text-sm:   0.875rem;
+  --text-base: 1rem;
+  --text-lg:   1.125rem;
+  --text-xl:   1.25rem;
+  --text-2xl:  1.5rem;
+  --text-3xl:  2rem;
+  --text-4xl:  2.75rem;
+  --text-5xl:  3.5rem;
+
+  /* ---- Spacing Scale ---- */
+  --space-xs:  0.25rem;
+  --space-sm:  0.5rem;
+  --space-md:  1rem;
+  --space-lg:  1.5rem;
+  --space-xl:  2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+  --space-4xl: 6rem;
+
+  /* ---- Layout ---- */
+  --max-width:       1200px;
+  --admin-sidebar:   260px;       /* Admin panel sidebar width */
+  --border-radius:   4px;
+  --border-radius-lg: 8px;
+  --nav-height:      70px;
+
+  /* ---- Transitions ---- */
+  --transition-fast: 0.2s ease;
+  --transition-med:  0.35s ease;
+
+  /* ---- Shadows ---- */
+  --shadow-sm:  0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md:  0 4px 20px rgba(0, 0, 0, 0.6);
+  --shadow-red: 0 4px 20px rgba(196, 30, 42, 0.3);
+
+  /* ---- Progress / Completion ---- */
+  --progress-track:  var(--color-mid-gray);
+  --progress-fill:   var(--color-success);
+}

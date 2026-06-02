@@ -1,0 +1,16 @@
+# ==========================================================
+# .gitignore — True Jiu Jitsu Online
+# ==========================================================
+
+# Local environment variables — contains real credentials
+.env
+env
+
+# Redundant gitignore file (not needed alongside .gitignore)
+gitignore
+
+# Netlify CLI local state
+.netlify/
+
+# Node dependencies
+node_modules/

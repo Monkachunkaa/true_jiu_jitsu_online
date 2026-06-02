@@ -1,0 +1,395 @@
+/* ==========================================================
+   layout.css — Page-level layouts for True Jiu Jitsu Online
+
+   Member-facing layouts:
+     Nav → Landing → Catalogue → Video Player →
+     Article Reader → Playlist → Account
+
+   Admin panel layout is in admin.css
+   ========================================================== */
+
+
+/* ==========================
+   NAVIGATION — Member-facing
+   ========================== */
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: var(--nav-height);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  background: rgba(10, 10, 10, 0.95);
+  border-bottom: 1px solid var(--color-mid-gray);
+  backdrop-filter: blur(8px);
+}
+
+.nav__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.nav__logo img {
+  height: 50px;
+  width: auto;
+}
+
+.nav__links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xl);
+}
+
+.nav__link {
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-light-gray);
+  transition: color var(--transition-fast);
+}
+
+.nav__link:hover {
+  color: var(--color-white);
+}
+
+.nav__user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  font-size: var(--text-sm);
+  color: var(--color-gray);
+}
+
+
+/* ==========================
+   LANDING PAGE
+   Non-member intro screen
+   ========================== */
+.landing {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: var(--color-black);
+  padding: var(--space-4xl) var(--space-xl);
+}
+
+.landing__content {
+  max-width: 600px;
+}
+
+.landing__logo {
+  width: 140px;
+  margin: 0 auto var(--space-2xl);
+}
+
+.landing__subtitle {
+  font-size: var(--text-xl);
+  color: var(--color-light-gray);
+  margin-bottom: var(--space-2xl);
+  font-weight: 300;
+}
+
+.landing__actions {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.landing__price {
+  margin-top: var(--space-lg);
+  font-size: var(--text-sm);
+  color: var(--color-gray);
+}
+
+
+/* ==========================
+   CATALOGUE
+   Main content browse page
+   ========================== */
+.catalogue {
+  padding-top: calc(var(--nav-height) + var(--space-2xl));
+  padding-bottom: var(--space-4xl);
+  min-height: 100vh;
+}
+
+.catalogue__header {
+  margin-bottom: var(--space-2xl);
+}
+
+.catalogue__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-2xl);
+  flex-wrap: wrap;
+}
+
+.catalogue__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-xl);
+}
+
+.catalogue__section {
+  margin-bottom: var(--space-3xl);
+}
+
+.catalogue__section-title {
+  font-size: var(--text-xl);
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--color-mid-gray);
+}
+
+
+/* ==========================
+   VIDEO PLAYER PAGE
+   ========================== */
+.player-page {
+  padding-top: var(--nav-height);
+  min-height: 100vh;
+  background: var(--color-black);
+}
+
+.player-page__video {
+  width: 100%;
+  background: #000;
+  aspect-ratio: 16 / 9;
+}
+
+.player-page__body {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: var(--space-2xl);
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: var(--space-2xl) var(--space-xl);
+}
+
+.player-page__meta h1 {
+  font-size: var(--text-2xl);
+  margin-bottom: var(--space-md);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.player-page__description {
+  color: var(--color-light-gray);
+  margin-bottom: var(--space-xl);
+}
+
+.player-page__sidebar {
+  border-left: 1px solid var(--color-mid-gray);
+  padding-left: var(--space-2xl);
+}
+
+.player-page__sidebar-title {
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-gray);
+  margin-bottom: var(--space-lg);
+}
+
+
+/* ==========================
+   ARTICLE READER
+   ========================== */
+.article-page {
+  padding-top: calc(var(--nav-height) + var(--space-3xl));
+  padding-bottom: var(--space-4xl);
+  min-height: 100vh;
+}
+
+.article-page__content {
+  max-width: 720px;
+  margin-inline: auto;
+}
+
+.article-page__header {
+  margin-bottom: var(--space-2xl);
+}
+
+.article-page__title {
+  font-size: var(--text-3xl);
+  margin-bottom: var(--space-md);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.article-page__meta {
+  font-size: var(--text-sm);
+  color: var(--color-gray);
+}
+
+/* Rich text content styles */
+.article-page__body {
+  font-size: var(--text-lg);
+  line-height: 1.8;
+  color: var(--color-light-gray);
+}
+
+.article-page__body h2,
+.article-page__body h3 {
+  margin: var(--space-2xl) 0 var(--space-md);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.article-page__body p {
+  margin-bottom: var(--space-lg);
+  max-width: none;
+}
+
+.article-page__body ul,
+.article-page__body ol {
+  list-style: disc;
+  padding-left: var(--space-xl);
+  margin-bottom: var(--space-lg);
+}
+
+.article-page__body img {
+  border-radius: var(--border-radius);
+  margin: var(--space-xl) 0;
+}
+
+
+/* ==========================
+   PLAYLIST PAGE
+   ========================== */
+.playlist-page {
+  padding-top: calc(var(--nav-height) + var(--space-2xl));
+  padding-bottom: var(--space-4xl);
+  min-height: 100vh;
+}
+
+.playlist-page__header {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-2xl);
+  align-items: center;
+  margin-bottom: var(--space-2xl);
+  padding-bottom: var(--space-2xl);
+  border-bottom: 1px solid var(--color-mid-gray);
+}
+
+.playlist-page__thumbnail {
+  width: 180px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--border-radius);
+}
+
+.playlist-page__title {
+  font-size: var(--text-3xl);
+  margin-bottom: var(--space-sm);
+}
+
+.playlist-page__progress-text {
+  font-size: var(--text-sm);
+  color: var(--color-gray);
+  margin-bottom: var(--space-lg);
+}
+
+.playlist-page__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+
+/* ==========================
+   ACCOUNT PAGE
+   ========================== */
+.account-page {
+  padding-top: calc(var(--nav-height) + var(--space-3xl));
+  padding-bottom: var(--space-4xl);
+  min-height: 100vh;
+}
+
+.account-page__grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: var(--space-2xl);
+  max-width: var(--max-width);
+  margin-inline: auto;
+}
+
+.account-page__sidebar {
+  background: var(--color-dark);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-xl);
+  border: 1px solid var(--color-mid-gray);
+  height: fit-content;
+}
+
+.account-page__name {
+  font-size: var(--text-xl);
+  margin-bottom: var(--space-xs);
+}
+
+.account-page__email {
+  font-size: var(--text-sm);
+  color: var(--color-gray);
+  margin-bottom: var(--space-lg);
+}
+
+
+/* ==========================
+   SUBSCRIBE PAGE
+   Stripe Checkout lead-in
+   ========================== */
+.subscribe-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4xl) var(--space-xl);
+}
+
+.subscribe-page__card {
+  background: var(--color-dark);
+  border: 1px solid var(--color-mid-gray);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-3xl);
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+}
+
+.subscribe-page__price {
+  font-size: var(--text-4xl);
+  font-family: var(--font-heading);
+  color: var(--color-white);
+  margin: var(--space-lg) 0 var(--space-xs);
+}
+
+.subscribe-page__price span {
+  font-size: var(--text-base);
+  color: var(--color-gray);
+  font-family: var(--font-body);
+}
+
+.subscribe-page__features {
+  text-align: left;
+  margin: var(--space-xl) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.subscribe-page__feature {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--text-sm);
+  color: var(--color-light-gray);
+}

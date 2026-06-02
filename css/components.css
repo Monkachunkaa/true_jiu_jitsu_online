@@ -1,0 +1,550 @@
+/* ==========================================================
+   components.css — Reusable UI components
+   True Jiu Jitsu Online
+
+   Buttons → Forms → Cards → Search →
+   Filter Pills → Playlist Item → Modal
+   ========================================================== */
+
+
+/* ==========================
+   BUTTONS
+   ========================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 12px 28px;
+  border-radius: var(--border-radius);
+  border: none;
+  cursor: pointer;
+  transition: background var(--transition-fast),
+              color var(--transition-fast),
+              transform var(--transition-fast),
+              box-shadow var(--transition-fast);
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.btn:active { transform: translateY(1px); }
+
+/* Primary — red CTA */
+.btn--primary {
+  background: var(--color-red);
+  color: var(--color-white);
+}
+.btn--primary:hover {
+  background: var(--color-red-dark);
+  color: var(--color-white);
+  box-shadow: var(--shadow-red);
+}
+
+/* Secondary — outlined */
+.btn--secondary {
+  background: transparent;
+  color: var(--color-off-white);
+  border: 1px solid var(--color-mid-gray);
+}
+.btn--secondary:hover {
+  border-color: var(--color-gray);
+  color: var(--color-white);
+  background: var(--color-dark-gray);
+}
+
+/* Ghost — minimal */
+.btn--ghost {
+  background: transparent;
+  color: var(--color-gray);
+  padding: 8px 16px;
+}
+.btn--ghost:hover {
+  color: var(--color-white);
+}
+
+/* Danger — destructive actions */
+.btn--danger {
+  background: transparent;
+  color: var(--color-red-accessible);
+  border: 1px solid var(--color-red);
+}
+.btn--danger:hover {
+  background: var(--color-red);
+  color: var(--color-white);
+}
+
+/* Size variants */
+.btn--sm { padding: 8px 18px; font-size: var(--text-xs); }
+.btn--lg { padding: 16px 36px; font-size: var(--text-base); }
+
+/* Full width */
+.btn--block { width: 100%; }
+
+/* Loading state */
+.btn--loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+
+/* ==========================
+   FORMS
+   ========================== */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.form__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.form__label {
+  font-size: var(--text-sm);
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-gray);
+}
+
+.form__input,
+.form__select,
+.form__textarea {
+  background: var(--color-dark);
+  border: 1px solid var(--color-mid-gray);
+  border-radius: var(--border-radius);
+  color: var(--color-off-white);
+  padding: 12px 16px;
+  font-size: var(--text-base);
+  transition: border-color var(--transition-fast);
+  width: 100%;
+}
+
+.form__input:focus,
+.form__select:focus,
+.form__textarea:focus {
+  outline: none;
+  border-color: var(--color-red);
+}
+
+.form__input::placeholder,
+.form__textarea::placeholder {
+  color: var(--color-gray);
+}
+
+.form__textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.form__select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 40px;
+}
+
+.form__hint {
+  font-size: var(--text-xs);
+  color: var(--color-gray);
+}
+
+.form__error {
+  font-size: var(--text-xs);
+  color: var(--color-red-accessible);
+}
+
+
+/* ==========================
+   CONTENT CARD
+   Used in catalogue grid for videos, articles, and playlists
+   ========================== */
+.content-card {
+  background: var(--color-dark);
+  border: 1px solid var(--color-mid-gray);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  transition: border-color var(--transition-fast),
+              transform var(--transition-fast),
+              box-shadow var(--transition-fast);
+  cursor: pointer;
+  text-decoration: none;
+  display: block;
+}
+
+.content-card:hover {
+  border-color: var(--color-gray);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.content-card__thumbnail {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: var(--color-dark-gray);
+  position: relative;
+}
+
+/* Play icon overlay on video card thumbnails */
+.content-card__play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.content-card:hover .content-card__play {
+  opacity: 1;
+}
+
+.content-card__play-icon {
+  width: 52px;
+  height: 52px;
+  background: var(--color-red);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.content-card__play-icon svg {
+  width: 20px;
+  height: 20px;
+  fill: var(--color-white);
+  margin-left: 3px;   /* optical center for play triangle */
+}
+
+.content-card__body {
+  padding: var(--space-lg);
+}
+
+.content-card__type {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-gray);
+  margin-bottom: var(--space-xs);
+}
+
+.content-card__title {
+  font-family: var(--font-heading);
+  font-size: var(--text-lg);
+  color: var(--color-white);
+  margin-bottom: var(--space-sm);
+  text-transform: none;
+  letter-spacing: 0;
+  line-height: 1.3;
+}
+
+.content-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--text-xs);
+  color: var(--color-gray);
+}
+
+/* Green checkmark when completed */
+.content-card__completed {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-success);
+  font-size: var(--text-xs);
+}
+
+
+/* ==========================
+   PLAYLIST ITEM
+   Row in the playlist detail view
+   ========================== */
+.playlist-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-dark);
+  border: 1px solid var(--color-mid-gray);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: border-color var(--transition-fast),
+              background var(--transition-fast);
+  text-decoration: none;
+}
+
+.playlist-item:hover {
+  border-color: var(--color-gray);
+  background: var(--color-dark-gray);
+}
+
+/* Highlight the currently playing item */
+.playlist-item--active {
+  border-color: var(--color-red);
+  background: rgba(196, 30, 42, 0.08);
+}
+
+.playlist-item__position {
+  font-size: var(--text-sm);
+  color: var(--color-gray);
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.playlist-item__thumbnail {
+  width: 80px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--border-radius);
+  flex-shrink: 0;
+  background: var(--color-dark-gray);
+}
+
+.playlist-item__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.playlist-item__title {
+  font-size: var(--text-sm);
+  color: var(--color-white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+.playlist-item__meta {
+  font-size: var(--text-xs);
+  color: var(--color-gray);
+}
+
+
+/* ==========================
+   SEARCH BAR
+   ========================== */
+.search {
+  position: relative;
+  flex: 1;
+  max-width: 360px;
+}
+
+.search__input {
+  width: 100%;
+  background: var(--color-dark);
+  border: 1px solid var(--color-mid-gray);
+  border-radius: 100px;
+  color: var(--color-off-white);
+  padding: 10px 16px 10px 40px;
+  font-size: var(--text-sm);
+  transition: border-color var(--transition-fast);
+}
+
+.search__input:focus {
+  outline: none;
+  border-color: var(--color-gray);
+}
+
+.search__icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  stroke: var(--color-gray);
+  fill: none;
+  pointer-events: none;
+}
+
+
+/* ==========================
+   FILTER PILLS
+   Category filter tabs in the catalogue
+   ========================== */
+.filter-pills {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.filter-pill {
+  padding: 6px 16px;
+  border-radius: 100px;
+  font-size: var(--text-sm);
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 1px solid var(--color-mid-gray);
+  background: transparent;
+  color: var(--color-gray);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.filter-pill:hover {
+  border-color: var(--color-gray);
+  color: var(--color-white);
+}
+
+.filter-pill--active {
+  background: var(--color-red);
+  border-color: var(--color-red);
+  color: var(--color-white);
+}
+
+
+/* ==========================
+   PROGRESS BAR
+   Linear progress for playlist completion
+   ========================== */
+.progress-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--color-mid-gray);
+  border-radius: 100px;
+  overflow: hidden;
+}
+
+.progress-bar__fill {
+  height: 100%;
+  background: var(--color-success);
+  border-radius: 100px;
+  transition: width var(--transition-med);
+}
+
+
+/* ==========================
+   MODAL
+   Generic overlay modal
+   ========================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-med);
+}
+
+.modal-overlay.is-open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.modal {
+  background: var(--color-dark);
+  border: 1px solid var(--color-mid-gray);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-2xl);
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  transform: translateY(12px);
+  transition: transform var(--transition-med);
+}
+
+.modal-overlay.is-open .modal {
+  transform: translateY(0);
+}
+
+.modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-xl);
+}
+
+.modal__title {
+  font-size: var(--text-2xl);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.modal__close {
+  background: none;
+  border: none;
+  color: var(--color-gray);
+  cursor: pointer;
+  padding: var(--space-xs);
+  transition: color var(--transition-fast);
+}
+
+.modal__close:hover {
+  color: var(--color-white);
+}
+
+
+/* ==========================
+   UPLOAD ZONE
+   Drag-and-drop file upload area in admin
+   ========================== */
+.upload-zone {
+  border: 2px dashed var(--color-mid-gray);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-3xl) var(--space-xl);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color var(--transition-fast),
+              background var(--transition-fast);
+}
+
+.upload-zone:hover,
+.upload-zone.is-dragging {
+  border-color: var(--color-red);
+  background: rgba(196, 30, 42, 0.04);
+}
+
+.upload-zone__icon {
+  width: 48px;
+  height: 48px;
+  stroke: var(--color-gray);
+  fill: none;
+  margin: 0 auto var(--space-md);
+}
+
+.upload-zone__label {
+  font-size: var(--text-sm);
+  color: var(--color-gray);
+  margin-bottom: var(--space-sm);
+}
+
+.upload-zone__label strong {
+  color: var(--color-red-accessible);
+}
+
+.upload-zone__hint {
+  font-size: var(--text-xs);
+  color: var(--color-gray);
+  opacity: 0.7;
+}
+
+/* Progress bar inside the upload zone */
+.upload-zone__progress {
+  margin-top: var(--space-lg);
+  display: none;
+}
+
+.upload-zone__progress.is-visible {
+  display: block;
+}

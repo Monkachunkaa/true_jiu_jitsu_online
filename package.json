@@ -1,0 +1,16 @@
+{
+  "name": "true-jiu-jitsu-online",
+  "version": "1.0.0",
+  "description": "True Jiu Jitsu Online — video subscription platform",
+  "scripts": {
+    "dev": "netlify dev"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.1490.0",
+    "stripe": "^14.0.0",
+    "@supabase/supabase-js": "^2.0.0"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.0.0"
+  }
+}

@@ -1,0 +1,133 @@
+/* ==========================================================
+   responsive.css — Mobile and tablet breakpoints
+   True Jiu Jitsu Online
+
+   Breakpoints:
+     ≤ 1024px — tablet
+     ≤  768px — large mobile
+     ≤  480px — small mobile
+   ========================================================== */
+
+
+/* ==========================
+   TABLET (≤ 1024px)
+   ========================== */
+@media (max-width: 1024px) {
+
+  /* Video player — stack sidebar below */
+  .player-page__body {
+    grid-template-columns: 1fr;
+  }
+
+  .player-page__sidebar {
+    border-left: none;
+    border-top: 1px solid var(--color-mid-gray);
+    padding-left: 0;
+    padding-top: var(--space-xl);
+  }
+
+  /* Playlist header — stack thumbnail above */
+  .playlist-page__header {
+    grid-template-columns: 1fr;
+  }
+
+  .playlist-page__thumbnail {
+    width: 100%;
+    max-width: 360px;
+  }
+
+  /* Account page — stack sidebar above */
+  .account-page__grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Chart grid — single column */
+  .chart-grid {
+    grid-template-columns: 1fr;
+  }
+
+}
+
+
+/* ==========================
+   LARGE MOBILE (≤ 768px)
+   ========================== */
+@media (max-width: 768px) {
+
+  /* Typography scale down */
+  h1 { font-size: var(--text-3xl); }
+  h2 { font-size: var(--text-2xl); }
+
+  /* Catalogue grid — two columns */
+  .catalogue__grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+
+  /* Landing actions — stack buttons */
+  .landing__actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Admin sidebar — hidden by default on mobile */
+  .admin-sidebar {
+    transform: translateX(-100%);
+    transition: transform var(--transition-med);
+  }
+
+  .admin-sidebar.is-open {
+    transform: translateX(0);
+  }
+
+  .admin-main {
+    margin-left: 0;
+  }
+
+  .admin-content {
+    padding: var(--space-lg);
+  }
+
+  /* Stat grid — two columns */
+  .stat-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+}
+
+
+/* ==========================
+   SMALL MOBILE (≤ 480px)
+   ========================== */
+@media (max-width: 480px) {
+
+  /* Full-width wrapper */
+  .wrapper {
+    width: 95%;
+  }
+
+  /* Catalogue grid — single column */
+  .catalogue__grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Stat grid — single column */
+  .stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Subscribe card — less padding */
+  .subscribe-page__card {
+    padding: var(--space-xl);
+  }
+
+  /* Catalogue controls — stack vertically */
+  .catalogue__controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search {
+    max-width: none;
+  }
+
+}
