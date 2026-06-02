@@ -21,24 +21,18 @@
 const SUPABASE_URL      = 'https://rcmherydjpqgmpygwdic.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjbWhlcnlkanBxZ21weWd3ZGljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDY3NjgsImV4cCI6MjA5NTk4Mjc2OH0.xY-GvRr-PNtail8ZjI9gW4qWPAkGuRc84Tfo137nFak';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Initialize Supabase client — wrapped in a try/catch so that if
+// the CDN fails to load, tab switching and other UI still works.
+let supabase = null;
+try {
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} catch (err) {
+  console.error('Supabase failed to initialize:', err);
+}
 
 
 /* ----------------------------------------------------------
-   2. SESSION CHECK
-   If the user is already logged in, redirect them straight
-   to the catalogue — no need to see the landing page.
-   ---------------------------------------------------------- */
-(async function checkSession() {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session) {
-    window.location.href = '/pages/catalogue.html';
-  }
-})();
-
-
-/* ----------------------------------------------------------
-   3. DOM REFERENCES
+   2. DOM REFERENCES
    ---------------------------------------------------------- */
 const tabBtns     = document.querySelectorAll('.auth-tab');
 const signinPanel = document.getElementById('panel-signin');
@@ -53,8 +47,9 @@ const forgotLink  = document.getElementById('forgot-password-link');
 
 
 /* ----------------------------------------------------------
-   4. TAB SWITCHING
-   Toggles between Sign In and Create Account panels.
+   3. TAB SWITCHING
+   Set up immediately and independently from Supabase so
+   the UI works even if the CDN is slow to respond.
    ---------------------------------------------------------- */
 tabBtns.forEach(tab => {
   tab.addEventListener('click', () => {
@@ -82,6 +77,25 @@ tabBtns.forEach(tab => {
     signupError.textContent = '';
   });
 });
+
+
+/* ----------------------------------------------------------
+   4. SESSION CHECK
+   If the user is already logged in, redirect them straight
+   to the catalogue — no need to see the landing page.
+   Only runs if Supabase initialized successfully.
+   ---------------------------------------------------------- */
+(async function checkSession() {
+  if (!supabase) return;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      window.location.href = '/pages/catalogue.html';
+    }
+  } catch (err) {
+    console.error('Session check failed:', err);
+  }
+})();
 
 
 /* ----------------------------------------------------------
@@ -119,6 +133,12 @@ function friendlyError(message) {
 signinForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   showError(signinError, '');
+
+  if (!supabase) {
+    showError(signinError, 'Authentication unavailable. Please refresh and try again.');
+    return;
+  }
+
   setLoading(signinBtn, true);
 
   const email    = document.getElementById('signin-email').value.trim();
@@ -165,6 +185,12 @@ signinForm.addEventListener('submit', async (e) => {
 signupForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   showError(signupError, '');
+
+  if (!supabase) {
+    showError(signupError, 'Authentication unavailable. Please refresh and try again.');
+    return;
+  }
+
   setLoading(signupBtn, true);
 
   const name     = document.getElementById('signup-name').value.trim();
@@ -216,6 +242,8 @@ signupForm.addEventListener('submit', async (e) => {
    ---------------------------------------------------------- */
 forgotLink.addEventListener('click', async (e) => {
   e.preventDefault();
+
+  if (!supabase) return;
 
   const email = document.getElementById('signin-email').value.trim();
 
