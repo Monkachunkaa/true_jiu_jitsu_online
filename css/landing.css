@@ -2,22 +2,22 @@
    landing.css — Landing / login page styles
    True Jiu Jitsu Online
 
-   Single-screen, no-scroll layout. Centered vertically
-   and horizontally. Gym photo background with dark overlay.
+   Single-screen centered layout. Allows gentle scrolling
+   on very short viewports so nothing gets clipped.
    ========================================================== */
 
 
 /* ==========================
    PAGE SHELL
    ========================== */
-
-/* Prevent any scrolling on this page */
 .landing-body {
-  overflow: hidden;
-  height: 100vh;
+  /* Allow scrolling if content is taller than the viewport —
+     prevents fields from being clipped on short screens */
+  overflow-y: auto;
+  min-height: 100vh;
 }
 
-/* Gym photo background — very dark overlay so text is legible */
+/* Gym photo background — fixed so it stays put while scrolling */
 .landing-bg {
   position: fixed;
   inset: 0;
@@ -35,17 +35,18 @@
   background: rgba(10, 10, 10, 0.88);
 }
 
-/* Centers everything vertically and horizontally */
+/* Centers everything vertically and horizontally.
+   Uses min-height so it grows naturally on short screens. */
 .landing-main {
   position: relative;
   z-index: 1;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: var(--space-xl);
-  gap: var(--space-xl);
+  padding: var(--space-lg) var(--space-xl);
+  gap: var(--space-md);
 }
 
 
@@ -58,14 +59,13 @@
 }
 
 .landing-logo img {
-  height: 52px;
+  height: 46px;
   width: auto;
 }
 
 
 /* ==========================
    AUTH CARD
-   The form container
    ========================== */
 .auth-card {
   background: rgba(20, 20, 20, 0.95);
@@ -73,14 +73,13 @@
   border-radius: var(--border-radius-lg);
   width: 100%;
   max-width: 400px;
-  overflow: hidden;
   backdrop-filter: blur(12px);
+  /* No overflow: hidden — let the card grow to fit its content */
 }
 
 
 /* ==========================
    AUTH TABS
-   Sign In / Create Account toggle
    ========================== */
 .auth-tabs {
   display: grid;
@@ -89,7 +88,7 @@
 }
 
 .auth-tab {
-  padding: var(--space-md) var(--space-lg);
+  padding: 12px var(--space-lg);
   background: transparent;
   border: none;
   font-family: var(--font-heading);
@@ -109,7 +108,6 @@
   background: rgba(255, 255, 255, 0.03);
 }
 
-/* Active tab — red underline indicator */
 .auth-tab--active {
   color: var(--color-white);
   border-bottom-color: var(--color-red);
@@ -118,27 +116,38 @@
 
 /* ==========================
    AUTH PANELS
-   Sign in and create account forms
    ========================== */
 .auth-panel {
-  padding: var(--space-xl);
+  padding: var(--space-lg);
 }
 
 .auth-panel--hidden {
   display: none;
 }
 
+/* Tighter gap between form fields than the default component spacing */
+.auth-panel .form {
+  gap: var(--space-md);
+}
+
+/* Tighter label/input gap within each field group */
+.auth-panel .form__group {
+  gap: 4px;
+}
+
+/* Slightly smaller inputs to save vertical space */
+.auth-panel .form__input {
+  padding: 10px 14px;
+}
+
 
 /* ==========================
    FORM EXTRAS
-   Error message, forgot password, terms
    ========================== */
-
-/* Inline error message — only visible when populated */
 .auth-error {
   font-size: var(--text-sm);
   color: var(--color-red-accessible);
-  min-height: 20px;
+  /* No min-height — only takes space when there's an actual error */
   margin: 0;
   max-width: none;
 }
@@ -148,7 +157,7 @@
   text-align: center;
   font-size: var(--text-sm);
   color: var(--color-gray);
-  margin-top: var(--space-md);
+  margin-top: var(--space-sm);
   transition: color var(--transition-fast);
 }
 
@@ -160,7 +169,7 @@
   font-size: var(--text-xs);
   color: var(--color-gray);
   text-align: center;
-  margin-top: var(--space-md);
+  margin-top: var(--space-sm);
   line-height: 1.5;
   max-width: none;
 }
@@ -178,7 +187,6 @@
 
 /* ==========================
    PITCH BLOCK
-   Below the form — headline, description, price
    ========================== */
 .landing-pitch {
   text-align: center;
@@ -186,18 +194,18 @@
 }
 
 .landing-pitch__headline {
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);
   font-family: var(--font-heading);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-white);
-  margin-bottom: var(--space-sm);
+  margin-bottom: 4px;
 }
 
 .landing-pitch__description {
   font-size: var(--text-sm);
   color: var(--color-gray);
-  margin-bottom: var(--space-sm);
+  margin-bottom: 4px;
   max-width: none;
 }
 
@@ -209,13 +217,13 @@
 
 .landing-pitch__price strong {
   font-family: var(--font-heading);
-  font-size: var(--text-2xl);
+  font-size: var(--text-xl);
   color: var(--color-white);
   letter-spacing: 0.02em;
 }
 
 .landing-pitch__price strong span {
-  font-size: var(--text-base);
+  font-size: var(--text-sm);
   color: var(--color-gray);
   font-family: var(--font-body);
   font-weight: 400;
@@ -227,21 +235,14 @@
    ========================== */
 @media (max-width: 480px) {
 
-  .landing-body {
-    overflow-y: auto;
-    height: auto;
-  }
-
   .landing-main {
-    height: auto;
-    min-height: 100vh;
+    padding: var(--space-xl) var(--space-md);
     justify-content: flex-start;
     padding-top: var(--space-2xl);
-    padding-bottom: var(--space-2xl);
   }
 
   .landing-logo img {
-    height: 44px;
+    height: 40px;
   }
 
 }
