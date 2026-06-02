@@ -8,6 +8,10 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  # These two values are intentionally public (Supabase anon key and URL
+  # are designed to be exposed client-side). Tell Netlify's secrets
+  # scanner to ignore them so the build doesn't fail.
+  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL,SUPABASE_ANON_KEY"
 
 # Redirect /admin to the admin index page
 [[redirects]]
