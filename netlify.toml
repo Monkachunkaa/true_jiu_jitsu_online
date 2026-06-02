@@ -19,6 +19,11 @@
   to   = "/pages/admin/index.html"
   status = 200
 
+[[redirects]]
+  from = "/admin/*"
+  to   = "/pages/admin/:splat"
+  status = 200
+
 # Redirect all member pages cleanly
 [[redirects]]
   from = "/catalogue"
