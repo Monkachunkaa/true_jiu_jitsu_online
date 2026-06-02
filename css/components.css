@@ -496,9 +496,75 @@
 
 
 /* ==========================
-   UPLOAD ZONE
-   Drag-and-drop file upload area in admin
+   CONTENT CARD EXTRAS
+   Additional styles for catalogue-specific card states
    ========================== */
+
+/* Placeholder when no thumbnail is set */
+.content-card__thumbnail--placeholder {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: linear-gradient(135deg, var(--color-dark-gray), var(--color-mid-gray));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Progress ring positioned in the bottom-right of the thumbnail */
+.content-card__ring {
+  position: absolute;
+  bottom: var(--space-sm);
+  right: var(--space-sm);
+  background: rgba(10, 10, 10, 0.8);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Completed checkmark badge — top right of thumbnail */
+.content-card__complete-badge {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+}
+
+/* Watch progress bar for continue watching cards */
+.content-card__watch-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--color-mid-gray);
+}
+
+.content-card__watch-fill {
+  height: 100%;
+  background: var(--color-red);
+  transition: width var(--transition-med);
+}
+
+/* Continue watching grid — slightly smaller cards */
+.catalogue__grid--continue {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+
+/* ==========================
+   CATALOGUE LOADING OVERLAY
+   ========================== */
+.catalogue-loading {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-black);
+  z-index: 500;
+}
+
+
 .upload-zone {
   border: 2px dashed var(--color-mid-gray);
   border-radius: var(--border-radius-lg);

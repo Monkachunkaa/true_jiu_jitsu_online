@@ -9,33 +9,12 @@
      - Forgot password flow
      - Session check on page load (redirect if already logged in)
 
-   Depends on: @supabase/supabase-js loaded via CDN in index.html.
-   The CDN exposes the library as window.supabase — we alias our
-   client as supabaseClient to avoid the naming conflict.
+   Depends on: supabase-client.js loaded before this script.
    ========================================================== */
 
 
 /* ----------------------------------------------------------
-   1. SUPABASE CLIENT
-   The anon key is safe to expose in the browser.
-   The service role key is never used client-side.
-   ---------------------------------------------------------- */
-const SUPABASE_URL      = 'https://rcmherydjpqgmpygwdic.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjbWhlcnlkanBxZ21weWd3ZGljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDY3NjgsImV4cCI6MjA5NTk4Mjc2OH0.xY-GvRr-PNtail8ZjI9gW4qWPAkGuRc84Tfo137nFak';
-
-// Named supabaseClient to avoid conflict with window.supabase
-// which is the global the CDN script declares.
-// Wrapped in try/catch so tab switching still works if CDN fails.
-let supabaseClient = null;
-try {
-  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-} catch (err) {
-  console.error('Supabase failed to initialize:', err);
-}
-
-
-/* ----------------------------------------------------------
-   2. DOM REFERENCES
+   1. DOM REFERENCES
    ---------------------------------------------------------- */
 const tabBtns     = document.querySelectorAll('.auth-tab');
 const signinPanel = document.getElementById('panel-signin');
@@ -50,15 +29,14 @@ const forgotLink  = document.getElementById('forgot-password-link');
 
 
 /* ----------------------------------------------------------
-   3. TAB SWITCHING
-   Set up immediately and independently from Supabase so
-   the UI works even if the CDN is slow to respond.
+   2. TAB SWITCHING
+   Set up immediately so the UI works regardless of whether
+   Supabase initialized successfully.
    ---------------------------------------------------------- */
 tabBtns.forEach(tab => {
   tab.addEventListener('click', () => {
     const target = tab.dataset.tab;
 
-    // Update tab button states
     tabBtns.forEach(t => {
       t.classList.remove('auth-tab--active');
       t.setAttribute('aria-selected', 'false');
@@ -66,7 +44,6 @@ tabBtns.forEach(tab => {
     tab.classList.add('auth-tab--active');
     tab.setAttribute('aria-selected', 'true');
 
-    // Show the correct panel
     if (target === 'signin') {
       signinPanel.classList.remove('auth-panel--hidden');
       signupPanel.classList.add('auth-panel--hidden');
@@ -75,7 +52,6 @@ tabBtns.forEach(tab => {
       signinPanel.classList.add('auth-panel--hidden');
     }
 
-    // Clear any lingering error messages
     signinError.textContent = '';
     signupError.textContent = '';
   });
@@ -83,15 +59,14 @@ tabBtns.forEach(tab => {
 
 
 /* ----------------------------------------------------------
-   4. SESSION CHECK
-   If the user is already logged in, redirect them straight
-   to the catalogue — no need to see the landing page.
-   Only runs if Supabase initialized successfully.
+   3. SESSION CHECK
+   If the user is already logged in, skip the landing page
+   and send them straight to the catalogue.
    ---------------------------------------------------------- */
 (async function checkSession() {
-  if (!supabaseClient) return;
+  if (!window.supabaseClient) return;
   try {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    const { data: { session } } = await window.supabaseClient.auth.getSession();
     if (session) {
       window.location.href = '/pages/catalogue.html';
     }
@@ -102,10 +77,9 @@ tabBtns.forEach(tab => {
 
 
 /* ----------------------------------------------------------
-   5. HELPERS
+   4. HELPERS
    ---------------------------------------------------------- */
 
-/** Set a button to loading state */
 function setLoading(btn, loading) {
   btn.disabled = loading;
   btn.classList.toggle('btn--loading', loading);
@@ -113,12 +87,10 @@ function setLoading(btn, loading) {
   btn.textContent = loading ? 'Please wait...' : btn.dataset.originalText;
 }
 
-/** Show an error message in the given element */
 function showError(el, message) {
   el.textContent = message;
 }
 
-/** Map Supabase auth error messages to friendly ones */
 function friendlyError(message) {
   if (message.includes('Invalid login credentials'))  return 'Incorrect email or password.';
   if (message.includes('Email not confirmed'))        return 'Please confirm your email before signing in.';
@@ -129,15 +101,13 @@ function friendlyError(message) {
 
 
 /* ----------------------------------------------------------
-   6. SIGN IN
-   Authenticates with Supabase, then checks subscription
-   status before redirecting to the catalogue.
+   5. SIGN IN
    ---------------------------------------------------------- */
 signinForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   showError(signinError, '');
 
-  if (!supabaseClient) {
+  if (!window.supabaseClient) {
     showError(signinError, 'Authentication unavailable. Please refresh and try again.');
     return;
   }
@@ -147,7 +117,7 @@ signinForm.addEventListener('submit', async (e) => {
   const email    = document.getElementById('signin-email').value.trim();
   const password = document.getElementById('signin-password').value;
 
-  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+  const { data, error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
 
   if (error) {
     showError(signinError, friendlyError(error.message));
@@ -155,16 +125,15 @@ signinForm.addEventListener('submit', async (e) => {
     return;
   }
 
-  // Check subscription status before letting them in
-  const { data: member, error: memberError } = await supabaseClient
+  // Check subscription status before granting access
+  const { data: member, error: memberError } = await window.supabaseClient
     .from('members')
     .select('subscription_status')
     .eq('auth_user_id', data.user.id)
     .single();
 
   if (memberError || !member) {
-    // User has an auth account but no member record yet —
-    // they signed up but never completed checkout
+    // Auth account exists but checkout was never completed
     window.location.href = '/pages/subscribe.html';
     return;
   }
@@ -172,24 +141,22 @@ signinForm.addEventListener('submit', async (e) => {
   if (member.subscription_status === 'active') {
     window.location.href = '/pages/catalogue.html';
   } else {
-    // Subscription lapsed — send to billing page
     window.location.href = '/pages/account.html';
   }
 });
 
 
 /* ----------------------------------------------------------
-   7. SIGN UP
-   Creates a Supabase auth account, then redirects to
-   Stripe Checkout to complete the subscription.
-   The member record in the database is created by the
+   6. SIGN UP
+   Creates a Supabase auth account then redirects to
+   Stripe Checkout. The member record is created by the
    stripe-webhook function after payment succeeds.
    ---------------------------------------------------------- */
 signupForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   showError(signupError, '');
 
-  if (!supabaseClient) {
+  if (!window.supabaseClient) {
     showError(signupError, 'Authentication unavailable. Please refresh and try again.');
     return;
   }
@@ -200,13 +167,10 @@ signupForm.addEventListener('submit', async (e) => {
   const email    = document.getElementById('signup-email').value.trim();
   const password = document.getElementById('signup-password').value;
 
-  // Create the Supabase auth account
-  const { data, error } = await supabaseClient.auth.signUp({
+  const { data, error } = await window.supabaseClient.auth.signUp({
     email,
     password,
-    options: {
-      data: { full_name: name },  // stored in auth.users metadata
-    },
+    options: { data: { full_name: name } },
   });
 
   if (error) {
@@ -215,17 +179,10 @@ signupForm.addEventListener('submit', async (e) => {
     return;
   }
 
-  // Auth account created — now redirect to Stripe Checkout.
-  // Pass the Supabase user ID and email so the Netlify function
-  // can attach them to the Stripe customer and later the member record.
   const response = await fetch('/.netlify/functions/create-checkout', {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      authUserId: data.user.id,
-      email,
-      name,
-    }),
+    body: JSON.stringify({ authUserId: data.user.id, email, name }),
   });
 
   const result = await response.json();
@@ -240,13 +197,12 @@ signupForm.addEventListener('submit', async (e) => {
 
 
 /* ----------------------------------------------------------
-   8. FORGOT PASSWORD
-   Sends a password reset email via Supabase.
+   7. FORGOT PASSWORD
    ---------------------------------------------------------- */
 forgotLink.addEventListener('click', async (e) => {
   e.preventDefault();
 
-  if (!supabaseClient) return;
+  if (!window.supabaseClient) return;
 
   const email = document.getElementById('signin-email').value.trim();
 
@@ -255,15 +211,13 @@ forgotLink.addEventListener('click', async (e) => {
     return;
   }
 
-  const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+  const { error } = await window.supabaseClient.auth.resetPasswordForEmail(email, {
     redirectTo: `${window.location.origin}/pages/reset-password.html`,
   });
 
   if (error) {
     showError(signinError, 'Could not send reset email. Please try again.');
   } else {
-    showError(signinError, '');
-    // Reuse the error element for a success message
     signinError.style.color = 'var(--color-success)';
     signinError.textContent = 'Check your email for a password reset link.';
   }
