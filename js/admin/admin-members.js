@@ -103,14 +103,32 @@ function renderMembers(members) {
   // Revoke access
   tbody.querySelectorAll('.js-revoke').forEach(btn => {
     btn.addEventListener('click', async () => {
-      if (!confirm('Revoke this member\'s access?')) return;
-      const { error } = await window.supabaseClient
-        .from('members')
-        .update({ subscription_status: 'cancelled' })
-        .eq('id', btn.dataset.id);
+      if (!confirm('Revoke this member\'s access? This will cancel their Stripe subscription immediately.')) return;
 
-      if (error) { showToast('Failed to revoke access', 'error'); return; }
-      showToast('Access revoked');
+      btn.disabled    = true;
+      btn.textContent = 'Revoking…';
+
+      const { data: { session } } = await window.supabaseClient.auth.getSession();
+
+      const response = await fetch('/.netlify/functions/admin-revoke-member', {
+        method:  'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ memberId: btn.dataset.id }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        showToast('Failed to revoke access', 'error');
+        btn.disabled    = false;
+        btn.textContent = 'Revoke';
+        return;
+      }
+
+      showToast('Access revoked and Stripe subscription cancelled');
       await loadMembers();
       renderMembers(allMembers);
     });
