@@ -38,7 +38,7 @@ exports.handler = async (event) => {
   }
 
   /* ----------------------------------------------------------
-     1. Verify JWT — confirm the request is from a logged-in member
+     1. Verify JWT
      ---------------------------------------------------------- */
   const token = (event.headers.authorization || '').replace('Bearer ', '');
   if (!token) return respond(401, { error: 'Unauthorized' });
@@ -61,14 +61,13 @@ exports.handler = async (event) => {
   const memberId = member.id;
 
   /* ----------------------------------------------------------
-     3. Fetch all published playlists with category info
+     3. Fetch all published playlists
+     Note: playlists don't have a direct category relationship —
+     categories live on videos and articles instead.
      ---------------------------------------------------------- */
   const { data: playlists, error: playlistError } = await supabase
     .from('playlists')
-    .select(`
-      id, title, description, thumbnail_url, display_order,
-      categories ( id, name, slug )
-    `)
+    .select('id, title, description, thumbnail_url, display_order')
     .eq('published', true)
     .order('display_order');
 
@@ -78,9 +77,9 @@ exports.handler = async (event) => {
   }
 
   /* ----------------------------------------------------------
-     4. Fetch all playlist items so we know what's in each one
+     4. Fetch all playlist items
      ---------------------------------------------------------- */
-  const playlistIds = playlists.map(p => p.id);
+  const playlistIds = (playlists || []).map(p => p.id);
 
   const { data: playlistItems } = playlistIds.length
     ? await supabase
@@ -91,7 +90,7 @@ exports.handler = async (event) => {
     : { data: [] };
 
   /* ----------------------------------------------------------
-     5. Fetch member's video and article progress
+     5. Fetch member's progress
      ---------------------------------------------------------- */
   const { data: videoProgress } = await supabase
     .from('video_progress')
@@ -103,14 +102,13 @@ exports.handler = async (event) => {
     .select('article_id, completed')
     .eq('member_id', memberId);
 
-  // Index progress by ID for fast lookup
   const videoProgressMap   = Object.fromEntries((videoProgress   || []).map(p => [p.video_id,   p]));
   const articleProgressMap = Object.fromEntries((articleProgress || []).map(p => [p.article_id, p]));
 
   /* ----------------------------------------------------------
-     6. Calculate per-playlist progress and attach to playlists
+     6. Enrich playlists with item count and progress
      ---------------------------------------------------------- */
-  const enrichedPlaylists = playlists.map(playlist => {
+  const enrichedPlaylists = (playlists || []).map(playlist => {
     const items = (playlistItems || []).filter(i => i.playlist_id === playlist.id);
     const total = items.length;
 
@@ -132,7 +130,7 @@ exports.handler = async (event) => {
   });
 
   /* ----------------------------------------------------------
-     7. Build "Continue Watching" — recent unfinished videos
+     7. Build "Continue Watching"
      ---------------------------------------------------------- */
   const { data: continueWatchingRaw } = await supabase
     .from('video_progress')
@@ -145,13 +143,12 @@ exports.handler = async (event) => {
     .order('last_watched_at', { ascending: false })
     .limit(6);
 
-  // For each continue watching item, find which playlist it belongs to
   const continueWatching = (continueWatchingRaw || [])
-    .filter(item => item.videos)  // skip if video was deleted
+    .filter(item => item.videos)
     .map(item => {
       const playlistItem = (playlistItems || []).find(pi => pi.video_id === item.video_id);
-      const playlist = playlistItem
-        ? playlists.find(p => p.id === playlistItem.playlist_id)
+      const playlist     = playlistItem
+        ? (playlists || []).find(p => p.id === playlistItem.playlist_id)
         : null;
 
       return {
@@ -167,21 +164,12 @@ exports.handler = async (event) => {
     });
 
   /* ----------------------------------------------------------
-     8. Fetch categories that have at least one published playlist
+     8. Fetch all categories (for future filtering use)
      ---------------------------------------------------------- */
-  const usedCategoryIds = [...new Set(
-    playlists
-      .filter(p => p.categories)
-      .map(p => p.categories.id)
-  )];
-
-  const { data: categories } = usedCategoryIds.length
-    ? await supabase
-        .from('categories')
-        .select('id, name, slug, display_order')
-        .in('id', usedCategoryIds)
-        .order('display_order')
-    : { data: [] };
+  const { data: categories } = await supabase
+    .from('categories')
+    .select('id, name, slug, display_order')
+    .order('display_order');
 
   return respond(200, {
     playlists:       enrichedPlaylists,
