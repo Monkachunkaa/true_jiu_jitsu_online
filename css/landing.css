@@ -8,6 +8,48 @@
 
 
 /* ==========================
+   CHECKOUT BANNER
+   Shown when returning from abandoned/cancelled checkout
+   ========================== */
+.checkout-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  background: var(--color-dark-gray);
+  border-bottom: 1px solid var(--color-mid-gray);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-xl);
+}
+
+.checkout-banner__text {
+  font-size: var(--text-sm);
+  color: var(--color-light-gray);
+  margin: 0;
+  max-width: none;
+  text-align: center;
+}
+
+.checkout-banner__close {
+  background: none;
+  border: none;
+  color: var(--color-gray);
+  cursor: pointer;
+  font-size: var(--text-base);
+  flex-shrink: 0;
+  transition: color var(--transition-fast);
+}
+
+.checkout-banner__close:hover {
+  color: var(--color-white);
+}
+
+
+/* ==========================
    PAGE SHELL
    ========================== */
 .landing-body {

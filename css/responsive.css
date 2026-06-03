@@ -6,6 +6,7 @@
      ≤ 1024px — tablet
      ≤  768px — large mobile
      ≤  480px — small mobile
+     ≤  380px — very small mobile (iPhone SE etc.)
    ========================================================== */
 
 
@@ -17,6 +18,7 @@
   /* Video player — stack sidebar below */
   .player-page__body {
     grid-template-columns: 1fr;
+    padding: var(--space-lg) var(--space-xl);
   }
 
   .player-page__sidebar {
@@ -26,19 +28,23 @@
     padding-top: var(--space-xl);
   }
 
-  /* Playlist header — stack thumbnail above */
+  /* Playlist header — stack thumbnail above meta */
   .playlist-page__header {
     grid-template-columns: 1fr;
   }
 
   .playlist-page__thumbnail {
     width: 100%;
-    max-width: 360px;
+    max-width: 400px;
   }
 
-  /* Account page — stack sidebar above */
+  /* Account page — stack sidebar above main */
   .account-page__grid {
     grid-template-columns: 1fr;
+  }
+
+  .account-page__sidebar {
+    position: static;
   }
 
   /* Chart grid — single column */
@@ -60,19 +66,51 @@
 
   /* Catalogue grid — two columns */
   .catalogue__grid {
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   }
 
-  /* Landing actions — stack buttons */
-  .landing__actions {
-    flex-direction: column;
-    align-items: center;
+  /* Catalogue padding */
+  .catalogue {
+    padding-top: calc(var(--nav-height) + var(--space-lg));
   }
 
-  /* Admin sidebar — hidden by default on mobile */
+  /* Playlist page padding */
+  .playlist-page {
+    padding-top: calc(var(--nav-height) + var(--space-lg));
+  }
+
+  /* Article page padding */
+  .article-page {
+    padding-top: calc(var(--nav-height) + var(--space-xl));
+  }
+
+  /* Account page padding */
+  .account-page {
+    padding-top: calc(var(--nav-height) + var(--space-xl));
+  }
+
+  /* Video player body padding */
+  .player-page__body {
+    padding: var(--space-md) var(--space-lg);
+    gap: var(--space-lg);
+  }
+
+  /* Playlist items — reduce thumbnail size */
+  .playlist-item__thumbnail {
+    width: 64px;
+  }
+
+  /* Playlist item title — allow wrapping */
+  .playlist-item__title {
+    white-space: normal;
+    line-height: 1.3;
+  }
+
+  /* Admin sidebar — slides in from left on mobile */
   .admin-sidebar {
     transform: translateX(-100%);
     transition: transform var(--transition-med);
+    z-index: 200;
   }
 
   .admin-sidebar.is-open {
@@ -87,9 +125,47 @@
     padding: var(--space-lg);
   }
 
+  /* Admin topbar title — prevent overflow */
+  .admin-topbar__title {
+    font-size: var(--text-base);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+  }
+
   /* Stat grid — two columns */
   .stat-grid {
     grid-template-columns: 1fr 1fr;
+  }
+
+  /* Content list items — simplify actions on mobile */
+  .content-list-item {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  .content-list-item__actions {
+    width: 100%;
+    justify-content: flex-start;
+    padding-top: var(--space-sm);
+    border-top: 1px solid var(--color-mid-gray);
+  }
+
+  /* Data table — hide less important columns */
+  .data-table th:nth-child(4),
+  .data-table td:nth-child(4) {
+    display: none;
+  }
+
+  /* Up next card — full width on mobile */
+  .up-next-card {
+    max-width: none;
+  }
+
+  /* Breadcrumb — allow wrapping */
+  .player-breadcrumb {
+    flex-wrap: wrap;
   }
 
 }
@@ -100,24 +176,23 @@
    ========================== */
 @media (max-width: 480px) {
 
-  /* Full-width wrapper */
+  /* Wrapper — more edge-to-edge */
   .wrapper {
     width: 95%;
   }
+
+  /* Typography */
+  h1 { font-size: var(--text-2xl); }
+  h2 { font-size: var(--text-xl); }
 
   /* Catalogue grid — single column */
   .catalogue__grid {
     grid-template-columns: 1fr;
   }
 
-  /* Stat grid — single column */
-  .stat-grid {
+  /* Catalogue continue watching — single column */
+  .catalogue__grid--continue {
     grid-template-columns: 1fr;
-  }
-
-  /* Subscribe card — less padding */
-  .subscribe-page__card {
-    padding: var(--space-xl);
   }
 
   /* Catalogue controls — stack vertically */
@@ -128,6 +203,131 @@
 
   .search {
     max-width: none;
+  }
+
+  /* Stat grid — single column */
+  .stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Playlist page title */
+  .playlist-page__title {
+    font-size: var(--text-2xl);
+  }
+
+  /* Playlist items — hide thumbnail on very small screens */
+  .playlist-item__thumbnail {
+    display: none;
+  }
+
+  /* Player page title */
+  .player-page__title {
+    font-size: var(--text-xl);
+  }
+
+  /* Player actions — stack vertically */
+  .player-page__actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  /* Article title */
+  .article-page__title {
+    font-size: var(--text-2xl);
+    letter-spacing: 0;
+  }
+
+  /* Article body — slightly smaller text */
+  .article-page__body {
+    font-size: var(--text-base);
+  }
+
+  /* Account sidebar padding */
+  .account-page__sidebar {
+    padding: var(--space-lg);
+  }
+
+  /* Admin topbar — tighter */
+  .admin-topbar {
+    padding: 0 var(--space-lg);
+  }
+
+  .admin-topbar__title {
+    font-size: var(--text-sm);
+    max-width: 140px;
+  }
+
+  /* Admin content list — stack thumbnail on top */
+  .content-list-item__thumbnail {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    max-width: 200px;
+  }
+
+  /* Modal — full width */
+  .modal {
+    padding: var(--space-lg);
+  }
+
+  /* Buttons in modal footer — stack */
+  .modal .form [style*="flex"] {
+    flex-direction: column;
+  }
+
+  /* Toast — full width */
+  .toast-container {
+    left: var(--space-md);
+    right: var(--space-md);
+    bottom: var(--space-md);
+  }
+
+  .toast {
+    max-width: none;
+  }
+
+  /* Chart cards — less padding */
+  .chart-card {
+    padding: var(--space-md);
+  }
+
+  /* Data table — hide more columns on very small screens */
+  .data-table th:nth-child(3),
+  .data-table td:nth-child(3) {
+    display: none;
+  }
+
+  /* Playlist builder items — smaller */
+  .playlist-builder-item__thumb {
+    width: 48px;
+  }
+
+}
+
+
+/* ==========================
+   VERY SMALL MOBILE (≤ 380px)
+   iPhone SE, older Android
+   ========================== */
+@media (max-width: 380px) {
+
+  /* Auth card panel padding */
+  .auth-panel {
+    padding: var(--space-md);
+  }
+
+  /* Landing pitch — hide description to save space */
+  .landing-pitch__description {
+    display: none;
+  }
+
+  /* Landing logo */
+  .landing-logo img {
+    height: 72px;
+  }
+
+  /* Stat card value — scale down large numbers */
+  .stat-card__value {
+    font-size: var(--text-3xl);
   }
 
 }

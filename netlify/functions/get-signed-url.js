@@ -115,6 +115,36 @@ exports.handler = async (event) => {
     return respond(404, { error: 'Video not found' });
   }
 
+  /* ----------------------------------------------------------
+     If duration is missing, fetch it from Cloudflare and
+     save it to Supabase for future requests.
+     ---------------------------------------------------------- */
+  let durationSeconds = video.duration_seconds;
+
+  if (!durationSeconds) {
+    try {
+      const cfRes = await fetch(
+        `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/stream/${video.cloudflare_video_id}`,
+        { headers: { 'Authorization': `Bearer ${process.env.CLOUDFLARE_API_TOKEN}` } }
+      );
+      const cfData = await cfRes.json();
+      const fetchedDuration = cfData?.result?.duration;
+
+      if (fetchedDuration && fetchedDuration > 0) {
+        durationSeconds = Math.round(fetchedDuration);
+
+        // Save it so we don't need to fetch again
+        await supabase
+          .from('videos')
+          .update({ duration_seconds: durationSeconds })
+          .eq('id', videoId);
+      }
+    } catch (err) {
+      // Non-fatal — duration just stays null for now
+      console.error('Cloudflare duration fetch failed:', err);
+    }
+  }
+
   // Generate the signed URL
   let signedUrl;
   try {
@@ -138,7 +168,7 @@ exports.handler = async (event) => {
       id:              video.id,
       title:           video.title,
       description:     video.description,
-      durationSeconds: video.duration_seconds,
+      durationSeconds: durationSeconds,
       thumbnailUrl:    video.thumbnail_url,
       category:        video.categories?.name || '',
     },

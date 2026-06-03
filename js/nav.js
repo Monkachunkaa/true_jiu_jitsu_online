@@ -125,7 +125,7 @@ async function renderNav(activePage = '') {
     }
 
     .member-nav__logo img {
-      height: 100px;
+      height: 56px;
       width: auto;
     }
 
@@ -155,6 +155,20 @@ async function renderNav(activePage = '') {
 
     .member-nav__link--admin:hover {
       color: var(--color-white);
+    }
+
+    /* Mobile nav — tighten up on small screens */
+    @media (max-width: 480px) {
+      .member-nav__links {
+        gap: 10px;
+      }
+      .member-nav__link {
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+      }
+      .member-nav__logo img {
+        height: 44px;
+      }
     }
   `;
   document.head.appendChild(style);

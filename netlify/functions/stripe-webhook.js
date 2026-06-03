@@ -16,6 +16,7 @@
 
 const Stripe  = require('stripe');
 const { createClient } = require('@supabase/supabase-js');
+const { sendEmail }    = require('./send-email');
 
 const stripe   = Stripe(process.env.STRIPE_SECRET_KEY);
 const supabase = createClient(
@@ -120,6 +121,18 @@ exports.handler = async (event) => {
         return respond(500, { error: 'Database error' });
       }
 
+      // Send welcome email
+      try {
+        await sendEmail({
+          to:   customer.email,
+          name: customer.name || '',
+          type: 'welcome',
+        });
+      } catch (emailErr) {
+        // Log but don't fail the webhook — data is saved
+        console.error('Welcome email failed:', emailErr);
+      }
+
       console.log(`Member created/updated for auth_user_id: ${authUserId}`);
     }
 
@@ -144,15 +157,30 @@ exports.handler = async (event) => {
        Fires when a subscription is fully cancelled.
     -------------------------------------------------------- */
     else if (type === 'customer.subscription.deleted') {
-      const { error } = await supabase
+      const { data: member, error } = await supabase
         .from('members')
         .update({
           subscription_status: 'cancelled',
           cancelled_at:        new Date().toISOString(),
         })
-        .eq('stripe_subscription_id', data.id);
+        .eq('stripe_subscription_id', data.id)
+        .select('name, email')
+        .single();
 
       if (error) console.error('Supabase update error:', error);
+
+      // Send cancellation email
+      if (member?.email) {
+        try {
+          await sendEmail({
+            to:   member.email,
+            name: member.name || '',
+            type: 'cancelled',
+          });
+        } catch (emailErr) {
+          console.error('Cancellation email error:', emailErr);
+        }
+      }
     }
 
 
@@ -162,12 +190,27 @@ exports.handler = async (event) => {
        Sets status to past_due — member loses access.
     -------------------------------------------------------- */
     else if (type === 'invoice.payment_failed') {
-      const { error } = await supabase
+      const { data: member, error } = await supabase
         .from('members')
         .update({ subscription_status: 'past_due' })
-        .eq('stripe_customer_id', data.customer);
+        .eq('stripe_customer_id', data.customer)
+        .select('name, email')
+        .single();
 
       if (error) console.error('Supabase update error:', error);
+
+      // Send payment failed email
+      if (member?.email) {
+        try {
+          await sendEmail({
+            to:   member.email,
+            name: member.name || '',
+            type: 'payment-failed',
+          });
+        } catch (emailErr) {
+          console.error('Payment failed email error:', emailErr);
+        }
+      }
     }
 
 

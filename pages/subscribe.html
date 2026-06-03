@@ -1,1 +1,75 @@
-<!-- subscribe.html — Subscription signup flow. TODO: Phase 1 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complete Your Subscription — True Jiu Jitsu Online</title>
+  <link rel="icon" type="image/webp" href="/img/tjj_favicon.webp">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/landing.css">
+</head>
+<body class="landing-body">
+
+  <div class="landing-bg" aria-hidden="true"></div>
+
+  <main class="landing-main">
+
+    <a href="/" class="landing-logo" aria-label="True Jiu Jitsu Online">
+      <img src="/img/true_jiu_jitsu_logo_white.webp" alt="True Jiu Jitsu">
+    </a>
+
+    <div class="auth-card">
+      <div class="auth-panel">
+
+        <div style="text-align:center;margin-bottom:var(--space-xl);">
+          <h2 style="font-size:var(--text-xl);text-transform:none;letter-spacing:0;margin-bottom:var(--space-sm);">
+            One step away
+          </h2>
+          <p style="font-size:var(--text-sm);color:var(--color-gray);max-width:none;margin:0;">
+            Your account is ready — complete checkout to unlock
+            full access to the library.
+          </p>
+        </div>
+
+        <!-- Subscription summary -->
+        <div style="background:var(--color-dark-gray);border:1px solid var(--color-mid-gray);border-radius:var(--border-radius);padding:var(--space-lg);margin-bottom:var(--space-xl);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-sm);">
+            <span style="font-size:var(--text-sm);color:var(--color-light-gray);">True Jiu Jitsu Online</span>
+            <span style="font-family:var(--font-heading);font-size:var(--text-lg);color:var(--color-white);">$8.99<span style="font-family:var(--font-body);font-size:var(--text-sm);color:var(--color-gray);">/mo</span></span>
+          </div>
+          <p style="font-size:var(--text-xs);color:var(--color-gray);margin:0;max-width:none;">
+            7-day free trial &nbsp;·&nbsp; Cancel anytime
+          </p>
+        </div>
+
+        <!-- Error message -->
+        <p class="auth-error" id="subscribe-error" aria-live="polite"></p>
+
+        <!-- CTA -->
+        <button class="btn btn--primary btn--block" id="subscribe-btn">
+          Complete Subscription
+        </button>
+
+        <!-- Signed in as -->
+        <p style="font-size:var(--text-xs);color:var(--color-gray);text-align:center;margin-top:var(--space-md);max-width:none;">
+          Signed in as <span id="user-email" style="color:var(--color-light-gray);"></span>
+          &nbsp;·&nbsp;
+          <a href="#" id="signout-link" style="color:var(--color-gray);text-decoration:underline;">Not you?</a>
+        </p>
+
+      </div>
+    </div>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-client.js"></script>
+  <script src="/js/subscribe.js"></script>
+
+</body>
+</html>

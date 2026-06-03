@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Page Not Found — True Jiu Jitsu Online</title>
+  <link rel="icon" type="image/webp" href="/img/tjj_favicon.webp">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/landing.css">
+</head>
+<body class="landing-body">
+
+  <div class="landing-bg" aria-hidden="true"></div>
+
+  <main class="landing-main">
+
+    <a href="/" class="landing-logo" aria-label="True Jiu Jitsu Online">
+      <img src="/img/true_jiu_jitsu_logo_white.webp" alt="True Jiu Jitsu">
+    </a>
+
+    <div class="auth-card">
+      <div class="auth-panel" style="text-align:center;padding:var(--space-2xl) var(--space-xl);">
+
+        <p style="font-family:var(--font-heading);font-size:5rem;line-height:1;color:var(--color-red);margin-bottom:var(--space-md);">
+          404
+        </p>
+
+        <h1 style="font-size:var(--text-xl);text-transform:none;letter-spacing:0;margin-bottom:var(--space-sm);">
+          Page not found
+        </h1>
+
+        <p style="font-size:var(--text-sm);color:var(--color-gray);margin-bottom:var(--space-xl);max-width:none;">
+          This page doesn't exist or may have moved.
+        </p>
+
+        <!-- Dynamic CTA — goes to catalogue if logged in, landing if not -->
+        <a href="/" class="btn btn--primary btn--block" id="cta-btn">
+          Back to Home
+        </a>
+
+      </div>
+    </div>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-client.js"></script>
+  <script>
+    /* If the user is already logged in, send them to the catalogue */
+    (async function() {
+      if (!window.supabaseClient) return;
+      const { data: { session } } = await window.supabaseClient.auth.getSession();
+      if (session) {
+        document.getElementById('cta-btn').href        = '/pages/catalogue.html';
+        document.getElementById('cta-btn').textContent = 'Back to Catalogue';
+      }
+    })();
+  </script>
+
+</body>
+</html>

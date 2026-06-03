@@ -29,6 +29,14 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  /* Start invisible — fade in on load */
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+/* Class added by JS on DOMContentLoaded to trigger the fade */
+body.page-ready {
+  opacity: 1;
 }
 
 /* ---- Typography ---- */

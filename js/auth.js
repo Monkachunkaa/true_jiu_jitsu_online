@@ -33,6 +33,38 @@ const forgotLink  = document.getElementById('forgot-password-link');
    Set up immediately so the UI works regardless of whether
    Supabase initialized successfully.
    ---------------------------------------------------------- */
+
+/* ----------------------------------------------------------
+   CHECK URL PARAMS
+   Show a banner if returning from cancelled/incomplete checkout
+   ---------------------------------------------------------- */
+(function checkUrlParams() {
+  const params  = new URLSearchParams(window.location.search);
+  const banner  = document.getElementById('checkout-banner');
+  const text    = document.getElementById('checkout-banner-text');
+  const closeBtn = document.getElementById('checkout-banner-close');
+  if (!banner) return;
+
+  let message = '';
+  if (params.get('checkout') === 'cancelled') {
+    message = 'Checkout was cancelled — your account is ready whenever you are.';
+  } else if (params.get('checkout') === 'incomplete') {
+    message = 'Complete checkout to access the library.';
+  }
+
+  if (message) {
+    text.textContent   = message;
+    banner.style.display = 'flex';
+    // Clean the URL without reloading
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+
+  closeBtn?.addEventListener('click', () => {
+    banner.style.display = 'none';
+  });
+})();
+
+
 tabBtns.forEach(tab => {
   tab.addEventListener('click', () => {
     const target = tab.dataset.tab;

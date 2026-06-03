@@ -22,6 +22,12 @@
 </head>
 <body class="landing-body">
 
+  <!-- Checkout cancelled/cancelled banner -->
+  <div class="checkout-banner" id="checkout-banner" style="display:none;" role="alert">
+    <p class="checkout-banner__text" id="checkout-banner-text"></p>
+    <button class="checkout-banner__close" id="checkout-banner-close" aria-label="Dismiss">✕</button>
+  </div>
+
   <!-- Background gym photo with dark overlay -->
   <div class="landing-bg" aria-hidden="true"></div>
 
@@ -182,6 +188,9 @@
 
   <!-- Shared Supabase client — must load before auth.js -->
   <script src="js/supabase-client.js"></script>
+
+  <!-- Analytics -->
+  <script src="js/analytics.js"></script>
 
   <!-- Auth logic -->
   <script src="js/auth.js"></script>

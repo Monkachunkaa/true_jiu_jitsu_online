@@ -41,6 +41,16 @@
   status = 200
 
 [[redirects]]
+  from = "/reset-password"
+  to   = "/pages/reset-password.html"
+  status = 200
+
+[[redirects]]
   from = "/account"
   to   = "/pages/account.html"
+  status = 200
+
+[[redirects]]
+  from = "/reset-password"
+  to   = "/pages/reset-password.html"
   status = 200

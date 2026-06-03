@@ -18,3 +18,8 @@ try {
   console.error('Supabase client failed to initialize:', err);
   window.supabaseClient = null;
 }
+
+/* Trigger page fade-in once DOM is ready */
+document.addEventListener('DOMContentLoaded', () => {
+  document.body.classList.add('page-ready');
+});

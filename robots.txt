@@ -1,0 +1,10 @@
+# robots.txt — True Jiu Jitsu Online
+# All member pages are behind authentication — disallow crawling.
+# Only the landing page is public.
+
+User-agent: *
+Allow: /$
+Disallow: /pages/
+Disallow: /netlify/
+
+Sitemap: https://online.truebjj.academy/sitemap.xml

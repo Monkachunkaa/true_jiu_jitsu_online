@@ -240,6 +240,31 @@ function filterPlaylists(slug) {
   // Inject the nav
   renderNav();
 
+  /* ----------------------------------------------------------
+     Show a welcome toast if returning from successful checkout
+     ---------------------------------------------------------- */
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('checkout') === 'success') {
+    // Clean the URL so refreshing doesn't re-show the toast
+    window.history.replaceState({}, '', window.location.pathname);
+
+    // Small delay so the page renders before the toast appears
+    setTimeout(() => {
+      let container = document.getElementById('toast-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.id        = 'toast-container';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+      }
+      const toast = document.createElement('div');
+      toast.className   = 'toast toast--success';
+      toast.textContent = '🅷 Welcome! Your free trial has started — enjoy the library.';
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 5000);
+    }, 600);
+  }
+
   const loadingEl = document.getElementById('catalogue-loading');
   const emptyEl   = document.getElementById('catalogue-empty');
 
