@@ -1,1 +1,83 @@
-<!-- article.html — Article reader page. TODO: Phase 2 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading... — True Jiu Jitsu Online</title>
+  <link rel="icon" type="image/webp" href="/img/tjj_favicon.webp">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+
+  <!-- Nav injected by nav.js -->
+
+  <main class="article-page" id="article-page">
+    <div class="wrapper">
+
+      <!-- Loading -->
+      <div id="article-loading" style="display:flex;align-items:center;justify-content:center;min-height:60vh;">
+        <div class="spinner"></div>
+      </div>
+
+      <!-- Content — hidden until data loads -->
+      <div id="article-content" style="display:none;">
+
+        <div class="article-page__content">
+
+          <!-- Breadcrumb -->
+          <nav class="player-breadcrumb" id="article-breadcrumb" style="display:none;" aria-label="Breadcrumb">
+            <a href="/pages/catalogue.html" class="player-breadcrumb__link">Catalogue</a>
+            <span class="player-breadcrumb__sep" aria-hidden="true">›</span>
+            <a href="#" class="player-breadcrumb__link" id="breadcrumb-playlist-link">Playlist</a>
+          </nav>
+
+          <!-- Header -->
+          <div class="article-page__header">
+            <p class="article-page__meta" id="article-meta"></p>
+            <h1 class="article-page__title" id="article-title"></h1>
+          </div>
+
+          <!-- Body -->
+          <div class="article-page__body" id="article-body"></div>
+
+          <!-- Footer actions -->
+          <div class="article-page__footer" id="article-footer">
+
+            <!-- Mark as read -->
+            <button class="btn btn--secondary" id="mark-read-btn" style="display:none;">
+              Mark as Read
+            </button>
+
+            <!-- Already read badge -->
+            <div class="player-completed" id="article-completed" style="display:none;">
+              <div class="check-icon">
+                <svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg>
+              </div>
+              <span>Completed</span>
+            </div>
+
+            <!-- Up Next card -->
+            <div id="article-up-next"></div>
+
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-client.js"></script>
+  <script src="/js/nav.js"></script>
+  <script src="/js/article.js"></script>
+
+</body>
+</html>

@@ -1,1 +1,99 @@
-<!-- account.html — Member account and billing management. TODO: Phase 2 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Account — True Jiu Jitsu Online</title>
+  <link rel="icon" type="image/webp" href="/img/tjj_favicon.webp">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+
+  <!-- Nav injected by nav.js -->
+
+  <main class="account-page">
+    <div class="wrapper">
+      <div class="account-page__grid">
+
+        <!-- Sidebar: member info -->
+        <aside class="account-page__sidebar">
+
+          <div style="text-align:center;padding-bottom:var(--space-lg);border-bottom:1px solid var(--color-mid-gray);margin-bottom:var(--space-lg);">
+            <!-- Avatar placeholder -->
+            <div class="account-avatar" id="account-avatar" aria-hidden="true"></div>
+            <h2 class="account-page__name" id="account-name">—</h2>
+            <p class="account-page__email" id="account-email">—</p>
+          </div>
+
+          <!-- Subscription status -->
+          <div class="account-status-block">
+            <p class="account-status-label">Subscription</p>
+            <div id="account-status-badge"></div>
+          </div>
+
+          <div class="account-status-block" id="account-renewal-block" style="display:none;">
+            <p class="account-status-label">Next Renewal</p>
+            <p class="account-status-value" id="account-renewal">—</p>
+          </div>
+
+          <!-- Billing CTA -->
+          <div style="margin-top:var(--space-xl);">
+            <button class="btn btn--secondary btn--block" id="billing-btn">
+              Manage Billing
+            </button>
+            <p style="font-size:var(--text-xs);color:var(--color-gray);margin-top:var(--space-sm);text-align:center;max-width:none;">
+              Update card, view invoices, or cancel
+            </p>
+          </div>
+
+        </aside>
+
+        <!-- Main: past due warning or content placeholder -->
+        <div class="account-page__main" id="account-main">
+
+          <div id="account-loading" style="display:flex;align-items:center;min-height:200px;">
+            <div class="spinner"></div>
+          </div>
+
+          <div id="account-body" style="display:none;">
+
+            <!-- Past due warning -->
+            <div class="account-warning" id="account-warning" style="display:none;">
+              <h3>Your subscription needs attention</h3>
+              <p>We had trouble processing your last payment. Please update your billing information to restore access.</p>
+              <button class="btn btn--primary" id="billing-btn-warning">Update Billing</button>
+            </div>
+
+            <!-- Normal state -->
+            <div id="account-normal">
+              <h2 style="font-size:var(--text-2xl);text-transform:none;letter-spacing:0;margin-bottom:var(--space-md);">
+                Welcome back
+              </h2>
+              <p style="color:var(--color-light-gray);margin-bottom:var(--space-xl);">
+                You have full access to the True Jiu Jitsu online library.
+              </p>
+              <a href="/pages/catalogue.html" class="btn btn--primary">Go to Catalogue</a>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-client.js"></script>
+  <script src="/js/nav.js"></script>
+  <script src="/js/account.js"></script>
+
+</body>
+</html>

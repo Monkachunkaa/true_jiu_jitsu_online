@@ -295,10 +295,11 @@ function filterPlaylists(slug) {
   });
 
   /* ----------------------------------------------------------
-     Render Category Filters (only if more than one category)
+     Render Category Filters (disabled for now — playlists
+     don't have categories assigned yet. Revisit later.)
      ---------------------------------------------------------- */
-  if (categories?.length > 1) {
-    renderFilters(categories, filterPlaylists);
-  }
+  // if (categories?.length > 1) {
+  //   renderFilters(categories, filterPlaylists);
+  // }
 
 })();

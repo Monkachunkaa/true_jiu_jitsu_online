@@ -1,1 +1,87 @@
-<!-- playlist.html — Playlist view with progress. TODO: Phase 3 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading... — True Jiu Jitsu Online</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/webp" href="/img/tjj_favicon.webp">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+
+  <!-- Nav injected by nav.js -->
+
+  <main class="playlist-page" id="playlist-page">
+    <div class="wrapper">
+
+      <!-- Loading state -->
+      <div class="playlist-loading" id="playlist-loading">
+        <div class="spinner"></div>
+      </div>
+
+      <!-- Page content — hidden until data loads -->
+      <div id="playlist-content" style="display:none;">
+
+        <!-- Header: thumbnail + title + progress + CTA -->
+        <div class="playlist-page__header" id="playlist-header">
+
+          <!-- Thumbnail -->
+          <div class="playlist-page__thumbnail-wrap" id="playlist-thumbnail-wrap"></div>
+
+          <!-- Meta -->
+          <div class="playlist-page__info">
+
+            <!-- Breadcrumb -->
+            <nav class="player-breadcrumb" aria-label="Breadcrumb">
+              <a href="/pages/catalogue.html" class="player-breadcrumb__link">Catalogue</a>
+            </nav>
+
+            <h1 class="playlist-page__title" id="playlist-title"></h1>
+            <p class="playlist-page__description" id="playlist-description"></p>
+
+            <!-- Progress -->
+            <div class="playlist-page__progress" id="playlist-progress-wrap">
+              <div class="playlist-page__progress-text" id="playlist-progress-text"></div>
+              <div class="progress-bar">
+                <div class="progress-bar__fill" id="playlist-progress-bar" style="width:0%;"></div>
+              </div>
+            </div>
+
+            <!-- CTA -->
+            <a href="#" class="btn btn--primary" id="playlist-cta">Start Playlist</a>
+
+          </div>
+
+        </div>
+
+        <!-- Items list -->
+        <div class="playlist-page__items" id="playlist-items"></div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Supabase CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Scripts -->
+  <script src="/js/supabase-client.js"></script>
+  <script src="/js/nav.js"></script>
+  <script src="/js/playlist.js"></script>
+
+</body>
+</html>

@@ -390,6 +390,128 @@
 
 
 /* ==========================
+   PLAYLIST PAGE
+   ========================== */
+.playlist-page {
+  padding-top: calc(var(--nav-height) + var(--space-2xl));
+  padding-bottom: var(--space-4xl);
+  min-height: 100vh;
+}
+
+.playlist-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.playlist-page__header {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: var(--space-2xl);
+  align-items: start;
+  margin-bottom: var(--space-2xl);
+  padding-bottom: var(--space-2xl);
+  border-bottom: 1px solid var(--color-mid-gray);
+}
+
+.playlist-page__thumbnail-wrap {
+  width: 100%;
+}
+
+.playlist-page__thumbnail {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--border-radius-lg);
+  display: block;
+}
+
+.playlist-page__thumbnail--placeholder {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--border-radius-lg);
+  background: linear-gradient(135deg, var(--color-dark-gray), var(--color-mid-gray));
+}
+
+.playlist-page__info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.playlist-page__title {
+  font-size: var(--text-3xl);
+  text-transform: none;
+  letter-spacing: 0;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.playlist-page__description {
+  color: var(--color-light-gray);
+  font-size: var(--text-lg);
+  margin: 0;
+  max-width: none;
+}
+
+.playlist-page__progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.playlist-page__progress-text {
+  font-size: var(--text-sm);
+  color: var(--color-gray);
+}
+
+.playlist-page__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* Completed playlist item styling */
+.playlist-item--completed {
+  opacity: 0.7;
+}
+
+.playlist-item--completed:hover {
+  opacity: 1;
+}
+
+.playlist-item__thumbnail--placeholder {
+  width: 80px;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--border-radius);
+  background: var(--color-dark-gray);
+  flex-shrink: 0;
+}
+
+.playlist-item__arrow {
+  color: var(--color-gray);
+  flex-shrink: 0;
+  transition: color var(--transition-fast);
+}
+
+.playlist-item:hover .playlist-item__arrow {
+  color: var(--color-white);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .playlist-page__header {
+    grid-template-columns: 1fr;
+  }
+
+  .playlist-page__thumbnail {
+    max-width: 360px;
+  }
+}
+
+
+/* ==========================
    ARTICLE READER
    ========================== */
 .article-page {
@@ -581,4 +703,92 @@
   gap: var(--space-sm);
   font-size: var(--text-sm);
   color: var(--color-light-gray);
+}
+
+
+/* ==========================
+   ACCOUNT PAGE EXTRAS
+   Additional styles not in the base account block
+   ========================== */
+.account-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--color-red);
+  color: var(--color-white);
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-md);
+}
+
+.account-page__sidebar {
+  position: sticky;
+  top: calc(var(--nav-height) + var(--space-lg));
+}
+
+.account-page__main {
+  min-height: 300px;
+}
+
+.account-status-block {
+  margin-bottom: var(--space-lg);
+}
+
+.account-status-label {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-gray);
+  margin-bottom: var(--space-xs);
+  max-width: none;
+}
+
+.account-status-value {
+  font-size: var(--text-sm);
+  color: var(--color-light-gray);
+  max-width: none;
+}
+
+.account-warning {
+  background: rgba(196, 30, 42, 0.1);
+  border: 1px solid var(--color-red);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-xl);
+  margin-bottom: var(--space-xl);
+}
+
+.account-warning h3 {
+  font-size: var(--text-xl);
+  text-transform: none;
+  letter-spacing: 0;
+  margin-bottom: var(--space-sm);
+}
+
+.account-warning p {
+  color: var(--color-light-gray);
+  margin-bottom: var(--space-lg);
+  max-width: none;
+}
+
+.article-page__footer {
+  margin-top: var(--space-2xl);
+  padding-top: var(--space-xl);
+  border-top: 1px solid var(--color-mid-gray);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  align-items: flex-start;
+}
+
+@media (max-width: 768px) {
+  .account-page__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .account-page__sidebar {
+    position: static;
+  }
 }
