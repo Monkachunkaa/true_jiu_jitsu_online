@@ -149,8 +149,11 @@ function openEditor(articleId = null) {
 
     document.getElementById('article-title').value       = article.title || '';
     document.getElementById('article-category').value   = article.category_id || '';
-    document.getElementById('article-thumbnail').value  = article.thumbnail_url || '';
     document.getElementById('article-published').checked = article.published || false;
+
+    if (window._articleUploader) {
+      window._articleUploader.setUrl(article.thumbnail_url || null);
+    }
 
     // Load content into Quill
     if (quillEditor) {
@@ -182,7 +185,7 @@ async function saveArticle(e) {
 
   const title        = document.getElementById('article-title').value.trim();
   const categoryId   = document.getElementById('article-category').value || null;
-  const thumbnailUrl = document.getElementById('article-thumbnail').value.trim() || null;
+  const thumbnailUrl = window._articleUploader?.getUrl() || null;
   const published    = document.getElementById('article-published').checked;
   const bodyHtml     = quillEditor ? quillEditor.root.innerHTML : '';
 
@@ -322,8 +325,8 @@ function buildPage(content) {
               <select class="form__select" id="article-category"></select>
             </div>
             <div class="form__group">
-              <label class="form__label" for="article-thumbnail">Thumbnail URL</label>
-              <input class="form__input" type="url" id="article-thumbnail" placeholder="https://…">
+              <label class="form__label">Thumbnail</label>
+              <div id="article-thumbnail-wrap"></div>
             </div>
           </div>
 
@@ -381,6 +384,10 @@ function buildPage(content) {
       ],
     },
   });
+
+  // Initialize thumbnail uploader
+  const thumbWrap = document.getElementById('article-thumbnail-wrap');
+  if (thumbWrap) window._articleUploader = createThumbnailUploader(thumbWrap);
 
   // Wire events
   document.getElementById('close-editor-btn')?.addEventListener('click', closeEditor);

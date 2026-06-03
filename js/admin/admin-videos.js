@@ -286,7 +286,7 @@ async function saveNewVideo(e) {
   const title       = document.getElementById('new-video-title').value.trim();
   const description = document.getElementById('new-video-description').value.trim();
   const categoryId  = document.getElementById('new-video-category').value || null;
-  const thumbnailUrl = document.getElementById('new-video-thumbnail').value.trim() || null;
+  const thumbnailUrl = window._newVideoUploader?.getUrl() || null;
   const published   = document.getElementById('new-video-published').checked;
 
   if (!title) {
@@ -333,8 +333,12 @@ function openEditModal(videoId) {
   document.getElementById('edit-video-title').value       = video.title || '';
   document.getElementById('edit-video-description').value = video.description || '';
   document.getElementById('edit-video-category').value    = video.category_id || '';
-  document.getElementById('edit-video-thumbnail').value   = video.thumbnail_url || '';
   document.getElementById('edit-video-published').checked = video.published || false;
+
+  // Load existing thumbnail into the uploader
+  if (window._editVideoUploader) {
+    window._editVideoUploader.setUrl(video.thumbnail_url || null);
+  }
 
   document.getElementById('edit-modal-overlay').classList.add('is-open');
 }
@@ -351,7 +355,7 @@ async function saveEditedVideo(e) {
   const title        = document.getElementById('edit-video-title').value.trim();
   const description  = document.getElementById('edit-video-description').value.trim();
   const categoryId   = document.getElementById('edit-video-category').value || null;
-  const thumbnailUrl = document.getElementById('edit-video-thumbnail').value.trim() || null;
+  const thumbnailUrl = window._editVideoUploader?.getUrl() || null;
   const published    = document.getElementById('edit-video-published').checked;
 
   if (!title) { showToast('Title is required', 'error'); return; }
@@ -524,9 +528,8 @@ function buildPage(content) {
             </div>
 
             <div class="form__group">
-              <label class="form__label" for="new-video-thumbnail">Thumbnail URL</label>
-              <input class="form__input" type="url" id="new-video-thumbnail" placeholder="https://…">
-              <span class="form__hint">Paste a URL to an image. Leave blank to use no thumbnail.</span>
+              <label class="form__label">Thumbnail</label>
+              <div id="new-video-thumbnail-wrap"></div>
             </div>
 
             <div style="display:flex; align-items:center; gap:var(--space-md);">
@@ -576,8 +579,8 @@ function buildPage(content) {
           </div>
 
           <div class="form__group">
-            <label class="form__label" for="edit-video-thumbnail">Thumbnail URL</label>
-            <input class="form__input" type="url" id="edit-video-thumbnail" placeholder="https://…">
+            <label class="form__label">Thumbnail</label>
+            <div id="edit-video-thumbnail-wrap"></div>
           </div>
 
           <div style="display:flex; align-items:center; gap:var(--space-md);">
@@ -604,6 +607,12 @@ function buildPage(content) {
    Wire up all event listeners
    ---------------------------------------------------------- */
 function wireEvents() {
+  // Initialize thumbnail uploaders after modals are in the DOM
+  const newThumbWrap  = document.getElementById('new-video-thumbnail-wrap');
+  const editThumbWrap = document.getElementById('edit-video-thumbnail-wrap');
+  if (newThumbWrap)  window._newVideoUploader  = createThumbnailUploader(newThumbWrap);
+  if (editThumbWrap) window._editVideoUploader = createThumbnailUploader(editThumbWrap);
+
   // Upload modal
   document.getElementById('close-upload-modal')?.addEventListener('click', closeUploadModal);
   document.getElementById('back-to-upload-btn')?.addEventListener('click', () => {

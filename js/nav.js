@@ -45,7 +45,20 @@ async function requireAuth() {
    Render the nav bar and inject it into the page.
    Call this after requireAuth() confirms the session.
    ---------------------------------------------------------- */
-function renderNav(activePage = '') {
+async function renderNav(activePage = '') {
+  // Check if current user is an admin to show the admin link
+  let isAdmin = false;
+  if (window.supabaseClient) {
+    const { data: { session } } = await window.supabaseClient.auth.getSession();
+    if (session) {
+      const { data: adminRecord } = await window.supabaseClient
+        .from('admins')
+        .select('id')
+        .eq('email', session.user.email)
+        .single();
+      isAdmin = !!adminRecord;
+    }
+  }
   const nav = document.createElement('nav');
   nav.className = 'member-nav';
   nav.setAttribute('aria-label', 'Main navigation');
@@ -60,6 +73,7 @@ function renderNav(activePage = '') {
 
       <!-- Right side links -->
       <div class="member-nav__links">
+        ${isAdmin ? `<a href="/pages/admin/index.html" class="member-nav__link member-nav__link--admin">Admin</a>` : ''}
         <a
           href="/pages/account.html"
           class="member-nav__link ${activePage === 'account' ? 'member-nav__link--active' : ''}"
@@ -111,7 +125,7 @@ function renderNav(activePage = '') {
     }
 
     .member-nav__logo img {
-      height: 46px;
+      height: 100px;
       width: auto;
     }
 
@@ -133,6 +147,13 @@ function renderNav(activePage = '') {
 
     .member-nav__link:hover,
     .member-nav__link--active {
+      color: var(--color-white);
+    }
+    .member-nav__link--admin {
+      color: var(--color-red-accessible);
+    }
+
+    .member-nav__link--admin:hover {
       color: var(--color-white);
     }
   `;

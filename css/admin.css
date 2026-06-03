@@ -448,6 +448,113 @@
 
 
 /* ==========================
+   THUMBNAIL UPLOADER
+   Drag-and-drop image upload component
+   ========================== */
+.thumb-uploader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.thumb-uploader__zone {
+  border: 2px dashed var(--color-mid-gray);
+  border-radius: var(--border-radius);
+  padding: var(--space-xl);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color var(--transition-fast),
+              background var(--transition-fast);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.thumb-uploader__zone.is-hidden { display: none; }
+
+.thumb-uploader__zone:hover,
+.thumb-uploader__zone.is-dragging {
+  border-color: var(--color-red);
+  background: rgba(196, 30, 42, 0.04);
+}
+
+.thumb-uploader__icon {
+  width: 36px;
+  height: 36px;
+  stroke: var(--color-gray);
+}
+
+.thumb-uploader__label {
+  font-size: var(--text-sm);
+  color: var(--color-gray);
+  max-width: none;
+  margin: 0;
+}
+
+.thumb-uploader__label strong { color: var(--color-red-accessible); }
+
+.thumb-uploader__hint {
+  font-size: var(--text-xs);
+  color: var(--color-gray);
+  opacity: 0.7;
+  max-width: none;
+  margin: 0;
+}
+
+.thumb-uploader__preview {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.thumb-uploader__img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--border-radius);
+  display: block;
+  border: 1px solid var(--color-mid-gray);
+}
+
+.thumb-uploader__remove {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+  background: rgba(10, 10, 10, 0.85);
+  color: var(--color-light-gray);
+  border: 1px solid var(--color-mid-gray);
+  border-radius: var(--border-radius);
+  font-size: var(--text-xs);
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.thumb-uploader__remove:hover {
+  background: var(--color-red);
+  color: var(--color-white);
+  border-color: var(--color-red);
+}
+
+.thumb-uploader__uploading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  color: var(--color-gray);
+  font-size: var(--text-sm);
+}
+
+.thumb-uploader__error {
+  font-size: var(--text-xs);
+  color: var(--color-red-accessible);
+  margin: 0;
+  max-width: none;
+}
+
+
+/* ==========================
    PLAYLIST BUILDER
    Drag-and-drop items in the playlist editor
    ========================== */

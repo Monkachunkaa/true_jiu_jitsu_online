@@ -132,6 +132,19 @@ signinForm.addEventListener('submit', async (e) => {
     .eq('auth_user_id', data.user.id)
     .single();
 
+  // Check if this user is an admin
+  const { data: adminRecord } = await window.supabaseClient
+    .from('admins')
+    .select('id')
+    .eq('email', data.user.email)
+    .single();
+
+  // Admins go straight to the admin panel
+  if (adminRecord) {
+    window.location.href = '/pages/admin/index.html';
+    return;
+  }
+
   if (memberError || !member) {
     // Auth account exists but checkout was never completed
     window.location.href = '/pages/subscribe.html';

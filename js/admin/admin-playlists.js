@@ -139,8 +139,11 @@ async function openBuilder(playlistId = null) {
 
     document.getElementById('playlist-title').value        = playlist.title || '';
     document.getElementById('playlist-description').value  = playlist.description || '';
-    document.getElementById('playlist-thumbnail').value    = playlist.thumbnail_url || '';
     document.getElementById('playlist-published').checked  = playlist.published || false;
+
+    if (window._playlistUploader) {
+      window._playlistUploader.setUrl(playlist.thumbnail_url || null);
+    }
 
     // Load existing items
     const { data: items } = await window.supabaseClient
@@ -320,7 +323,7 @@ async function savePlaylist(e) {
 
   const title        = document.getElementById('playlist-title').value.trim();
   const description  = document.getElementById('playlist-description').value.trim();
-  const thumbnailUrl = document.getElementById('playlist-thumbnail').value.trim() || null;
+  const thumbnailUrl = window._playlistUploader?.getUrl() || null;
   const published    = document.getElementById('playlist-published').checked;
 
   if (!title) { showToast('Title is required', 'error'); return; }
@@ -476,8 +479,8 @@ function buildPage(content) {
           </div>
 
           <div class="form__group">
-            <label class="form__label" for="playlist-thumbnail">Thumbnail URL</label>
-            <input class="form__input" type="url" id="playlist-thumbnail" placeholder="https://…">
+            <label class="form__label">Thumbnail</label>
+            <div id="playlist-thumbnail-wrap"></div>
           </div>
 
           <!-- Current items -->
@@ -526,6 +529,10 @@ function buildPage(content) {
   await Promise.all([loadPlaylists(), loadContent()]);
   renderPlaylistList();
   setupContentSearch();
+
+  // Initialize thumbnail uploader
+  const thumbWrap = document.getElementById('playlist-thumbnail-wrap');
+  if (thumbWrap) window._playlistUploader = createThumbnailUploader(thumbWrap);
 
   // Wire events
   document.getElementById('close-builder-btn')?.addEventListener('click', closeBuilder);
