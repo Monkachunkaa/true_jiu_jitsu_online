@@ -475,4 +475,25 @@ async function triggerSearch() {
   initSearch();
   initTagFilter();
 
+  /* ----------------------------------------------------------
+     Check for ?tags= in the URL — e.g. coming from a video
+     tag pill. Pre-activate those tags and trigger search.
+     ---------------------------------------------------------- */
+  const urlParams  = new URLSearchParams(window.location.search);
+  const urlTagSlugs = urlParams.get('tags');
+
+  if (urlTagSlugs && _allTags.length) {
+    // Activate each slug from the URL
+    urlTagSlugs.split(',').forEach(slug => {
+      const tag = _allTags.find(t => t.slug === slug.trim());
+      if (tag) _activeTags.add(tag.slug);
+    });
+
+    // Clean the URL so refreshing doesn't re-trigger
+    window.history.replaceState({}, '', window.location.pathname);
+
+    // Fire the search with the pre-selected tags
+    if (_activeTags.size) triggerSearch();
+  }
+
 })();

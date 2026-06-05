@@ -2,31 +2,31 @@
    stripe-webhook.js — Handle Stripe subscription events
    True Jiu Jitsu Online
 
-   Stripe calls this function automatically when subscription
-   events occur. It keeps the Supabase members table in sync
-   with the real subscription status.
+   Handles events for two subscription types:
+     1. Online video subscriptions (members table)
+     2. Gym in-person memberships (gym_members table)
+
+   Type is determined by metadata.type on the Stripe
+   subscription — 'gym_membership' vs default (online).
 
    Handled events:
-     checkout.session.completed     → create member record, set active
-     customer.subscription.updated  → sync subscription status
+     checkout.session.completed     → create member record
+     customer.subscription.updated  → sync status
      customer.subscription.deleted  → set cancelled
      invoice.payment_failed         → set past_due
-     invoice.payment_succeeded      → set active (payment recovery)
+     invoice.payment_succeeded      → restore active
    ========================================================== */
 
-const Stripe  = require('stripe');
+const Stripe           = require('stripe');
 const { createClient } = require('@supabase/supabase-js');
 const { sendEmail }    = require('./send-email');
 
 const stripe   = Stripe(process.env.STRIPE_SECRET_KEY);
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY   // service role — can write to any table
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-/* ----------------------------------------------------------
-   Helper: build a plain response
-   ---------------------------------------------------------- */
 function respond(statusCode, body) {
   return {
     statusCode,
@@ -35,13 +35,10 @@ function respond(statusCode, body) {
   };
 }
 
-/* ----------------------------------------------------------
-   Helper: map Stripe subscription status to our status values
-   ---------------------------------------------------------- */
 function mapStatus(stripeStatus) {
   const map = {
     active:             'active',
-    trialing:           'active',     // trial counts as active access
+    trialing:           'active',
     past_due:           'past_due',
     canceled:           'cancelled',
     unpaid:             'past_due',
@@ -53,6 +50,105 @@ function mapStatus(stripeStatus) {
 }
 
 /* ----------------------------------------------------------
+   Determine if a subscription belongs to a gym member.
+   Checks subscription metadata for type: 'gym_membership'.
+   ---------------------------------------------------------- */
+async function isGymMembership(subscriptionId) {
+  if (!subscriptionId) return false;
+  try {
+    const sub = await stripe.subscriptions.retrieve(subscriptionId);
+    return sub.metadata?.type === 'gym_membership';
+  } catch {
+    return false;
+  }
+}
+
+/* ----------------------------------------------------------
+   Handle gym member checkout completion
+   ---------------------------------------------------------- */
+async function handleGymMemberCheckout(data) {
+  const gymMemberId = data.metadata?.gym_member_id;
+  if (!gymMemberId) {
+    console.error('No gym_member_id in checkout metadata');
+    return;
+  }
+
+  const subscription = await stripe.subscriptions.retrieve(data.subscription);
+
+  const { error } = await supabase
+    .from('gym_members')
+    .update({
+      stripe_subscription_id: data.subscription,
+      subscription_status:    mapStatus(subscription.status),
+    })
+    .eq('id', gymMemberId);
+
+  if (error) {
+    console.error('Gym member update error:', error);
+    return;
+  }
+
+  // Fetch member details for welcome email
+  const { data: member } = await supabase
+    .from('gym_members')
+    .select('name, email')
+    .eq('id', gymMemberId)
+    .single();
+
+  if (member?.email) {
+    try {
+      await sendEmail({ to: member.email, name: member.name || '', type: 'gym-welcome' });
+    } catch (err) {
+      console.error('Gym welcome email error:', err);
+    }
+  }
+
+  console.log(`Gym member ${gymMemberId} billing activated`);
+}
+
+/* ----------------------------------------------------------
+   Handle online member checkout completion
+   ---------------------------------------------------------- */
+async function handleOnlineMemberCheckout(data) {
+  const customerId     = data.customer;
+  const subscriptionId = data.subscription;
+
+  const customer = await stripe.customers.retrieve(customerId);
+  const authUserId = customer.metadata?.auth_user_id;
+
+  if (!authUserId) {
+    console.error('No auth_user_id in customer metadata');
+    return;
+  }
+
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+
+  const { error } = await supabase.from('members').upsert({
+    auth_user_id:           authUserId,
+    email:                  customer.email,
+    name:                   customer.name || '',
+    stripe_customer_id:     customerId,
+    stripe_subscription_id: subscriptionId,
+    subscription_status:    mapStatus(subscription.status),
+    subscribed_at:          new Date().toISOString(),
+  }, { onConflict: 'auth_user_id' });
+
+  if (error) {
+    console.error('Member upsert error:', error);
+    return;
+  }
+
+  try {
+    await sendEmail({ to: customer.email, name: customer.name || '', type: 'welcome' });
+  } catch (err) {
+    console.error('Welcome email error:', err);
+  }
+
+  console.log(`Online member created for auth_user_id: ${authUserId}`);
+}
+
+
+/* ----------------------------------------------------------
    HANDLER
    ---------------------------------------------------------- */
 exports.handler = async (event) => {
@@ -61,8 +157,6 @@ exports.handler = async (event) => {
     return respond(405, { error: 'Method not allowed' });
   }
 
-  // Verify the webhook signature — confirms the request is
-  // genuinely from Stripe and not a spoofed request
   let stripeEvent;
   try {
     stripeEvent = stripe.webhooks.constructEvent(
@@ -71,114 +165,79 @@ exports.handler = async (event) => {
       process.env.STRIPE_WEBHOOK_SECRET
     );
   } catch (err) {
-    console.error('Webhook signature verification failed:', err.message);
+    console.error('Webhook signature failed:', err.message);
     return respond(400, { error: 'Invalid signature' });
   }
 
-  const data   = stripeEvent.data.object;
-  const type   = stripeEvent.type;
-
-  console.log(`Stripe webhook received: ${type}`);
+  const data = stripeEvent.data.object;
+  const type = stripeEvent.type;
+  console.log(`Stripe webhook: ${type}`);
 
   try {
 
     /* --------------------------------------------------------
        checkout.session.completed
-       Fires when a new subscriber completes Stripe Checkout.
-       Creates the member record in Supabase.
+       Route to gym or online handler based on metadata.
     -------------------------------------------------------- */
     if (type === 'checkout.session.completed') {
-      const customerId     = data.customer;
-      const subscriptionId = data.subscription;
-
-      // Retrieve the customer to get the auth_user_id we stored in metadata
-      const customer = await stripe.customers.retrieve(customerId);
-      const authUserId = customer.metadata?.auth_user_id;
-
-      if (!authUserId) {
-        console.error('No auth_user_id in customer metadata — cannot create member record');
-        return respond(200, { received: true });
+      if (data.metadata?.type === 'gym_membership') {
+        await handleGymMemberCheckout(data);
+      } else {
+        await handleOnlineMemberCheckout(data);
       }
-
-      // Retrieve the subscription to get the current status
-      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-
-      // Create the member record
-      const { error } = await supabase.from('members').upsert({
-        auth_user_id:           authUserId,
-        email:                  customer.email,
-        name:                   customer.name || '',
-        stripe_customer_id:     customerId,
-        stripe_subscription_id: subscriptionId,
-        subscription_status:    mapStatus(subscription.status),
-        subscribed_at:          new Date().toISOString(),
-      }, {
-        onConflict: 'auth_user_id',   // update if already exists
-      });
-
-      if (error) {
-        console.error('Supabase member upsert error:', error);
-        return respond(500, { error: 'Database error' });
-      }
-
-      // Send welcome email
-      try {
-        await sendEmail({
-          to:   customer.email,
-          name: customer.name || '',
-          type: 'welcome',
-        });
-      } catch (emailErr) {
-        // Log but don't fail the webhook — data is saved
-        console.error('Welcome email failed:', emailErr);
-      }
-
-      console.log(`Member created/updated for auth_user_id: ${authUserId}`);
     }
 
 
     /* --------------------------------------------------------
        customer.subscription.updated
-       Fires when subscription status changes — trial ends,
-       payment method updated, plan changed, etc.
+       Check metadata to route to correct table.
     -------------------------------------------------------- */
     else if (type === 'customer.subscription.updated') {
-      const { error } = await supabase
-        .from('members')
-        .update({ subscription_status: mapStatus(data.status) })
-        .eq('stripe_subscription_id', data.id);
-
-      if (error) console.error('Supabase update error:', error);
+      if (data.metadata?.type === 'gym_membership' && data.metadata?.gym_member_id) {
+        await supabase
+          .from('gym_members')
+          .update({ subscription_status: mapStatus(data.status) })
+          .eq('id', data.metadata.gym_member_id);
+      } else {
+        await supabase
+          .from('members')
+          .update({ subscription_status: mapStatus(data.status) })
+          .eq('stripe_subscription_id', data.id);
+      }
     }
 
 
     /* --------------------------------------------------------
        customer.subscription.deleted
-       Fires when a subscription is fully cancelled.
     -------------------------------------------------------- */
     else if (type === 'customer.subscription.deleted') {
-      const { data: member, error } = await supabase
-        .from('members')
-        .update({
-          subscription_status: 'cancelled',
-          cancelled_at:        new Date().toISOString(),
-        })
-        .eq('stripe_subscription_id', data.id)
-        .select('name, email')
-        .single();
+      if (data.metadata?.type === 'gym_membership' && data.metadata?.gym_member_id) {
+        // Gym member cancellation
+        const { data: gymMember } = await supabase
+          .from('gym_members')
+          .update({ subscription_status: 'cancelled', cancelled_at: new Date().toISOString() })
+          .eq('id', data.metadata.gym_member_id)
+          .select('name, email')
+          .single();
 
-      if (error) console.error('Supabase update error:', error);
+        if (gymMember?.email) {
+          try {
+            await sendEmail({ to: gymMember.email, name: gymMember.name || '', type: 'gym-cancelled' });
+          } catch (err) { console.error('Gym cancellation email error:', err); }
+        }
+      } else {
+        // Online member cancellation
+        const { data: member } = await supabase
+          .from('members')
+          .update({ subscription_status: 'cancelled', cancelled_at: new Date().toISOString() })
+          .eq('stripe_subscription_id', data.id)
+          .select('name, email')
+          .single();
 
-      // Send cancellation email
-      if (member?.email) {
-        try {
-          await sendEmail({
-            to:   member.email,
-            name: member.name || '',
-            type: 'cancelled',
-          });
-        } catch (emailErr) {
-          console.error('Cancellation email error:', emailErr);
+        if (member?.email) {
+          try {
+            await sendEmail({ to: member.email, name: member.name || '', type: 'cancelled' });
+          } catch (err) { console.error('Cancellation email error:', err); }
         }
       }
     }
@@ -186,29 +245,43 @@ exports.handler = async (event) => {
 
     /* --------------------------------------------------------
        invoice.payment_failed
-       Fires when a renewal payment fails.
-       Sets status to past_due — member loses access.
+       Check customer metadata to find the right table.
     -------------------------------------------------------- */
     else if (type === 'invoice.payment_failed') {
-      const { data: member, error } = await supabase
-        .from('members')
-        .update({ subscription_status: 'past_due' })
-        .eq('stripe_customer_id', data.customer)
-        .select('name, email')
-        .single();
+      // Check if this is a gym member by looking up the subscription
+      const isGym = data.subscription
+        ? await isGymMembership(data.subscription)
+        : false;
 
-      if (error) console.error('Supabase update error:', error);
+      if (isGym) {
+        const sub = await stripe.subscriptions.retrieve(data.subscription);
+        const gymMemberId = sub.metadata?.gym_member_id;
+        if (gymMemberId) {
+          const { data: gymMember } = await supabase
+            .from('gym_members')
+            .update({ subscription_status: 'past_due' })
+            .eq('id', gymMemberId)
+            .select('name, email')
+            .single();
 
-      // Send payment failed email
-      if (member?.email) {
-        try {
-          await sendEmail({
-            to:   member.email,
-            name: member.name || '',
-            type: 'payment-failed',
-          });
-        } catch (emailErr) {
-          console.error('Payment failed email error:', emailErr);
+          if (gymMember?.email) {
+            try {
+              await sendEmail({ to: gymMember.email, name: gymMember.name || '', type: 'gym-payment-failed' });
+            } catch (err) { console.error('Gym payment failed email error:', err); }
+          }
+        }
+      } else {
+        const { data: member } = await supabase
+          .from('members')
+          .update({ subscription_status: 'past_due' })
+          .eq('stripe_customer_id', data.customer)
+          .select('name, email')
+          .single();
+
+        if (member?.email) {
+          try {
+            await sendEmail({ to: member.email, name: member.name || '', type: 'payment-failed' });
+          } catch (err) { console.error('Payment failed email error:', err); }
         }
       }
     }
@@ -216,18 +289,26 @@ exports.handler = async (event) => {
 
     /* --------------------------------------------------------
        invoice.payment_succeeded
-       Fires when a payment succeeds — including recovery
-       after a failed payment. Restores active status.
+       Restore active status on payment recovery.
     -------------------------------------------------------- */
     else if (type === 'invoice.payment_succeeded') {
-      // Only update for subscription invoices, not one-off charges
-      if (data.subscription) {
-        const { error } = await supabase
+      if (!data.subscription) return respond(200, { received: true });
+
+      const isGym = await isGymMembership(data.subscription);
+
+      if (isGym) {
+        const sub = await stripe.subscriptions.retrieve(data.subscription);
+        if (sub.metadata?.gym_member_id) {
+          await supabase
+            .from('gym_members')
+            .update({ subscription_status: 'active' })
+            .eq('id', sub.metadata.gym_member_id);
+        }
+      } else {
+        await supabase
           .from('members')
           .update({ subscription_status: 'active' })
           .eq('stripe_customer_id', data.customer);
-
-        if (error) console.error('Supabase update error:', error);
       }
     }
 
@@ -236,7 +317,5 @@ exports.handler = async (event) => {
     return respond(500, { error: 'Internal error' });
   }
 
-  // Always return 200 to acknowledge receipt —
-  // if we return an error Stripe will keep retrying
   return respond(200, { received: true });
 };

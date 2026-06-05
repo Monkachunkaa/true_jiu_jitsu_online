@@ -194,6 +194,30 @@ function setupCompleteButton(videoId, accessToken, durationSeconds) {
   if (descEl && video.description) descEl.textContent = video.description;
 
   /* ----------------------------------------------------------
+     Render tag pills — each links to catalogue filtered by
+     that tag so members can explore related content
+     ---------------------------------------------------------- */
+  if (videoData.tags?.length) {
+    const tagsEl = document.createElement('div');
+    tagsEl.className = 'player-tags';
+    tagsEl.setAttribute('aria-label', 'Video tags');
+
+    videoData.tags.forEach(tag => {
+      const pill = document.createElement('a');
+      pill.className   = 'player-tag-pill';
+      pill.href        = `/pages/catalogue.html?tags=${tag.slug}`;
+      pill.textContent = tag.name;
+      tagsEl.appendChild(pill);
+    });
+
+    // Insert after the title
+    const metaEl = document.getElementById('player-meta');
+    if (metaEl && titleEl) {
+      titleEl.insertAdjacentElement('afterend', tagsEl);
+    }
+  }
+
+  /* ----------------------------------------------------------
      Breadcrumb — show playlist link if we came from one
      ---------------------------------------------------------- */
   if (pid && playlistTitle) {

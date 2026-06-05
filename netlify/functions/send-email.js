@@ -310,18 +310,173 @@ function buildCancelledEmail(name) {
 
 
 /* ----------------------------------------------------------
+   GYM MEMBER EMAIL TEMPLATES
+   ---------------------------------------------------------- */
+
+function buildGymBillingInviteEmail(name, extra = {}) {
+  const firstName   = name?.split(' ')[0] || 'there';
+  const checkoutUrl = extra.checkoutUrl || '#';
+  const planName    = extra.planName    || 'Membership';
+  const priceStr    = extra.priceStr    || '';
+
+  return {
+    subject: 'Set up your membership billing — True Jiu Jitsu',
+    html: `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#111111;font-family:Arial,sans-serif;color:#f0f0f0;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#111111;padding:30px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#1e1e1e;border-radius:6px;overflow:hidden;border:1px solid #2a2a2a;">
+        <tr>
+          <td style="background-color:#0a0a0a;padding:28px 32px;border-bottom:3px solid #c41e2a;">
+            <p style="margin:0;font-size:11px;text-transform:uppercase;letter-spacing:0.15em;color:#c41e2a;">True Jiu Jitsu</p>
+            <h1 style="margin:8px 0 0;font-size:22px;font-weight:700;color:#ffffff;text-transform:uppercase;letter-spacing:0.05em;">Welcome, ${firstName}</h1>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px;">
+            <p style="margin:0 0 16px;font-size:15px;color:#cccccc;line-height:1.7;">You've been added to the True Jiu Jitsu gym as a <strong style="color:#ffffff;">${planName}</strong> member${priceStr ? ` at <strong style="color:#ffffff;">${priceStr}/month</strong>` : ''}.</p>
+            <p style="margin:0 0 28px;font-size:15px;color:#cccccc;line-height:1.7;">Click below to securely enter your payment details. This only takes a minute and you won't be charged until your billing date.</p>
+            <table cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+              <tr><td style="background-color:#c41e2a;border-radius:4px;">
+                <a href="${checkoutUrl}" style="display:inline-block;padding:14px 32px;color:#ffffff;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;">Set Up Billing</a>
+              </td></tr>
+            </table>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr><td style="border-top:1px solid #2a2a2a;padding-top:20px;">
+                <p style="margin:0;font-size:12px;color:#555555;">This link is secure and expires after 24 hours. If you have any questions, contact us directly.</p>
+              </td></tr>
+            </table>
+          </td>
+        </tr>
+        <tr><td style="background-color:#0a0a0a;padding:20px 32px;border-top:1px solid #2a2a2a;">
+          <p style="margin:0;font-size:12px;color:#555555;text-align:center;">True Jiu Jitsu &nbsp;·&nbsp; Hickory, NC</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`,
+    text: [
+      `Welcome to True Jiu Jitsu, ${firstName}!`,
+      '',
+      `You've been added as a ${planName} member.`,
+      '',
+      `Set up your billing here: ${checkoutUrl}`,
+      '',
+      'This link expires after 24 hours.',
+    ].join('\n'),
+  };
+}
+
+function buildGymWelcomeEmail(name) {
+  const firstName = name?.split(' ')[0] || 'there';
+  return {
+    subject: 'Membership confirmed — True Jiu Jitsu',
+    html: `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background-color:#111111;font-family:Arial,sans-serif;color:#f0f0f0;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#111111;padding:30px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#1e1e1e;border-radius:6px;overflow:hidden;border:1px solid #2a2a2a;">
+        <tr><td style="background-color:#0a0a0a;padding:28px 32px;border-bottom:3px solid #c41e2a;">
+          <p style="margin:0;font-size:11px;text-transform:uppercase;letter-spacing:0.15em;color:#c41e2a;">True Jiu Jitsu</p>
+          <h1 style="margin:8px 0 0;font-size:22px;font-weight:700;color:#ffffff;text-transform:uppercase;">You're all set, ${firstName}</h1>
+        </td></tr>
+        <tr><td style="padding:32px;">
+          <p style="margin:0 0 20px;font-size:15px;color:#cccccc;line-height:1.7;">Your membership billing is confirmed. You'll be charged automatically each month — no action needed.</p>
+          <p style="margin:0;font-size:15px;color:#cccccc;line-height:1.7;">See you on the mats.</p>
+        </td></tr>
+        <tr><td style="background-color:#0a0a0a;padding:20px 32px;border-top:1px solid #2a2a2a;">
+          <p style="margin:0;font-size:12px;color:#555555;text-align:center;">True Jiu Jitsu &nbsp;·&nbsp; Hickory, NC</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`,
+    text: `Hi ${firstName},\n\nYour membership billing is confirmed. You'll be charged automatically each month.\n\nSee you on the mats.`,
+  };
+}
+
+function buildGymPaymentFailedEmail(name) {
+  const firstName = name?.split(' ')[0] || 'there';
+  return {
+    subject: 'Membership payment failed — True Jiu Jitsu',
+    html: `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background-color:#111111;font-family:Arial,sans-serif;color:#f0f0f0;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#111111;padding:30px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#1e1e1e;border-radius:6px;overflow:hidden;border:1px solid #2a2a2a;">
+        <tr><td style="background-color:#0a0a0a;padding:28px 32px;border-bottom:3px solid #c41e2a;">
+          <p style="margin:0;font-size:11px;text-transform:uppercase;letter-spacing:0.15em;color:#c41e2a;">True Jiu Jitsu</p>
+          <h1 style="margin:8px 0 0;font-size:22px;font-weight:700;color:#ffffff;text-transform:uppercase;">Payment Failed</h1>
+        </td></tr>
+        <tr><td style="padding:32px;">
+          <p style="margin:0 0 20px;font-size:15px;color:#cccccc;line-height:1.7;">Hi ${firstName} — we weren't able to process your membership payment. Please update your payment method to keep your membership active.</p>
+          <p style="margin:0;font-size:14px;color:#888888;">Contact the gym directly if you need help.</p>
+        </td></tr>
+        <tr><td style="background-color:#0a0a0a;padding:20px 32px;border-top:1px solid #2a2a2a;">
+          <p style="margin:0;font-size:12px;color:#555555;text-align:center;">True Jiu Jitsu &nbsp;·&nbsp; Hickory, NC</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`,
+    text: `Hi ${firstName},\n\nWe weren't able to process your membership payment. Please contact the gym to update your payment method.`,
+  };
+}
+
+function buildGymCancelledEmail(name) {
+  const firstName = name?.split(' ')[0] || 'there';
+  return {
+    subject: 'Membership cancelled — True Jiu Jitsu',
+    html: `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background-color:#111111;font-family:Arial,sans-serif;color:#f0f0f0;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#111111;padding:30px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#1e1e1e;border-radius:6px;overflow:hidden;border:1px solid #2a2a2a;">
+        <tr><td style="background-color:#0a0a0a;padding:28px 32px;border-bottom:3px solid #2a2a2a;">
+          <p style="margin:0;font-size:11px;text-transform:uppercase;letter-spacing:0.15em;color:#888888;">True Jiu Jitsu</p>
+          <h1 style="margin:8px 0 0;font-size:22px;font-weight:700;color:#ffffff;text-transform:uppercase;">Membership Cancelled</h1>
+        </td></tr>
+        <tr><td style="padding:32px;">
+          <p style="margin:0 0 20px;font-size:15px;color:#cccccc;line-height:1.7;">Hi ${firstName} — your True Jiu Jitsu membership has been cancelled. You will not be charged again.</p>
+          <p style="margin:0;font-size:15px;color:#cccccc;line-height:1.7;">We hope to see you back on the mats soon.</p>
+        </td></tr>
+        <tr><td style="background-color:#0a0a0a;padding:20px 32px;border-top:1px solid #2a2a2a;">
+          <p style="margin:0;font-size:12px;color:#555555;text-align:center;">True Jiu Jitsu &nbsp;·&nbsp; Hickory, NC</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`,
+    text: `Hi ${firstName},\n\nYour True Jiu Jitsu membership has been cancelled. You will not be charged again.\n\nWe hope to see you back soon.`,
+  };
+}
+
+
+/* ----------------------------------------------------------
    Send an email via SES
    ---------------------------------------------------------- */
-async function sendEmail({ to, name, type }) {
+async function sendEmail({ to, name, type, extra = {} }) {
   if (!FROM_ADDRESS) {
     throw new Error('SES_FROM_ADDRESS environment variable is not set');
   }
 
   let template;
 
-  if (type === 'welcome')        template = buildWelcomeEmail(name);
-  else if (type === 'payment-failed') template = buildPaymentFailedEmail(name);
-  else if (type === 'cancelled') template = buildCancelledEmail(name);
+  if (type === 'welcome')             template = buildWelcomeEmail(name);
+  else if (type === 'payment-failed')  template = buildPaymentFailedEmail(name);
+  else if (type === 'cancelled')       template = buildCancelledEmail(name);
+  else if (type === 'gym-welcome')     template = buildGymWelcomeEmail(name);
+  else if (type === 'gym-payment-failed') template = buildGymPaymentFailedEmail(name);
+  else if (type === 'gym-cancelled')   template = buildGymCancelledEmail(name);
+  else if (type === 'gym-billing-invite') template = buildGymBillingInviteEmail(name, extra);
   else throw new Error(`Unknown email type: ${type}`);
 
   const params = {

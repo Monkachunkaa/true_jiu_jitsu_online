@@ -340,6 +340,38 @@
 }
 
 /* ==========================
+   VIDEO PLAYER TAG PILLS
+   Clickable tags below the video title
+   ========================== */
+.player-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-md);
+}
+
+.player-tag-pill {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: var(--text-xs);
+  border: 1px solid var(--color-mid-gray);
+  color: var(--color-gray);
+  text-decoration: none;
+  transition: border-color var(--transition-fast),
+              color var(--transition-fast),
+              background var(--transition-fast);
+  white-space: nowrap;
+}
+
+.player-tag-pill:hover {
+  border-color: var(--color-red);
+  color: var(--color-red-accessible);
+  background: rgba(196, 30, 42, 0.08);
+}
+
+
+/* ==========================
    VIDEO PLAYER PAGE
    ========================== */
 .player-page {

@@ -96,7 +96,19 @@ function renderAdminShell(activePage = '', pageTitle = '') {
          class="admin-nav__item ${activePage === 'members' ? 'admin-nav__item--active' : ''}"
          data-page="members">
         ${iconMembers()}
-        <span>Members</span>
+        <span>Online Members</span>
+      </a>
+      <a href="/pages/admin/gym-members.html"
+         class="admin-nav__item ${activePage === 'gym-members' ? 'admin-nav__item--active' : ''}"
+         data-page="gym-members">
+        ${iconMembers()}
+        <span>Gym Members</span>
+      </a>
+      <a href="/pages/admin/gym-plans.html"
+         class="admin-nav__item ${activePage === 'gym-plans' ? 'admin-nav__item--active' : ''}"
+         data-page="gym-plans">
+        ${iconPlaylist()}
+        <span>Membership Plans</span>
       </a>
       <a href="/pages/admin/analytics.html"
          class="admin-nav__item ${activePage === 'analytics' ? 'admin-nav__item--active' : ''}"

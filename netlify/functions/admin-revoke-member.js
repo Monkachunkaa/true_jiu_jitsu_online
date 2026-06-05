@@ -67,8 +67,51 @@ exports.handler = async (event) => {
     return respond(400, { error: 'Invalid JSON' });
   }
 
-  const { memberId } = body;
-  if (!memberId) return respond(400, { error: 'memberId is required' });
+  const { memberId, gymMemberId } = body;
+
+  /* ----------------------------------------------------------
+     Handle gym member cancellation
+     ---------------------------------------------------------- */
+  if (gymMemberId) {
+    const { data: gymMember, error: gymMemberError } = await supabase
+      .from('gym_members')
+      .select('id, name, email, stripe_subscription_id')
+      .eq('id', gymMemberId)
+      .single();
+
+    if (gymMemberError || !gymMember) {
+      return respond(404, { error: 'Gym member not found' });
+    }
+
+    if (gymMember.stripe_subscription_id) {
+      try {
+        await stripe.subscriptions.cancel(gymMember.stripe_subscription_id);
+      } catch (err) {
+        if (err.code !== 'resource_missing') {
+          console.error('Stripe cancellation error:', err);
+          return respond(500, { error: 'Failed to cancel Stripe subscription' });
+        }
+      }
+    }
+
+    const { error: updateError } = await supabase
+      .from('gym_members')
+      .update({ subscription_status: 'cancelled', cancelled_at: new Date().toISOString() })
+      .eq('id', gymMemberId);
+
+    if (updateError) {
+      console.error('Supabase update error:', updateError);
+      return respond(500, { error: 'Failed to update gym member status' });
+    }
+
+    console.log(`Gym member ${gymMember.email} revoked successfully`);
+    return respond(200, { success: true });
+  }
+
+  /* ----------------------------------------------------------
+     Handle online member cancellation (original logic)
+     ---------------------------------------------------------- */
+  if (!memberId) return respond(400, { error: 'memberId or gymMemberId is required' });
 
   /* ----------------------------------------------------------
      Fetch the member record to get their Stripe subscription ID
