@@ -11,7 +11,7 @@
   # These two values are intentionally public (Supabase anon key and URL
   # are designed to be exposed client-side). Tell Netlify's secrets
   # scanner to ignore them so the build doesn't fail.
-  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL,SUPABASE_ANON_KEY"
+  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL,SUPABASE_ANON_KEY,SES_FROM_ADDRESS,TJJ_AWS_REGION"
 
 # Redirect /admin to the admin index page
 [[redirects]]
@@ -48,9 +48,4 @@
 [[redirects]]
   from = "/account"
   to   = "/pages/account.html"
-  status = 200
-
-[[redirects]]
-  from = "/reset-password"
-  to   = "/pages/reset-password.html"
   status = 200

@@ -17,10 +17,12 @@ const AWS = require('aws-sdk');
 const ses = new AWS.SES({
   accessKeyId:     process.env.TJJ_AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.TJJ_AWS_SECRET_ACCESS_KEY,
-  region:          process.env.TJJ_AWS_REGION || 'us-east-1',
+  region:          process.env.TJJ_AWS_REGION,
 });
 
-const FROM_ADDRESS = 'True Jiu Jitsu Online <no-reply@truebjj.academy>';
+const FROM_ADDRESS = process.env.SES_FROM_ADDRESS
+  ? `True Jiu Jitsu Online <${process.env.SES_FROM_ADDRESS}>`
+  : null;
 const SITE_URL     = process.env.SITE_URL || 'https://online.truebjj.academy';
 
 
@@ -311,6 +313,10 @@ function buildCancelledEmail(name) {
    Send an email via SES
    ---------------------------------------------------------- */
 async function sendEmail({ to, name, type }) {
+  if (!FROM_ADDRESS) {
+    throw new Error('SES_FROM_ADDRESS environment variable is not set');
+  }
+
   let template;
 
   if (type === 'welcome')        template = buildWelcomeEmail(name);
