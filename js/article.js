@@ -128,9 +128,8 @@ async function markAsRead(articleId, accessToken) {
     playlistLink.href         = `/pages/playlist.html?id=${pid}`;
   }
 
-  // Meta line: category · date · read time
+  // Meta line: date · read time
   const metaParts = [];
-  if (article.category)  metaParts.push(article.category);
   if (article.createdAt) metaParts.push(formatDate(article.createdAt));
   if (article.bodyHtml)  metaParts.push(estimateReadTime(article.bodyHtml));
 

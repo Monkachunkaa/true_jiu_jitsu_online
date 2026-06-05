@@ -11,7 +11,6 @@
    ========================================================== */
 
 let allArticles = [];
-let categories  = [];
 let editingId   = null;
 let quillEditor = null;
 
@@ -81,13 +80,13 @@ function renderArticleList() {
       <div class="content-list-item__info">
         <p class="content-list-item__title">${article.title}</p>
         <div class="content-list-item__meta">
-          <span>${article.categories?.name || 'Uncategorized'}</span>
           <span>${formatDate(article.created_at)}</span>
         </div>
       </div>
       <div class="content-list-item__actions">
-        <label class="toggle" title="${article.published ? 'Click to unpublish' : 'Click to publish'}">
-          <input type="checkbox" class="toggle__input js-publish-toggle" data-id="${article.id}" ${article.published ? 'checked' : ''}>
+        <label class="toggle">
+          <input type="checkbox" class="toggle__input js-publish-toggle"
+            data-id="${article.id}" ${article.published ? 'checked' : ''}>
           <div class="toggle__track"><div class="toggle__thumb"></div></div>
           <span class="toggle__label">${article.published ? 'Live' : 'Draft'}</span>
         </label>
@@ -99,7 +98,6 @@ function renderArticleList() {
     list.appendChild(item);
   });
 
-  // Publish toggles
   list.querySelectorAll('.js-publish-toggle').forEach(toggle => {
     toggle.addEventListener('change', async (e) => {
       const id        = e.target.dataset.id;
@@ -133,23 +131,20 @@ function renderArticleList() {
 
 /* ----------------------------------------------------------
    Open the article editor
-   Pass null to create a new article, or an ID to edit.
+   async so we can await the tag fetch when editing.
    ---------------------------------------------------------- */
-function openEditor(articleId = null) {
+async function openEditor(articleId = null) {
   editingId = articleId;
 
-  const overlay   = document.getElementById('editor-overlay');
-  const titleEl   = document.getElementById('editor-modal-title');
-
+  const titleEl = document.getElementById('editor-modal-title');
   titleEl.textContent = articleId ? 'Edit Article' : 'New Article';
 
   if (articleId) {
     const article = allArticles.find(a => a.id === articleId);
     if (!article) return;
 
-    document.getElementById('article-title').value       = article.title || '';
-    document.getElementById('article-category').value   = article.category_id || '';
-    document.getElementById('article-published').checked = article.published || false;
+    document.getElementById('article-title').value        = article.title     || '';
+    document.getElementById('article-published').checked  = article.published || false;
 
     if (window._articleUploader) {
       window._articleUploader.setUrl(article.thumbnail_url || null);
@@ -164,20 +159,17 @@ function openEditor(articleId = null) {
       createTagPicker(articleTagWrap, selectedTagIds).then(p => { window._articleTagPicker = p; });
     }
 
-    // Load content into Quill
-    if (quillEditor) {
-      quillEditor.root.innerHTML = article.body_html || '';
-    }
+    if (quillEditor) quillEditor.root.innerHTML = article.body_html || '';
+
   } else {
-    // Clear the form for a new article
+    // Clear form for new article
     document.getElementById('article-title').value       = '';
-    document.getElementById('article-category').value   = '';
-    document.getElementById('article-thumbnail').value  = '';
     document.getElementById('article-published').checked = false;
+    if (window._articleUploader) window._articleUploader.setUrl(null);
     if (quillEditor) quillEditor.setText('');
   }
 
-  overlay.classList.add('is-open');
+  document.getElementById('editor-overlay').classList.add('is-open');
 }
 
 function closeEditor() {
@@ -193,24 +185,22 @@ async function saveArticle(e) {
   e.preventDefault();
 
   const title        = document.getElementById('article-title').value.trim();
-  const categoryId   = document.getElementById('article-category').value || null;
   const thumbnailUrl = window._articleUploader?.getUrl() || null;
   const published    = document.getElementById('article-published').checked;
   const bodyHtml     = quillEditor ? quillEditor.root.innerHTML : '';
 
   if (!title) { showToast('Title is required', 'error'); return; }
 
-  const saveBtn = document.getElementById('save-article-btn');
+  const saveBtn       = document.getElementById('save-article-btn');
   saveBtn.disabled    = true;
   saveBtn.textContent = 'Saving…';
 
   const payload = {
     title,
-    body_html:    bodyHtml,
-    category_id:  categoryId,
+    body_html:     bodyHtml,
     thumbnail_url: thumbnailUrl,
     published,
-    updated_at:   new Date().toISOString(),
+    updated_at:    new Date().toISOString(),
   };
 
   let error;
@@ -220,7 +210,6 @@ async function saveArticle(e) {
       .from('articles').update(payload).eq('id', editingId));
 
     if (!error) {
-      // Update tags
       await window.supabaseClient.from('article_tags').delete().eq('article_id', editingId);
       const tagIds = window._articleTagPicker?.getSelectedIds() || [];
       if (tagIds.length) {
@@ -281,36 +270,14 @@ async function confirmDelete(articleId) {
 
 
 /* ----------------------------------------------------------
-   Populate category dropdown
-   ---------------------------------------------------------- */
-function populateCategoryDropdown() {
-  const select = document.getElementById('article-category');
-  if (!select) return;
-  select.innerHTML = `<option value="">No category</option>`;
-  categories.forEach(cat => {
-    const opt = document.createElement('option');
-    opt.value       = cat.id;
-    opt.textContent = cat.name;
-    select.appendChild(opt);
-  });
-}
-
-
-/* ----------------------------------------------------------
-   Load data
+   Load articles
    ---------------------------------------------------------- */
 async function loadArticles() {
   const { data } = await window.supabaseClient
     .from('articles')
-    .select('*, categories(name)')
+    .select('*')
     .order('created_at', { ascending: false });
   allArticles = data || [];
-}
-
-async function loadCategories() {
-  const { data } = await window.supabaseClient
-    .from('categories').select('id, name').order('display_order');
-  categories = data || [];
 }
 
 
@@ -320,7 +287,7 @@ async function loadCategories() {
 function buildPage(content) {
   const actions = getAdminActions();
   if (actions) {
-    const btn = document.createElement('button');
+    const btn       = document.createElement('button');
     btn.className   = 'btn btn--primary btn--sm';
     btn.textContent = '+ New Article';
     btn.addEventListener('click', () => openEditor());
@@ -334,8 +301,10 @@ function buildPage(content) {
     </div>
 
     <!-- Article editor modal -->
-    <div class="modal-overlay" id="editor-overlay" style="align-items:flex-start;padding-top:var(--nav-height);">
-      <div class="modal" style="max-width:760px;width:100%;max-height:calc(100vh - var(--nav-height) - 40px);overflow-y:auto;">
+    <div class="modal-overlay" id="editor-overlay"
+         style="align-items:flex-start;padding-top:var(--nav-height);">
+      <div class="modal"
+           style="max-width:760px;width:100%;max-height:calc(100vh - var(--nav-height) - 40px);overflow-y:auto;">
 
         <div class="modal__header">
           <h2 class="modal__title" id="editor-modal-title">New Article</h2>
@@ -346,21 +315,15 @@ function buildPage(content) {
 
           <div class="form__group">
             <label class="form__label" for="article-title">Title *</label>
-            <input class="form__input" type="text" id="article-title" placeholder="e.g. The Basics of Guard Retention" required>
+            <input class="form__input" type="text" id="article-title"
+              placeholder="e.g. The Basics of Guard Retention" required>
           </div>
 
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
-            <div class="form__group">
-              <label class="form__label" for="article-category">Category</label>
-              <select class="form__select" id="article-category"></select>
-            </div>
-            <div class="form__group">
-              <label class="form__label">Thumbnail</label>
-              <div id="article-thumbnail-wrap"></div>
-            </div>
+          <div class="form__group">
+            <label class="form__label">Thumbnail</label>
+            <div id="article-thumbnail-wrap"></div>
           </div>
 
-          <!-- Quill editor -->
           <div class="form__group">
             <label class="form__label">Content</label>
             <div id="quill-editor-container"></div>
@@ -375,7 +338,9 @@ function buildPage(content) {
             <label class="toggle">
               <input type="checkbox" class="toggle__input" id="article-published">
               <div class="toggle__track"><div class="toggle__thumb"></div></div>
-              <span class="toggle__label" style="margin-left:var(--space-sm);font-size:var(--text-sm);color:var(--color-gray);">Publish immediately</span>
+              <span style="margin-left:var(--space-sm);font-size:var(--text-sm);color:var(--color-gray);">
+                Publish immediately
+              </span>
             </label>
             <div style="display:flex;gap:var(--space-md);">
               <button type="button" class="btn btn--secondary" id="cancel-article-btn">Cancel</button>
@@ -401,13 +366,12 @@ function buildPage(content) {
   const content = renderAdminShell('articles', 'Articles');
   buildPage(content);
 
-  await Promise.all([loadArticles(), loadCategories()]);
-  populateCategoryDropdown();
+  await loadArticles();
   renderArticleList();
 
-  // Initialize Quill editor
+  // Initialize Quill rich text editor
   quillEditor = new Quill('#quill-editor-container', {
-    theme:   'snow',
+    theme:       'snow',
     placeholder: 'Write your article here…',
     modules: {
       toolbar: [

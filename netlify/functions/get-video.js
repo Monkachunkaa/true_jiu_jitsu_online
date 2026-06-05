@@ -57,7 +57,7 @@ exports.handler = async (event) => {
   // Fetch the video
   const { data: video, error: videoError } = await supabase
     .from('videos')
-    .select('id, title, description, duration_seconds, thumbnail_url, categories(name)')
+    .select('id, title, description, duration_seconds, thumbnail_url')
     .eq('id', videoId)
     .eq('published', true)
     .single();
@@ -141,7 +141,6 @@ exports.handler = async (event) => {
       description:     video.description,
       durationSeconds: video.duration_seconds,
       thumbnailUrl:    video.thumbnail_url,
-      category:        video.categories?.name || '',
     },
     nextItem,
     playlistTitle,

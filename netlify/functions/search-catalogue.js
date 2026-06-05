@@ -91,7 +91,6 @@ exports.handler = async (event) => {
     .from('videos')
     .select(`
       id, title, description, thumbnail_url, duration_seconds, created_at,
-      categories ( name ),
       video_tags ( tag_id, tags ( name, slug, category ) )
     `)
     .eq('published', true);
@@ -112,7 +111,6 @@ exports.handler = async (event) => {
     .from('articles')
     .select(`
       id, title, thumbnail_url, created_at,
-      categories ( name ),
       article_tags ( tag_id, tags ( name, slug, category ) )
     `)
     .eq('published', true);
@@ -180,7 +178,6 @@ exports.handler = async (event) => {
     description:   v.description || '',
     thumbnailUrl:  v.thumbnail_url || null,
     durationSecs:  v.duration_seconds || null,
-    category:      v.categories?.name || '',
     tags:          (v.video_tags || []).map(t => t.tags).filter(Boolean),
     playlist:      videoPlaylistMap[v.id] || null,
     href:          videoPlaylistMap[v.id]
@@ -195,7 +192,6 @@ exports.handler = async (event) => {
     description:  '',
     thumbnailUrl: a.thumbnail_url || null,
     durationSecs: null,
-    category:     a.categories?.name || '',
     tags:         (a.article_tags || []).map(t => t.tags).filter(Boolean),
     playlist:     articlePlaylistMap[a.id] || null,
     href:         articlePlaylistMap[a.id]

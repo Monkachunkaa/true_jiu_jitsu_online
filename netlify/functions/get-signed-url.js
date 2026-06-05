@@ -102,11 +102,7 @@ exports.handler = async (event) => {
   // Fetch video metadata from Supabase
   const { data: video, error: videoError } = await supabase
     .from('videos')
-    .select(`
-      id, title, description, cloudflare_video_id,
-      duration_seconds, thumbnail_url,
-      categories ( name, slug )
-    `)
+    .select('id, title, description, cloudflare_video_id, duration_seconds, thumbnail_url')
     .eq('id', videoId)
     .eq('published', true)
     .single();
@@ -170,7 +166,6 @@ exports.handler = async (event) => {
       description:     video.description,
       durationSeconds: durationSeconds,
       thumbnailUrl:    video.thumbnail_url,
-      category:        video.categories?.name || '',
     },
     progress: progress || { seconds_watched: 0, completed: false },
   });

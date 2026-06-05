@@ -57,7 +57,7 @@ exports.handler = async (event) => {
   // Fetch article
   const { data: article, error: articleError } = await supabase
     .from('articles')
-    .select('id, title, body_html, thumbnail_url, created_at, categories(name)')
+    .select('id, title, body_html, thumbnail_url, created_at')
     .eq('id', articleId)
     .eq('published', true)
     .single();
@@ -120,7 +120,6 @@ exports.handler = async (event) => {
       title:        article.title,
       bodyHtml:     article.body_html || '',
       thumbnailUrl: article.thumbnail_url,
-      category:     article.categories?.name || '',
       createdAt:    article.created_at,
     },
     progress: progress || { completed: false },
