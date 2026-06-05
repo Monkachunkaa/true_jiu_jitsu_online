@@ -315,6 +315,22 @@ async function saveNewVideo(e) {
     return;
   }
 
+  // Save tags — fetch the new video ID first
+  const tagIds = window._newVideoTagPicker?.getSelectedIds() || [];
+  if (tagIds.length) {
+    const { data: newVideo } = await window.supabaseClient
+      .from('videos')
+      .select('id')
+      .eq('cloudflare_video_id', uploadVideoId)
+      .single();
+
+    if (newVideo?.id) {
+      await window.supabaseClient.from('video_tags').insert(
+        tagIds.map(tag_id => ({ video_id: newVideo.id, tag_id }))
+      );
+    }
+  }
+
   showToast('Video saved successfully!');
   closeUploadModal();
   await loadVideos();
@@ -338,6 +354,17 @@ function openEditModal(videoId) {
   // Load existing thumbnail into the uploader
   if (window._editVideoUploader) {
     window._editVideoUploader.setUrl(video.thumbnail_url || null);
+  }
+
+  // Load existing tags and re-initialize the edit tag picker
+  const editTagWrap = document.getElementById('edit-video-tag-picker');
+  if (editTagWrap) {
+    const { data: existingTags } = await window.supabaseClient
+      .from('video_tags')
+      .select('tag_id')
+      .eq('video_id', videoId);
+    const selectedTagIds = (existingTags || []).map(t => t.tag_id);
+    createTagPicker(editTagWrap, selectedTagIds).then(p => { window._editVideoTagPicker = p; });
   }
 
   document.getElementById('edit-modal-overlay').classList.add('is-open');
@@ -374,6 +401,15 @@ async function saveEditedVideo(e) {
     saveBtn.disabled    = false;
     saveBtn.textContent = 'Save Changes';
     return;
+  }
+
+  // Update tags — delete existing and re-insert
+  await window.supabaseClient.from('video_tags').delete().eq('video_id', editingId);
+  const tagIds = window._editVideoTagPicker?.getSelectedIds() || [];
+  if (tagIds.length) {
+    await window.supabaseClient.from('video_tags').insert(
+      tagIds.map(tag_id => ({ video_id: editingId, tag_id }))
+    );
   }
 
   showToast('Changes saved');
@@ -532,7 +568,17 @@ function buildPage(content) {
               <div id="new-video-thumbnail-wrap"></div>
             </div>
 
-            <div style="display:flex; align-items:center; gap:var(--space-md);">
+            <div class="form__group">
+              <label class="form__label">Tags</label>
+              <div id="new-video-tag-picker"></div>
+            </div>
+
+            <div class="form__group">
+            <label class="form__label">Tags</label>
+            <div id="edit-video-tag-picker"></div>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:var(--space-md);">
               <label class="toggle">
                 <input type="checkbox" class="toggle__input" id="new-video-published">
                 <div class="toggle__track"><div class="toggle__thumb"></div></div>
@@ -612,6 +658,12 @@ function wireEvents() {
   const editThumbWrap = document.getElementById('edit-video-thumbnail-wrap');
   if (newThumbWrap)  window._newVideoUploader  = createThumbnailUploader(newThumbWrap);
   if (editThumbWrap) window._editVideoUploader = createThumbnailUploader(editThumbWrap);
+
+  // Initialize tag pickers
+  const newTagWrap  = document.getElementById('new-video-tag-picker');
+  const editTagWrap = document.getElementById('edit-video-tag-picker');
+  if (newTagWrap)  createTagPicker(newTagWrap, []).then(p => { window._newVideoTagPicker = p; });
+  if (editTagWrap) createTagPicker(editTagWrap, []).then(p => { window._editVideoTagPicker = p; });
 
   // Upload modal
   document.getElementById('close-upload-modal')?.addEventListener('click', closeUploadModal);

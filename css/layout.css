@@ -655,6 +655,148 @@
 
 
 /* ==========================
+   CATALOGUE TAG FILTER PILLS
+   Member-facing tag filter in the catalogue
+   ========================== */
+.catalogue__tag-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  align-items: center;
+}
+
+.catalogue__tag-filter-label {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-gray);
+  flex-shrink: 0;
+}
+
+/* Search results count */
+.catalogue__results-count {
+  font-size: var(--text-sm);
+  color: var(--color-gray);
+  margin-bottom: var(--space-lg);
+}
+
+/* Tag picker for members — slightly simplified vs admin */
+.member-tag-picker {
+  position: relative;
+  flex: 1;
+  max-width: 360px;
+}
+
+.member-tag-picker__input {
+  width: 100%;
+  background: var(--color-dark);
+  border: 1px solid var(--color-mid-gray);
+  border-radius: var(--border-radius);
+  color: var(--color-off-white);
+  padding: 10px 14px;
+  font-size: var(--text-sm);
+  transition: border-color var(--transition-fast);
+}
+
+.member-tag-picker__input:focus {
+  outline: none;
+  border-color: var(--color-gray);
+}
+
+.member-tag-picker__dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--color-dark-gray);
+  border: 1px solid var(--color-mid-gray);
+  border-radius: var(--border-radius);
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 200;
+  display: none;
+}
+
+.member-tag-picker__dropdown.is-open {
+  display: block;
+}
+
+.member-tag-picker__group-label {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-gray);
+  padding: var(--space-sm) var(--space-md) 2px;
+  max-width: none;
+}
+
+.member-tag-picker__option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--text-sm);
+  color: var(--color-light-gray);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.member-tag-picker__option:hover {
+  background: rgba(255,255,255,0.05);
+}
+
+.member-tag-picker__option--selected {
+  color: var(--color-red-accessible);
+}
+
+.member-tag-picker__option-check {
+  color: var(--color-red-accessible);
+  font-size: var(--text-sm);
+}
+
+/* Active tag pills in the catalogue controls */
+.active-tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: var(--text-xs);
+  background: rgba(196,30,42,0.15);
+  border: 1px solid var(--color-red);
+  color: var(--color-red-accessible);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.active-tag-pill:hover {
+  background: var(--color-red);
+  color: var(--color-white);
+}
+
+.active-tag-pill__remove {
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+/* Clear all tags button */
+.catalogue__clear-tags {
+  font-size: var(--text-xs);
+  color: var(--color-gray);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  transition: color var(--transition-fast);
+}
+
+.catalogue__clear-tags:hover {
+  color: var(--color-white);
+}
+
+
+/* ==========================
    SUBSCRIBE PAGE
    Stripe Checkout lead-in
    ========================== */

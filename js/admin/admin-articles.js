@@ -155,6 +155,15 @@ function openEditor(articleId = null) {
       window._articleUploader.setUrl(article.thumbnail_url || null);
     }
 
+    // Load existing tags
+    const articleTagWrap = document.getElementById('article-tag-picker');
+    if (articleTagWrap) {
+      const { data: existingTags } = await window.supabaseClient
+        .from('article_tags').select('tag_id').eq('article_id', articleId);
+      const selectedTagIds = (existingTags || []).map(t => t.tag_id);
+      createTagPicker(articleTagWrap, selectedTagIds).then(p => { window._articleTagPicker = p; });
+    }
+
     // Load content into Quill
     if (quillEditor) {
       quillEditor.root.innerHTML = article.body_html || '';
@@ -209,10 +218,31 @@ async function saveArticle(e) {
   if (editingId) {
     ({ error } = await window.supabaseClient
       .from('articles').update(payload).eq('id', editingId));
+
+    if (!error) {
+      // Update tags
+      await window.supabaseClient.from('article_tags').delete().eq('article_id', editingId);
+      const tagIds = window._articleTagPicker?.getSelectedIds() || [];
+      if (tagIds.length) {
+        await window.supabaseClient.from('article_tags').insert(
+          tagIds.map(tag_id => ({ article_id: editingId, tag_id }))
+        );
+      }
+    }
   } else {
-    // Generate a slug from the title — ensure uniqueness with a timestamp suffix
     payload.slug = `${slugify(title)}-${Date.now()}`;
-    ({ error } = await window.supabaseClient.from('articles').insert(payload));
+    const { data: newArticle, error: insertError } = await window.supabaseClient
+      .from('articles').insert(payload).select('id').single();
+    error = insertError;
+
+    if (!error && newArticle) {
+      const tagIds = window._articleTagPicker?.getSelectedIds() || [];
+      if (tagIds.length) {
+        await window.supabaseClient.from('article_tags').insert(
+          tagIds.map(tag_id => ({ article_id: newArticle.id, tag_id }))
+        );
+      }
+    }
   }
 
   if (error) {
@@ -336,6 +366,11 @@ function buildPage(content) {
             <div id="quill-editor-container"></div>
           </div>
 
+          <div class="form__group">
+            <label class="form__label">Tags</label>
+            <div id="article-tag-picker"></div>
+          </div>
+
           <div style="display:flex;align-items:center;justify-content:space-between;">
             <label class="toggle">
               <input type="checkbox" class="toggle__input" id="article-published">
@@ -388,6 +423,10 @@ function buildPage(content) {
   // Initialize thumbnail uploader
   const thumbWrap = document.getElementById('article-thumbnail-wrap');
   if (thumbWrap) window._articleUploader = createThumbnailUploader(thumbWrap);
+
+  // Initialize tag picker
+  const tagWrap = document.getElementById('article-tag-picker');
+  if (tagWrap) createTagPicker(tagWrap, []).then(p => { window._articleTagPicker = p; });
 
   // Wire events
   document.getElementById('close-editor-btn')?.addEventListener('click', closeEditor);

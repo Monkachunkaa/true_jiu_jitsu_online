@@ -50,7 +50,45 @@
           <div class="filter-pills" id="category-filters" role="tablist" aria-label="Filter by category"></div>
         </div>
 
-        <!-- Playlist grid — populated by JS -->
+        <!-- Search + tag filter row -->
+        <div class="catalogue__controls" id="search-controls">
+          <!-- Text search -->
+          <div class="search">
+            <svg class="search__icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input
+              type="text"
+              class="search__input"
+              id="catalogue-search"
+              placeholder="Search videos and articles…"
+              autocomplete="off"
+              aria-label="Search content"
+            >
+          </div>
+
+          <!-- Tag filter picker -->
+          <div class="member-tag-picker" id="tag-picker-wrap">
+            <input
+              type="text"
+              class="member-tag-picker__input"
+              id="tag-filter-input"
+              placeholder="Filter by tag…"
+              autocomplete="off"
+              readonly
+            >
+            <div class="member-tag-picker__dropdown" id="tag-picker-dropdown"></div>
+          </div>
+        </div>
+
+        <!-- Active tag pills -->
+        <div class="catalogue__tag-filters" id="active-tag-filters" style="display:none;"></div>
+
+        <!-- Search results — shown instead of playlists when searching -->
+        <div id="search-results-section" style="display:none;">
+          <p class="catalogue__results-count" id="search-results-count"></p>
+          <div class="catalogue__grid" id="search-results-grid"></div>
+        </div>
+
+        <!-- Playlist grid — hidden when searching -->
         <div class="catalogue__grid" id="playlists-grid"></div>
 
       </section>
