@@ -5,7 +5,7 @@
    Handles:
      - Listing all videos with status
      - Upload modal: direct upload to Cloudflare Stream
-     - Edit modal: update title, description, category, thumbnail
+     - Edit modal: update title, description, category, thumbnail, tags
      - Publish / unpublish toggle
      - Delete video
    ========================================================== */
@@ -14,10 +14,10 @@
 /* ----------------------------------------------------------
    State
    ---------------------------------------------------------- */
-let allVideos    = [];
-let categories   = [];
-let editingId    = null;   // video ID currently being edited
-let uploadVideoId = null;  // Cloudflare video ID from current upload
+let allVideos     = [];
+let categories    = [];
+let editingId     = null;   // video ID currently being edited
+let uploadVideoId = null;   // Cloudflare video ID from current upload
 
 
 /* ----------------------------------------------------------
@@ -45,7 +45,7 @@ function showToast(message, type = 'success') {
     document.body.appendChild(container);
   }
   const toast = document.createElement('div');
-  toast.className = `toast toast--${type}`;
+  toast.className   = `toast toast--${type}`;
   toast.textContent = message;
   container.appendChild(toast);
   setTimeout(() => toast.remove(), 3500);
@@ -73,8 +73,8 @@ function renderVideoList() {
   list.innerHTML = '';
   allVideos.forEach(video => {
     const item = document.createElement('div');
-    item.className      = 'content-list-item';
-    item.dataset.id     = video.id;
+    item.className  = 'content-list-item';
+    item.dataset.id = video.id;
 
     item.innerHTML = `
       ${video.thumbnail_url
@@ -90,14 +90,9 @@ function renderVideoList() {
         </div>
       </div>
       <div class="content-list-item__actions">
-        <!-- Published toggle -->
         <label class="toggle" title="${video.published ? 'Click to unpublish' : 'Click to publish'}">
-          <input
-            type="checkbox"
-            class="toggle__input js-publish-toggle"
-            data-id="${video.id}"
-            ${video.published ? 'checked' : ''}
-          >
+          <input type="checkbox" class="toggle__input js-publish-toggle"
+            data-id="${video.id}" ${video.published ? 'checked' : ''}>
           <div class="toggle__track"><div class="toggle__thumb"></div></div>
           <span class="toggle__label">${video.published ? 'Live' : 'Draft'}</span>
         </label>
@@ -118,9 +113,7 @@ function renderVideoList() {
       if (label) label.textContent = published ? 'Live' : 'Draft';
 
       const { error } = await window.supabaseClient
-        .from('videos')
-        .update({ published })
-        .eq('id', id);
+        .from('videos').update({ published }).eq('id', id);
 
       if (error) {
         showToast('Failed to update status', 'error');
@@ -133,12 +126,10 @@ function renderVideoList() {
     });
   });
 
-  // Edit buttons
   list.querySelectorAll('.js-edit-video').forEach(btn => {
     btn.addEventListener('click', () => openEditModal(btn.dataset.id));
   });
 
-  // Delete buttons
   list.querySelectorAll('.js-delete-video').forEach(btn => {
     btn.addEventListener('click', () => confirmDelete(btn.dataset.id));
   });
@@ -146,7 +137,7 @@ function renderVideoList() {
 
 
 /* ----------------------------------------------------------
-   Upload modal — Step 1: choose file and upload to Cloudflare
+   Upload modal
    ---------------------------------------------------------- */
 function openUploadModal() {
   document.getElementById('upload-modal-overlay').classList.add('is-open');
@@ -174,10 +165,9 @@ function showUploadStep2() {
   document.getElementById('upload-step-2').style.display = '';
 }
 
-async function uploadFileToClouflare(file) {
+async function uploadFileToCloudflare(file) {
   const { data: { session } } = await window.supabaseClient.auth.getSession();
 
-  // Get a direct upload URL from our Netlify function
   const res = await fetch('/.netlify/functions/admin-upload-video', {
     method:  'POST',
     headers: {
@@ -195,24 +185,20 @@ async function uploadFileToClouflare(file) {
   const { uploadUrl, videoId } = await res.json();
   uploadVideoId = videoId;
 
-  // Upload directly to Cloudflare using XMLHttpRequest for progress tracking
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
 
     xhr.upload.addEventListener('progress', (e) => {
       if (e.lengthComputable) {
         const pct = Math.round((e.loaded / e.total) * 100);
-        document.getElementById('upload-progress-bar').style.width = `${pct}%`;
-        document.getElementById('upload-progress-label').textContent = `Uploading… ${pct}%`;
+        document.getElementById('upload-progress-bar').style.width    = `${pct}%`;
+        document.getElementById('upload-progress-label').textContent  = `Uploading… ${pct}%`;
       }
     });
 
     xhr.addEventListener('load', () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        resolve();
-      } else {
-        reject(new Error(`Upload failed: ${xhr.status}`));
-      }
+      if (xhr.status >= 200 && xhr.status < 300) resolve();
+      else reject(new Error(`Upload failed: ${xhr.status}`));
     });
 
     xhr.addEventListener('error', () => reject(new Error('Upload error')));
@@ -225,14 +211,12 @@ async function uploadFileToClouflare(file) {
 }
 
 function setupUploadZone() {
-  const zone      = document.getElementById('upload-zone');
-  const fileInput = document.getElementById('upload-file-input');
+  const zone         = document.getElementById('upload-zone');
+  const fileInput    = document.getElementById('upload-file-input');
   const progressWrap = document.getElementById('upload-progress-wrap');
 
-  // Click to browse
   zone.addEventListener('click', () => fileInput.click());
 
-  // Drag and drop
   zone.addEventListener('dragover', (e) => {
     e.preventDefault();
     zone.classList.add('is-dragging');
@@ -250,18 +234,15 @@ function setupUploadZone() {
   });
 
   async function handleFileSelected(file) {
-    // Show progress
     progressWrap.style.display = '';
     document.getElementById('upload-progress-label').textContent = 'Uploading…';
-    document.getElementById('upload-progress-bar').style.width = '0%';
+    document.getElementById('upload-progress-bar').style.width   = '0%';
 
     try {
-      await uploadFileToClouflare(file);
+      await uploadFileToCloudflare(file);
       document.getElementById('upload-progress-label').textContent = '✓ Upload complete — fill in the details below';
-      document.getElementById('upload-progress-bar').style.width = '100%';
+      document.getElementById('upload-progress-bar').style.width      = '100%';
       document.getElementById('upload-progress-bar').style.background = 'var(--color-success)';
-
-      // Move to step 2 after a short pause
       setTimeout(showUploadStep2, 600);
     } catch (err) {
       console.error('Upload error:', err);
@@ -283,11 +264,11 @@ async function saveNewVideo(e) {
     return;
   }
 
-  const title       = document.getElementById('new-video-title').value.trim();
-  const description = document.getElementById('new-video-description').value.trim();
-  const categoryId  = document.getElementById('new-video-category').value || null;
+  const title        = document.getElementById('new-video-title').value.trim();
+  const description  = document.getElementById('new-video-description').value.trim();
+  const categoryId   = document.getElementById('new-video-category').value || null;
   const thumbnailUrl = window._newVideoUploader?.getUrl() || null;
-  const published   = document.getElementById('new-video-published').checked;
+  const published    = document.getElementById('new-video-published').checked;
 
   if (!title) {
     showToast('Please enter a title', 'error');
@@ -300,10 +281,10 @@ async function saveNewVideo(e) {
 
   const { error } = await window.supabaseClient.from('videos').insert({
     title,
-    description:        description || null,
+    description:         description || null,
     cloudflare_video_id: uploadVideoId,
-    category_id:        categoryId,
-    thumbnail_url:      thumbnailUrl,
+    category_id:         categoryId,
+    thumbnail_url:       thumbnailUrl,
     published,
   });
 
@@ -315,7 +296,7 @@ async function saveNewVideo(e) {
     return;
   }
 
-  // Save tags — fetch the new video ID first
+  // Save tags — look up the new video's ID by its Cloudflare ID
   const tagIds = window._newVideoTagPicker?.getSelectedIds() || [];
   if (tagIds.length) {
     const { data: newVideo } = await window.supabaseClient
@@ -339,32 +320,34 @@ async function saveNewVideo(e) {
 
 
 /* ----------------------------------------------------------
-   Edit modal — update existing video metadata
+   Edit modal — async so we can await the tag fetch
    ---------------------------------------------------------- */
-function openEditModal(videoId) {
-  editingId     = videoId;
-  const video   = allVideos.find(v => v.id === videoId);
+async function openEditModal(videoId) {
+  editingId   = videoId;
+  const video = allVideos.find(v => v.id === videoId);
   if (!video) return;
 
-  document.getElementById('edit-video-title').value       = video.title || '';
+  document.getElementById('edit-video-title').value       = video.title       || '';
   document.getElementById('edit-video-description').value = video.description || '';
   document.getElementById('edit-video-category').value    = video.category_id || '';
-  document.getElementById('edit-video-published').checked = video.published || false;
+  document.getElementById('edit-video-published').checked = video.published   || false;
 
-  // Load existing thumbnail into the uploader
+  // Load existing thumbnail
   if (window._editVideoUploader) {
     window._editVideoUploader.setUrl(video.thumbnail_url || null);
   }
 
-  // Load existing tags and re-initialize the edit tag picker
+  // Load existing tags and re-initialize the picker with them pre-selected
   const editTagWrap = document.getElementById('edit-video-tag-picker');
   if (editTagWrap) {
     const { data: existingTags } = await window.supabaseClient
       .from('video_tags')
       .select('tag_id')
       .eq('video_id', videoId);
+
     const selectedTagIds = (existingTags || []).map(t => t.tag_id);
-    createTagPicker(editTagWrap, selectedTagIds).then(p => { window._editVideoTagPicker = p; });
+    createTagPicker(editTagWrap, selectedTagIds)
+      .then(p => { window._editVideoTagPicker = p; });
   }
 
   document.getElementById('edit-modal-overlay').classList.add('is-open');
@@ -393,7 +376,14 @@ async function saveEditedVideo(e) {
 
   const { error } = await window.supabaseClient
     .from('videos')
-    .update({ title, description: description || null, category_id: categoryId, thumbnail_url: thumbnailUrl, published, updated_at: new Date().toISOString() })
+    .update({
+      title,
+      description:   description || null,
+      category_id:   categoryId,
+      thumbnail_url: thumbnailUrl,
+      published,
+      updated_at:    new Date().toISOString(),
+    })
     .eq('id', editingId);
 
   if (error) {
@@ -403,7 +393,7 @@ async function saveEditedVideo(e) {
     return;
   }
 
-  // Update tags — delete existing and re-insert
+  // Update tags — delete old, insert new
   await window.supabaseClient.from('video_tags').delete().eq('video_id', editingId);
   const tagIds = window._editVideoTagPicker?.getSelectedIds() || [];
   if (tagIds.length) {
@@ -429,9 +419,7 @@ async function confirmDelete(videoId) {
   if (!confirm(`Delete "${video.title}"? This cannot be undone.`)) return;
 
   const { error } = await window.supabaseClient
-    .from('videos')
-    .delete()
-    .eq('id', videoId);
+    .from('videos').delete().eq('id', videoId);
 
   if (error) {
     showToast('Failed to delete video', 'error');
@@ -452,7 +440,7 @@ function populateCategoryDropdowns() {
   selects.forEach(select => {
     select.innerHTML = `<option value="">No category</option>`;
     categories.forEach(cat => {
-      const opt = document.createElement('option');
+      const opt       = document.createElement('option');
       opt.value       = cat.id;
       opt.textContent = cat.name;
       select.appendChild(opt);
@@ -462,7 +450,7 @@ function populateCategoryDropdowns() {
 
 
 /* ----------------------------------------------------------
-   Load videos from Supabase
+   Load videos and categories from Supabase
    ---------------------------------------------------------- */
 async function loadVideos() {
   const { data, error } = await window.supabaseClient
@@ -474,20 +462,12 @@ async function loadVideos() {
     showToast('Failed to load videos', 'error');
     return;
   }
-
   allVideos = data || [];
 }
 
-
-/* ----------------------------------------------------------
-   Load categories
-   ---------------------------------------------------------- */
 async function loadCategories() {
   const { data } = await window.supabaseClient
-    .from('categories')
-    .select('id, name')
-    .order('display_order');
-
+    .from('categories').select('id, name').order('display_order');
   categories = data || [];
 }
 
@@ -497,10 +477,9 @@ async function loadCategories() {
    ---------------------------------------------------------- */
 function buildPage(content) {
 
-  // Add "Upload Video" button to the topbar
   const actions = getAdminActions();
   if (actions) {
-    const btn = document.createElement('button');
+    const btn       = document.createElement('button');
     btn.className   = 'btn btn--primary btn--sm';
     btn.textContent = '+ Upload Video';
     btn.addEventListener('click', openUploadModal);
@@ -516,8 +495,8 @@ function buildPage(content) {
 
     <!-- ============================================================
          UPLOAD MODAL
-         Step 1: drag/drop or browse to upload video to Cloudflare
-         Step 2: fill in title, description, category, thumbnail
+         Step 1: drag/drop or browse to upload to Cloudflare
+         Step 2: fill in title, description, category, thumbnail, tags
          ============================================================ -->
     <div class="modal-overlay" id="upload-modal-overlay">
       <div class="modal" style="max-width:560px;">
@@ -526,16 +505,19 @@ function buildPage(content) {
           <button class="modal__close" id="close-upload-modal" aria-label="Close">✕</button>
         </div>
 
-        <!-- Step 1: Upload -->
+        <!-- Step 1: File upload -->
         <div id="upload-step-1">
           <div class="upload-zone" id="upload-zone">
-            <svg class="upload-zone__icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <svg class="upload-zone__icon" viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+              <polyline points="17,8 12,3 7,8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
             <p class="upload-zone__label"><strong>Click to browse</strong> or drag and drop your video here</p>
             <p class="upload-zone__hint">MP4, MOV, MKV — up to 30GB</p>
             <input type="file" id="upload-file-input" accept="video/*" style="display:none;">
           </div>
 
-          <!-- Upload progress -->
           <div id="upload-progress-wrap" style="display:none; margin-top:var(--space-lg);">
             <p id="upload-progress-label" style="font-size:var(--text-sm);color:var(--color-gray);margin-bottom:var(--space-sm);max-width:none;"></p>
             <div class="progress-bar">
@@ -550,12 +532,14 @@ function buildPage(content) {
 
             <div class="form__group">
               <label class="form__label" for="new-video-title">Title *</label>
-              <input class="form__input" type="text" id="new-video-title" placeholder="e.g. Guard Passing Fundamentals" required>
+              <input class="form__input" type="text" id="new-video-title"
+                placeholder="e.g. Guard Passing Fundamentals" required>
             </div>
 
             <div class="form__group">
               <label class="form__label" for="new-video-description">Description</label>
-              <textarea class="form__textarea" id="new-video-description" rows="3" placeholder="Optional description of this video…"></textarea>
+              <textarea class="form__textarea" id="new-video-description" rows="3"
+                placeholder="Optional description…"></textarea>
             </div>
 
             <div class="form__group">
@@ -573,12 +557,7 @@ function buildPage(content) {
               <div id="new-video-tag-picker"></div>
             </div>
 
-            <div class="form__group">
-            <label class="form__label">Tags</label>
-            <div id="edit-video-tag-picker"></div>
-          </div>
-
-          <div style="display:flex; align-items:center; gap:var(--space-md);">
+            <div style="display:flex; align-items:center; gap:var(--space-md);">
               <label class="toggle">
                 <input type="checkbox" class="toggle__input" id="new-video-published">
                 <div class="toggle__track"><div class="toggle__thumb"></div></div>
@@ -629,6 +608,11 @@ function buildPage(content) {
             <div id="edit-video-thumbnail-wrap"></div>
           </div>
 
+          <div class="form__group">
+            <label class="form__label">Tags</label>
+            <div id="edit-video-tag-picker"></div>
+          </div>
+
           <div style="display:flex; align-items:center; gap:var(--space-md);">
             <label class="toggle">
               <input type="checkbox" class="toggle__input" id="edit-video-published">
@@ -653,42 +637,46 @@ function buildPage(content) {
    Wire up all event listeners
    ---------------------------------------------------------- */
 function wireEvents() {
-  // Initialize thumbnail uploaders after modals are in the DOM
+  // Thumbnail uploaders
   const newThumbWrap  = document.getElementById('new-video-thumbnail-wrap');
   const editThumbWrap = document.getElementById('edit-video-thumbnail-wrap');
   if (newThumbWrap)  window._newVideoUploader  = createThumbnailUploader(newThumbWrap);
   if (editThumbWrap) window._editVideoUploader = createThumbnailUploader(editThumbWrap);
 
-  // Initialize tag pickers
-  const newTagWrap  = document.getElementById('new-video-tag-picker');
-  const editTagWrap = document.getElementById('edit-video-tag-picker');
-  if (newTagWrap)  createTagPicker(newTagWrap, []).then(p => { window._newVideoTagPicker = p; });
-  if (editTagWrap) createTagPicker(editTagWrap, []).then(p => { window._editVideoTagPicker = p; });
+  // Tag pickers — initialized empty; edit picker is re-initialized in openEditModal
+  const newTagWrap = document.getElementById('new-video-tag-picker');
+  if (newTagWrap) {
+    createTagPicker(newTagWrap, []).then(p => { window._newVideoTagPicker = p; });
+  }
 
   // Upload modal
-  document.getElementById('close-upload-modal')?.addEventListener('click', closeUploadModal);
-  document.getElementById('back-to-upload-btn')?.addEventListener('click', () => {
-    document.getElementById('upload-step-2').style.display = 'none';
-    document.getElementById('upload-step-1').style.display = '';
-  });
-  document.getElementById('new-video-form')?.addEventListener('submit', saveNewVideo);
-
-  // Close upload modal on overlay click
-  document.getElementById('upload-modal-overlay')?.addEventListener('click', (e) => {
-    if (e.target === document.getElementById('upload-modal-overlay')) closeUploadModal();
-  });
+  document.getElementById('close-upload-modal')
+    ?.addEventListener('click', closeUploadModal);
+  document.getElementById('back-to-upload-btn')
+    ?.addEventListener('click', () => {
+      document.getElementById('upload-step-2').style.display = 'none';
+      document.getElementById('upload-step-1').style.display = '';
+    });
+  document.getElementById('new-video-form')
+    ?.addEventListener('submit', saveNewVideo);
+  document.getElementById('upload-modal-overlay')
+    ?.addEventListener('click', (e) => {
+      if (e.target === document.getElementById('upload-modal-overlay')) closeUploadModal();
+    });
 
   // Edit modal
-  document.getElementById('close-edit-modal')?.addEventListener('click', closeEditModal);
-  document.getElementById('cancel-edit-btn')?.addEventListener('click', closeEditModal);
-  document.getElementById('edit-video-form')?.addEventListener('submit', saveEditedVideo);
+  document.getElementById('close-edit-modal')
+    ?.addEventListener('click', closeEditModal);
+  document.getElementById('cancel-edit-btn')
+    ?.addEventListener('click', closeEditModal);
+  document.getElementById('edit-video-form')
+    ?.addEventListener('submit', saveEditedVideo);
+  document.getElementById('edit-modal-overlay')
+    ?.addEventListener('click', (e) => {
+      if (e.target === document.getElementById('edit-modal-overlay')) closeEditModal();
+    });
 
-  // Close edit modal on overlay click
-  document.getElementById('edit-modal-overlay')?.addEventListener('click', (e) => {
-    if (e.target === document.getElementById('edit-modal-overlay')) closeEditModal();
-  });
-
-  // Check if a specific video ID was passed in the URL to auto-open edit
+  // Auto-open edit if ?edit=<id> in URL
   const editId = new URLSearchParams(window.location.search).get('edit');
   if (editId) openEditModal(editId);
 
@@ -707,7 +695,6 @@ function wireEvents() {
   const content = renderAdminShell('videos', 'Videos');
   buildPage(content);
 
-  // Load data
   await Promise.all([loadVideos(), loadCategories()]);
   populateCategoryDropdowns();
   renderVideoList();
