@@ -252,6 +252,12 @@ function openAddModal() {
 
 function closeAddModal() {
   document.getElementById('add-member-overlay').classList.remove('is-open');
+  // Re-enable the save button for the next add
+  const saveBtn = document.getElementById('save-member-btn');
+  if (saveBtn) {
+    saveBtn.disabled    = false;
+    saveBtn.textContent = 'Add Member';
+  }
 }
 
 async function saveMember(e) {
@@ -329,6 +335,12 @@ function openEditModal(memberId) {
 
 function closeEditModal() {
   document.getElementById('edit-member-overlay').classList.remove('is-open');
+  // Re-enable the save button so it works for the next edit
+  const saveBtn = document.getElementById('save-edit-member-btn');
+  if (saveBtn) {
+    saveBtn.disabled    = false;
+    saveBtn.textContent = 'Save Changes';
+  }
   editingId = null;
 }
 

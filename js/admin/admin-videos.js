@@ -154,6 +154,8 @@ function resetUploadModal() {
   document.getElementById('upload-progress-wrap').style.display = 'none';
   document.getElementById('upload-progress-bar').style.width = '0%';
   document.getElementById('upload-file-input').value = '';
+  const saveBtn = document.getElementById('save-new-video-btn');
+  if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Video'; }
   uploadVideoId = null;
 }
 
@@ -341,6 +343,8 @@ async function openEditModal(videoId) {
 
 function closeEditModal() {
   document.getElementById('edit-modal-overlay').classList.remove('is-open');
+  const saveBtn = document.getElementById('save-edit-btn');
+  if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Changes'; }
   editingId = null;
 }
 

@@ -177,6 +177,8 @@ async function openBuilder(playlistId = null) {
 
 function closeBuilder() {
   document.getElementById('builder-overlay').classList.remove('is-open');
+  const saveBtn = document.getElementById('save-playlist-btn');
+  if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Playlist'; }
   editingId    = null;
   playlistItems = [];
   document.getElementById('content-search-input').value = '';

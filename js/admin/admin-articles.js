@@ -174,6 +174,8 @@ async function openEditor(articleId = null) {
 
 function closeEditor() {
   document.getElementById('editor-overlay').classList.remove('is-open');
+  const saveBtn = document.getElementById('save-article-btn');
+  if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Article'; }
   editingId = null;
 }
 

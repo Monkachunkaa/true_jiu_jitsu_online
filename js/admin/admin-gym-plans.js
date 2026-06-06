@@ -197,6 +197,8 @@ function openEditPlanModal(planId) {
 
 function closeEditPlanModal() {
   document.getElementById('edit-plan-overlay').classList.remove('is-open');
+  const saveBtn = document.getElementById('save-edit-plan-btn');
+  if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Changes'; }
 }
 
 async function saveEditedPlan(e) {
