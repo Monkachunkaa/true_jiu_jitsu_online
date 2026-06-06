@@ -92,17 +92,11 @@ function renderAdminShell(activePage = '', pageTitle = '') {
 
       <p class="admin-sidebar__label" style="margin-top:var(--space-lg);">Members</p>
 
-      <a href="/pages/admin/members.html"
+      <a href="/pages/admin/gym-members.html"
          class="admin-nav__item ${activePage === 'members' ? 'admin-nav__item--active' : ''}"
          data-page="members">
         ${iconMembers()}
-        <span>Online Members</span>
-      </a>
-      <a href="/pages/admin/gym-members.html"
-         class="admin-nav__item ${activePage === 'gym-members' ? 'admin-nav__item--active' : ''}"
-         data-page="gym-members">
-        ${iconMembers()}
-        <span>Gym Members</span>
+        <span>Members</span>
       </a>
       <a href="/pages/admin/gym-plans.html"
          class="admin-nav__item ${activePage === 'gym-plans' ? 'admin-nav__item--active' : ''}"

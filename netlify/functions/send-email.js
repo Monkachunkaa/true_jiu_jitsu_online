@@ -524,11 +524,11 @@ exports.handler = async (event) => {
     return respond(400, { error: 'Invalid JSON' });
   }
 
-  const { type, to, name } = body;
+  const { type, to, name, extra } = body;
   if (!type || !to) return respond(400, { error: 'type and to are required' });
 
   try {
-    await sendEmail({ to, name, type });
+    await sendEmail({ to, name, type, extra });
     return respond(200, { success: true });
   } catch (err) {
     console.error('SES send error:', err);
