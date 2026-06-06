@@ -396,8 +396,6 @@ function buildPage(content) {
   document.getElementById('close-editor-btn')?.addEventListener('click', closeEditor);
   document.getElementById('cancel-article-btn')?.addEventListener('click', closeEditor);
   document.getElementById('article-form')?.addEventListener('submit', saveArticle);
-  document.getElementById('editor-overlay')?.addEventListener('click', (e) => {
-    if (e.target === document.getElementById('editor-overlay')) closeEditor();
-  });
+  safeModalClose('editor-overlay', closeEditor);
 
 })();

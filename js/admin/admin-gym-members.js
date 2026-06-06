@@ -15,7 +15,7 @@ let allGymMembers = [];
 let allPlans      = [];
 let editingId     = null;
 
-const BELT_RANKS = ['White', 'Blue', 'Purple', 'Brown', 'Black'];
+const BELT_RANKS = ['Unknown', 'White', 'Blue', 'Purple', 'Brown', 'Black'];
 
 
 /* ----------------------------------------------------------
@@ -60,15 +60,17 @@ function statusBadge(status) {
 
 function beltBadge(belt) {
   const colors = {
-    white:  '#ffffff',
-    blue:   '#1a73e8',
-    purple: '#8b5cf6',
-    brown:  '#92400e',
-    black:  '#1a1a1a',
+    unknown: '#444444',
+    white:   '#ffffff',
+    blue:    '#1a73e8',
+    purple:  '#8b5cf6',
+    brown:   '#92400e',
+    black:   '#1a1a1a',
   };
-  const color = colors[(belt || 'white').toLowerCase()] || '#ffffff';
-  const text  = (belt || 'white').charAt(0).toUpperCase() + (belt || 'white').slice(1);
-  return `<span style="display:inline-block;padding:2px 10px;border-radius:100px;font-size:10px;font-weight:600;background:${color};color:${belt?.toLowerCase() === 'white' ? '#111' : '#fff'};border:1px solid rgba(255,255,255,0.1);">${text}</span>`;
+  const color = colors[(belt || 'unknown').toLowerCase()] || '#444444';
+  const text  = (belt || 'unknown').charAt(0).toUpperCase() + (belt || 'unknown').slice(1);
+  const darkText = ['white'].includes((belt || '').toLowerCase());
+  return `<span style="display:inline-block;padding:2px 10px;border-radius:100px;font-size:10px;font-weight:600;background:${color};color:${darkText ? '#111' : '#fff'};border:1px solid rgba(255,255,255,0.1);">${text}</span>`;
 }
 
 function discountLabel(member) {
@@ -793,16 +795,12 @@ function buildPage(content) {
   document.getElementById('close-add-member')?.addEventListener('click', closeAddModal);
   document.getElementById('cancel-add-member')?.addEventListener('click', closeAddModal);
   document.getElementById('add-member-form')?.addEventListener('submit', saveMember);
-  document.getElementById('add-member-overlay')?.addEventListener('click', (e) => {
-    if (e.target === document.getElementById('add-member-overlay')) closeAddModal();
-  });
+  safeModalClose('add-member-overlay', closeAddModal);
 
   // Wire edit member modal
   document.getElementById('close-edit-member')?.addEventListener('click', closeEditModal);
   document.getElementById('cancel-edit-member')?.addEventListener('click', closeEditModal);
   document.getElementById('edit-member-form')?.addEventListener('submit', saveEditedMember);
-  document.getElementById('edit-member-overlay')?.addEventListener('click', (e) => {
-    if (e.target === document.getElementById('edit-member-overlay')) closeEditModal();
-  });
+  safeModalClose('edit-member-overlay', closeEditModal);
 
 })();

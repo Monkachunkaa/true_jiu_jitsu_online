@@ -538,8 +538,6 @@ function buildPage(content) {
   document.getElementById('close-builder-btn')?.addEventListener('click', closeBuilder);
   document.getElementById('cancel-playlist-btn')?.addEventListener('click', closeBuilder);
   document.getElementById('playlist-form')?.addEventListener('submit', savePlaylist);
-  document.getElementById('builder-overlay')?.addEventListener('click', (e) => {
-    if (e.target === document.getElementById('builder-overlay')) closeBuilder();
-  });
+  safeModalClose('builder-overlay', closeBuilder);
 
 })();

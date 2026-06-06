@@ -579,17 +579,13 @@ function wireEvents() {
     document.getElementById('upload-step-1').style.display = '';
   });
   document.getElementById('new-video-form')?.addEventListener('submit', saveNewVideo);
-  document.getElementById('upload-modal-overlay')?.addEventListener('click', (e) => {
-    if (e.target === document.getElementById('upload-modal-overlay')) closeUploadModal();
-  });
+  safeModalClose('upload-modal-overlay', closeUploadModal);
 
   // Edit modal
   document.getElementById('close-edit-modal')?.addEventListener('click', closeEditModal);
   document.getElementById('cancel-edit-btn')?.addEventListener('click', closeEditModal);
   document.getElementById('edit-video-form')?.addEventListener('submit', saveEditedVideo);
-  document.getElementById('edit-modal-overlay')?.addEventListener('click', (e) => {
-    if (e.target === document.getElementById('edit-modal-overlay')) closeEditModal();
-  });
+  safeModalClose('edit-modal-overlay', closeEditModal);
 
   // Auto-open edit if ?edit=<id> in URL
   const editId = new URLSearchParams(window.location.search).get('edit');

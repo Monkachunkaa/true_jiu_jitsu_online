@@ -126,6 +126,12 @@ function openCreateModal() {
 function closeCreateModal() {
   document.getElementById('create-plan-overlay').classList.remove('is-open');
   document.getElementById('create-plan-form').reset();
+  // Re-enable the submit button so it works for the next plan
+  const saveBtn = document.getElementById('create-plan-btn');
+  if (saveBtn) {
+    saveBtn.disabled    = false;
+    saveBtn.textContent = 'Create Plan';
+  }
 }
 
 async function createPlan(e) {
@@ -379,15 +385,11 @@ function buildPage(content) {
   document.getElementById('close-create-plan')?.addEventListener('click', closeCreateModal);
   document.getElementById('cancel-create-plan')?.addEventListener('click', closeCreateModal);
   document.getElementById('create-plan-form')?.addEventListener('submit', createPlan);
-  document.getElementById('create-plan-overlay')?.addEventListener('click', (e) => {
-    if (e.target === document.getElementById('create-plan-overlay')) closeCreateModal();
-  });
+  safeModalClose('create-plan-overlay', closeCreateModal);
 
   document.getElementById('close-edit-plan')?.addEventListener('click', closeEditPlanModal);
   document.getElementById('cancel-edit-plan')?.addEventListener('click', closeEditPlanModal);
   document.getElementById('edit-plan-form')?.addEventListener('submit', saveEditedPlan);
-  document.getElementById('edit-plan-overlay')?.addEventListener('click', (e) => {
-    if (e.target === document.getElementById('edit-plan-overlay')) closeEditPlanModal();
-  });
+  safeModalClose('edit-plan-overlay', closeEditPlanModal);
 
 })();

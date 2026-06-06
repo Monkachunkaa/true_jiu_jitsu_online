@@ -206,6 +206,29 @@ function getAdminContent() {
 }
 
 /* ----------------------------------------------------------
+   safeModalClose — only closes a modal when the mousedown
+   AND mouseup both land on the overlay itself, not when
+   the user clicks inside the modal and drags out.
+
+   Usage: safeModalClose('my-overlay-id', closeFn);
+   ---------------------------------------------------------- */
+function safeModalClose(overlayId, closeFn) {
+  const overlay = document.getElementById(overlayId);
+  if (!overlay) return;
+
+  let mousedownOnOverlay = false;
+
+  overlay.addEventListener('mousedown', (e) => {
+    mousedownOnOverlay = e.target === overlay;
+  });
+
+  overlay.addEventListener('click', (e) => {
+    if (mousedownOnOverlay && e.target === overlay) closeFn();
+    mousedownOnOverlay = false;
+  });
+}
+
+/* ----------------------------------------------------------
    Expose the topbar actions area for page-level buttons.
    ---------------------------------------------------------- */
 function getAdminActions() {
