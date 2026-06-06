@@ -20,9 +20,11 @@ const ses = new AWS.SES({
   region:          process.env.TJJ_AWS_REGION,
 });
 
+const FROM_NAME    = 'True Jiu Jitsu Online';
 const FROM_ADDRESS = process.env.SES_FROM_ADDRESS
-  ? `True Jiu Jitsu Online <${process.env.SES_FROM_ADDRESS}>`
+  ? `${FROM_NAME} <${process.env.SES_FROM_ADDRESS}>`
   : null;
+const FROM_RAW     = process.env.SES_FROM_ADDRESS || null;
 const SITE_URL     = process.env.SITE_URL || 'https://online.truebjj.academy';
 
 
@@ -480,16 +482,16 @@ async function sendEmail({ to, name, type, extra = {} }) {
   else throw new Error(`Unknown email type: ${type}`);
 
   const params = {
-    Source:      FROM_ADDRESS,
+    Source:      FROM_RAW,   // bare email — SES verifies against the domain
+    ReplyToAddresses: [],
     Destination: { ToAddresses: [to] },
     Message: {
       Subject: { Data: template.subject, Charset: 'UTF-8' },
       Body: {
-        Html: { Data: template.html, Charset: 'UTF-8' },
+        Html: { Data: template.html.replace(/{{FROM_NAME}}/g, FROM_NAME), Charset: 'UTF-8' },
         Text: { Data: template.text, Charset: 'UTF-8' },
       },
     },
-    // No ReplyToAddresses — replies are not accepted
   };
 
   return ses.sendEmail(params).promise();
