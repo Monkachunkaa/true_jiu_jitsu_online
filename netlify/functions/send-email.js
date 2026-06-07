@@ -311,6 +311,48 @@ function buildCancelledEmail(name) {
 }
 
 
+function buildAnnouncementEmail(name, subject, message) {
+  const firstName = name?.split(' ')[0] || 'there';
+  // Convert newlines to <br> tags for HTML version
+  const messageHtml = message.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+
+  return {
+    subject,
+    html: `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#111111;font-family:Arial,sans-serif;color:#f0f0f0;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#111111;padding:30px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#1e1e1e;border-radius:6px;overflow:hidden;border:1px solid #2a2a2a;">
+        <tr>
+          <td style="background-color:#0a0a0a;padding:28px 32px;border-bottom:3px solid #c41e2a;">
+            <p style="margin:0;font-size:11px;text-transform:uppercase;letter-spacing:0.15em;color:#c41e2a;">True Jiu Jitsu</p>
+            <h1 style="margin:8px 0 0;font-size:22px;font-weight:700;color:#ffffff;text-transform:uppercase;letter-spacing:0.05em;">${subject}</h1>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px;">
+            <p style="margin:0 0 8px;font-size:15px;color:#cccccc;">Hi ${firstName},</p>
+            <p style="margin:0;font-size:15px;color:#cccccc;line-height:1.8;">${messageHtml}</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background-color:#0a0a0a;padding:20px 32px;border-top:1px solid #2a2a2a;">
+            <p style="margin:0;font-size:12px;color:#555555;text-align:center;">
+              True Jiu Jitsu &nbsp;·&nbsp; Hickory, NC
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`,
+    text: `Hi ${firstName},\n\n${message}\n\n— True Jiu Jitsu`,
+  };
+}
+
+
 /* ----------------------------------------------------------
    GYM MEMBER EMAIL TEMPLATES
    ---------------------------------------------------------- */

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Join True Jiu Jitsu</title>
+  <meta name="description" content="Sign up for a membership at True Jiu Jitsu and Fitness in Hickory, NC.">
+  <link rel="icon" type="image/webp" href="/img/tjj_favicon.webp">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/intake.css">
+</head>
+<body class="intake-body">
+
+  <!-- Header -->
+  <div class="intake-header">
+    <img src="/img/true_jiu_jitsu_logo_white.webp" alt="True Jiu Jitsu">
+    <p class="intake-header__subtitle">New Member Enrollment</p>
+  </div>
+
+  <!-- Card -->
+  <div class="intake-card" id="onboard-card">
+    <div class="intake-card__header">
+      <h1 class="intake-card__title" id="card-title">Your Information</h1>
+    </div>
+    <div class="intake-card__body">
+
+      <!-- Step indicator (5 steps) -->
+      <div class="step-indicator" id="step-indicator" aria-label="Progress">
+        <div class="step-indicator__step">
+          <div class="step-indicator__dot step-indicator__dot--active" id="dot-1">1</div>
+        </div>
+        <div class="step-indicator__line" id="line-1"></div>
+        <div class="step-indicator__step">
+          <div class="step-indicator__dot" id="dot-2">2</div>
+        </div>
+        <div class="step-indicator__line" id="line-2"></div>
+        <div class="step-indicator__step">
+          <div class="step-indicator__dot" id="dot-3">3</div>
+        </div>
+        <div class="step-indicator__line" id="line-3"></div>
+        <div class="step-indicator__step">
+          <div class="step-indicator__dot" id="dot-4">4</div>
+        </div>
+        <div class="step-indicator__line" id="line-4"></div>
+        <div class="step-indicator__step">
+          <div class="step-indicator__dot" id="dot-5">5</div>
+        </div>
+      </div>
+
+
+      <!-- ====================================================
+           STEP 1 — Personal Information
+           ==================================================== -->
+      <div class="intake-panel intake-panel--active" id="panel-1">
+        <p class="intake-panel__title">Your Information</p>
+        <div class="form">
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
+            <div class="form__group">
+              <label class="form__label" for="o-first-name">First Name *</label>
+              <input class="form__input" type="text" id="o-first-name" autocomplete="given-name" required>
+            </div>
+            <div class="form__group">
+              <label class="form__label" for="o-last-name">Last Name *</label>
+              <input class="form__input" type="text" id="o-last-name" autocomplete="family-name" required>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
+            <div class="form__group">
+              <label class="form__label" for="o-dob">Date of Birth *</label>
+              <input class="form__input" type="date" id="o-dob" required>
+            </div>
+            <div class="form__group" style="display:flex;align-items:flex-end;padding-bottom:2px;">
+              <label class="toggle" style="align-items:center;gap:var(--space-sm);">
+                <input type="checkbox" class="toggle__input" id="o-is-minor">
+                <div class="toggle__track"><div class="toggle__thumb"></div></div>
+                <span style="font-size:var(--text-sm);color:var(--color-gray);">Under 18</span>
+              </label>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
+            <div class="form__group">
+              <label class="form__label" for="o-phone">Phone Number *</label>
+              <input class="form__input" type="tel" id="o-phone" autocomplete="tel" placeholder="(555) 000-0000" required>
+            </div>
+            <div class="form__group">
+              <label class="form__label" for="o-email">Email Address *</label>
+              <input class="form__input" type="email" id="o-email" autocomplete="email" placeholder="you@example.com" required>
+            </div>
+          </div>
+
+          <p class="intake-panel__title" style="margin-top:var(--space-lg);">Emergency Contact</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
+            <div class="form__group">
+              <label class="form__label" for="o-ec-name">Contact Name *</label>
+              <input class="form__input" type="text" id="o-ec-name" required>
+            </div>
+            <div class="form__group">
+              <label class="form__label" for="o-ec-phone">Contact Phone *</label>
+              <input class="form__input" type="tel" id="o-ec-phone" placeholder="(555) 000-0000" required>
+            </div>
+          </div>
+
+          <p class="intake-error" id="error-1"></p>
+          <div class="intake-nav intake-nav--right">
+            <button type="button" class="btn btn--primary" id="next-1">Next →</button>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ====================================================
+           STEP 2 — Membership Plan Selection
+           ==================================================== -->
+      <div class="intake-panel" id="panel-2">
+        <p class="intake-panel__title">Choose Your Membership</p>
+        <p style="font-size:var(--text-sm);color:var(--color-gray);margin-bottom:var(--space-lg);max-width:none;">
+          Select the plan that works best for you. Billing will be set up securely via Stripe in the final step.
+        </p>
+
+        <div class="plan-cards" id="plan-cards">
+          <div class="spinner" style="margin:var(--space-xl) auto;"></div>
+        </div>
+
+        <p class="intake-error" id="error-2"></p>
+        <div class="intake-nav">
+          <button type="button" class="btn btn--secondary" id="back-1">← Back</button>
+          <button type="button" class="btn btn--primary" id="next-2">Next →</button>
+        </div>
+      </div>
+
+
+      <!-- ====================================================
+           STEP 3 — Waiver Agreement
+           ==================================================== -->
+      <div class="intake-panel" id="panel-3">
+        <p class="intake-panel__title">Participation Waiver</p>
+        <p style="font-size:var(--text-sm);color:var(--color-gray);margin-bottom:var(--space-lg);max-width:none;">
+          Please read each section carefully and check the box to confirm your agreement.
+        </p>
+
+        <!-- Section B -->
+        <div class="waiver-section" id="section-b">
+          <p class="waiver-section__label">Section B — Assumption of Risk</p>
+          <p class="waiver-section__text">
+            Brazilian Jiu-Jitsu and related training involve inherent risks, including the risk of serious injury
+            or death. By participating, you acknowledge and voluntarily assume all such risks associated with
+            these activities.
+          </p>
+          <label class="waiver-section__agree">
+            <input type="checkbox" id="agree-b" class="waiver-checkbox">
+            <span class="waiver-section__agree-label">
+              <strong>I have read and agree</strong> to the Assumption of Risk statement above.
+            </span>
+          </label>
+        </div>
+
+        <!-- Section C -->
+        <div class="waiver-section" id="section-c">
+          <p class="waiver-section__label">Section C — Medical Responsibility</p>
+          <p class="waiver-section__text">
+            I confirm that I am physically able and/or medically cleared to participate in Brazilian Jiu-Jitsu
+            and related activities. I accept full responsibility for my medical condition and any related expenses.
+          </p>
+          <label class="waiver-section__agree">
+            <input type="checkbox" id="agree-c" class="waiver-checkbox">
+            <span class="waiver-section__agree-label">
+              <strong>I have read and agree</strong> to the Medical Responsibility statement above.
+            </span>
+          </label>
+        </div>
+
+        <!-- Section D -->
+        <div class="waiver-section" id="section-d">
+          <p class="waiver-section__label">Section D — Liability Waiver &amp; Release (North Carolina)</p>
+          <p class="waiver-section__text">
+            I hereby release True Jiu-Jitsu and Fitness, its owners, staff, instructors, and affiliates from
+            any liability for injury or death arising from participation, including ordinary negligence, but not
+            for gross negligence or intentional wrongdoing.
+          </p>
+          <label class="waiver-section__agree">
+            <input type="checkbox" id="agree-d" class="waiver-checkbox">
+            <span class="waiver-section__agree-label">
+              <strong>I have read and agree</strong> to the Liability Waiver &amp; Release statement above.
+            </span>
+          </label>
+        </div>
+
+        <!-- Section E -->
+        <div class="waiver-section" id="section-e">
+          <p class="waiver-section__label">Section E — Hold Harmless &amp; Indemnification</p>
+          <p class="waiver-section__text">
+            I agree to defend, indemnify, and hold harmless True Jiu-Jitsu and Fitness and related parties
+            from any claims arising from my participation, my own negligence, or injuries caused to others.
+            I acknowledge responsibility for attorney's fees where permitted by North Carolina law and agree
+            not to sue other students for ordinary supervised contact.
+          </p>
+          <label class="waiver-section__agree">
+            <input type="checkbox" id="agree-e" class="waiver-checkbox">
+            <span class="waiver-section__agree-label">
+              <strong>I have read and agree</strong> to the Hold Harmless &amp; Indemnification statement above.
+            </span>
+          </label>
+        </div>
+
+        <!-- Section F -->
+        <div class="waiver-section" id="section-f">
+          <p class="waiver-section__label">Section F — Gym Rules &amp; Conduct</p>
+          <p class="waiver-section__text">
+            I agree to follow all gym safety, hygiene, and anti-bullying rules, and understand that misconduct
+            may result in suspension or termination of participation.
+          </p>
+          <label class="waiver-section__agree">
+            <input type="checkbox" id="agree-f" class="waiver-checkbox">
+            <span class="waiver-section__agree-label">
+              <strong>I have read and agree</strong> to the Gym Rules &amp; Conduct statement above.
+            </span>
+          </label>
+        </div>
+
+        <!-- Section G -->
+        <div class="waiver-section" style="border-color:transparent;background:transparent;border-style:dashed;">
+          <p class="waiver-section__label" style="color:var(--color-gray);">Section G — Photo &amp; Media Release (Optional)</p>
+          <p class="waiver-section__text">
+            Do you allow True Jiu-Jitsu and Fitness to use photos or videos of you for promotional media?
+          </p>
+          <label class="waiver-section__agree">
+            <input type="checkbox" id="agree-g">
+            <span class="waiver-section__agree-label">
+              Yes, I allow the use of my photo or video for promotional purposes.
+            </span>
+          </label>
+        </div>
+
+        <p class="intake-error" id="error-3"></p>
+        <div class="intake-nav">
+          <button type="button" class="btn btn--secondary" id="back-2">← Back</button>
+          <button type="button" class="btn btn--primary" id="next-3">Next →</button>
+        </div>
+      </div>
+
+
+      <!-- ====================================================
+           STEP 4 — Signature + Submit
+           ==================================================== -->
+      <div class="intake-panel" id="panel-4">
+        <p class="intake-panel__title">Electronic Signature</p>
+
+        <div class="signature-field">
+          <p class="waiver-section__text">
+            By typing your full legal name below, you confirm that you have read and agree to all sections of
+            this participation waiver, release, and hold harmless agreement. If the participant is under 18,
+            the parent or guardian must sign.
+          </p>
+
+          <div class="form__group">
+            <label class="form__label" for="o-signature">Type your full name to sign *</label>
+            <input class="signature-field__input" type="text" id="o-signature"
+              placeholder="Your full legal name" autocomplete="name" required>
+          </div>
+
+          <div id="o-guardian-field" style="display:none;margin-top:var(--space-lg);">
+            <div class="form__group">
+              <label class="form__label" for="o-guardian">Parent / Guardian Full Name *</label>
+              <input class="signature-field__input" type="text" id="o-guardian"
+                placeholder="Parent or guardian full legal name">
+            </div>
+          </div>
+
+          <p class="signature-field__disclaimer">
+            This electronic signature is legally binding under the E-SIGN Act and North Carolina's Uniform
+            Electronic Transactions Act. Your IP address, browser, and timestamp are recorded.
+          </p>
+        </div>
+
+        <p class="intake-error" id="error-4"></p>
+        <div class="intake-nav">
+          <button type="button" class="btn btn--secondary" id="back-3">← Back</button>
+          <button type="button" class="btn btn--primary" id="submit-btn">Submit &amp; Continue →</button>
+        </div>
+      </div>
+
+
+      <!-- ====================================================
+           STEP 5 — Billing Setup
+           ==================================================== -->
+      <div class="intake-panel" id="panel-5">
+        <p class="intake-panel__title">Set Up Billing</p>
+
+        <div style="background:var(--color-dark-gray);border:1px solid var(--color-mid-gray);border-radius:var(--border-radius-lg);padding:var(--space-xl);margin-bottom:var(--space-xl);text-align:center;">
+          <p style="font-size:2rem;margin-bottom:var(--space-md);">✅</p>
+          <p style="font-size:var(--text-base);color:var(--color-white);font-weight:500;margin-bottom:var(--space-sm);max-width:none;">
+            Waiver signed — you're almost done.
+          </p>
+          <p style="font-size:var(--text-sm);color:var(--color-gray);margin-bottom:var(--space-lg);max-width:none;">
+            The last step is setting up your billing. You'll be taken to our secure payment page
+            to enter your card details. Your first charge won't happen until your billing date.
+          </p>
+
+          <!-- Plan summary -->
+          <div id="billing-plan-summary" style="background:var(--color-black);border-radius:var(--border-radius);padding:var(--space-md) var(--space-lg);margin-bottom:var(--space-lg);display:inline-block;min-width:200px;">
+            <p style="font-size:var(--text-xs);text-transform:uppercase;letter-spacing:0.1em;color:var(--color-gray);margin-bottom:4px;max-width:none;">Selected Plan</p>
+            <p style="font-family:var(--font-heading);font-size:var(--text-xl);color:var(--color-white);margin:0;max-width:none;" id="billing-plan-name">—</p>
+            <p style="font-size:var(--text-sm);color:var(--color-gray);margin:0;max-width:none;" id="billing-plan-price"></p>
+          </div>
+
+          <p class="intake-error" id="error-5" style="text-align:center;"></p>
+
+          <button type="button" class="btn btn--primary" id="billing-btn" style="width:100%;justify-content:center;padding:var(--space-md);">
+            Set Up Billing →
+          </button>
+        </div>
+
+        <p style="font-size:var(--text-xs);color:var(--color-gray);text-align:center;max-width:none;">
+          Secured by Stripe. True Jiu Jitsu never stores your card details.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <p style="font-size:var(--text-xs);color:var(--color-gray);text-align:center;margin-top:var(--space-xl);">
+    True Jiu Jitsu &amp; Fitness &nbsp;·&nbsp; Hickory, NC
+  </p>
+
+  <script src="/js/onboard.js"></script>
+
+</body>
+</html>

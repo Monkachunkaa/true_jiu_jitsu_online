@@ -269,31 +269,16 @@ function renderMembers(members) {
    Set up filter pills
    ---------------------------------------------------------- */
 function setupFilters() {
-  // Status filter
-  document.getElementById('status-filters')?.addEventListener('click', (e) => {
-    const pill = e.target.closest('.filter-pill');
-    if (!pill) return;
-    document.querySelectorAll('#status-filters .filter-pill').forEach(p => {
-      p.classList.remove('filter-pill--active');
-    });
-    pill.classList.add('filter-pill--active');
-    activeStatusFilter = pill.dataset.status;
+  document.getElementById('status-filter')?.addEventListener('change', (e) => {
+    activeStatusFilter = e.target.value;
     applyFilters();
   });
 
-  // Online access filter
-  document.getElementById('online-filters')?.addEventListener('click', (e) => {
-    const pill = e.target.closest('.filter-pill');
-    if (!pill) return;
-    document.querySelectorAll('#online-filters .filter-pill').forEach(p => {
-      p.classList.remove('filter-pill--active');
-    });
-    pill.classList.add('filter-pill--active');
-    activeOnlineFilter = pill.dataset.online;
+  document.getElementById('online-filter')?.addEventListener('change', (e) => {
+    activeOnlineFilter = e.target.value;
     applyFilters();
   });
 
-  // Search
   document.getElementById('member-search')?.addEventListener('input', applyFilters);
 }
 
@@ -612,21 +597,21 @@ function buildPage(content) {
       <input class="form__input" type="text" id="member-search"
         placeholder="Search by name, email, phone…" style="max-width:240px;flex-shrink:0;">
 
-      <!-- Status filter pills -->
-      <div class="filter-pills" id="status-filters" role="tablist" aria-label="Filter by status">
-        <button class="filter-pill filter-pill--active" data-status="" role="tab">All</button>
-        <button class="filter-pill" data-status="active"    role="tab">Active</button>
-        <button class="filter-pill" data-status="past_due"  role="tab">Past Due</button>
-        <button class="filter-pill" data-status="pending"   role="tab">Pending</button>
-        <button class="filter-pill" data-status="cancelled" role="tab">Cancelled</button>
-      </div>
+      <!-- Status filter dropdown -->
+      <select class="form__select" id="status-filter" style="max-width:160px;" aria-label="Filter by status">
+        <option value="">All Statuses</option>
+        <option value="active">Active</option>
+        <option value="past_due">Past Due</option>
+        <option value="pending">Pending</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
 
-      <!-- Online access filter pills -->
-      <div class="filter-pills" id="online-filters" role="tablist" aria-label="Filter by online access">
-        <button class="filter-pill filter-pill--active" data-online=""    role="tab">All</button>
-        <button class="filter-pill" data-online="yes" role="tab">Has Online</button>
-        <button class="filter-pill" data-online="no"  role="tab">No Online</button>
-      </div>
+      <!-- Online access filter dropdown -->
+      <select class="form__select" id="online-filter" style="max-width:180px;" aria-label="Filter by online access">
+        <option value="">All Members</option>
+        <option value="yes">Has Online Access</option>
+        <option value="no">No Online Access</option>
+      </select>
     </div>
 
     <!-- Members table -->

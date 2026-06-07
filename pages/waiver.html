@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Participation Waiver — True Jiu Jitsu</title>
+  <meta name="description" content="Sign the True Jiu Jitsu participation waiver, release, and hold harmless agreement.">
+  <link rel="icon" type="image/webp" href="/img/tjj_favicon.webp">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/intake.css">
+</head>
+<body class="intake-body">
+
+  <!-- Header -->
+  <div class="intake-header">
+    <img src="/img/true_jiu_jitsu_logo_white.webp" alt="True Jiu Jitsu">
+    <p class="intake-header__subtitle">Participation Waiver, Release &amp; Hold Harmless Agreement</p>
+  </div>
+
+  <!-- Card -->
+  <div class="intake-card" id="waiver-card">
+    <div class="intake-card__header">
+      <h1 class="intake-card__title" id="card-title">Your Information</h1>
+    </div>
+    <div class="intake-card__body">
+
+      <!-- Step indicator -->
+      <div class="step-indicator" id="step-indicator" aria-label="Progress">
+        <div class="step-indicator__step">
+          <div class="step-indicator__dot step-indicator__dot--active" id="dot-1">1</div>
+        </div>
+        <div class="step-indicator__line" id="line-1"></div>
+        <div class="step-indicator__step">
+          <div class="step-indicator__dot" id="dot-2">2</div>
+        </div>
+        <div class="step-indicator__line" id="line-2"></div>
+        <div class="step-indicator__step">
+          <div class="step-indicator__dot" id="dot-3">3</div>
+        </div>
+      </div>
+
+      <!-- ====================================================
+           STEP 1 — Personal Information
+           ==================================================== -->
+      <div class="intake-panel intake-panel--active" id="panel-1">
+        <p class="intake-panel__title">Section A — Participant Information</p>
+        <div class="form">
+
+          <!-- Name -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
+            <div class="form__group">
+              <label class="form__label" for="w-first-name">First Name *</label>
+              <input class="form__input" type="text" id="w-first-name" autocomplete="given-name" required>
+            </div>
+            <div class="form__group">
+              <label class="form__label" for="w-last-name">Last Name *</label>
+              <input class="form__input" type="text" id="w-last-name" autocomplete="family-name" required>
+            </div>
+          </div>
+
+          <!-- DOB + Minor -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
+            <div class="form__group">
+              <label class="form__label" for="w-dob">Date of Birth *</label>
+              <input class="form__input" type="date" id="w-dob" required>
+            </div>
+            <div class="form__group" style="display:flex;align-items:flex-end;padding-bottom:2px;">
+              <label class="toggle" style="align-items:center;gap:var(--space-sm);">
+                <input type="checkbox" class="toggle__input" id="w-is-minor">
+                <div class="toggle__track"><div class="toggle__thumb"></div></div>
+                <span style="font-size:var(--text-sm);color:var(--color-gray);">Under 18</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Minor fields -->
+          <div class="minor-fields" id="minor-fields" style="display:none;">
+            <p style="font-size:var(--text-sm);color:var(--color-gray);margin-bottom:var(--space-sm);max-width:none;">
+              Parent or guardian must provide their name below and sign the waiver on behalf of the participant.
+            </p>
+          </div>
+
+          <!-- Contact -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
+            <div class="form__group">
+              <label class="form__label" for="w-phone">Phone Number *</label>
+              <input class="form__input" type="tel" id="w-phone" autocomplete="tel" placeholder="(555) 000-0000" required>
+            </div>
+            <div class="form__group">
+              <label class="form__label" for="w-email">Email Address *</label>
+              <input class="form__input" type="email" id="w-email" autocomplete="email" placeholder="you@example.com" required>
+            </div>
+          </div>
+
+          <!-- Emergency Contact -->
+          <p class="intake-panel__title" style="margin-top:var(--space-lg);">Emergency Contact</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
+            <div class="form__group">
+              <label class="form__label" for="w-ec-name">Contact Name *</label>
+              <input class="form__input" type="text" id="w-ec-name" required>
+            </div>
+            <div class="form__group">
+              <label class="form__label" for="w-ec-phone">Contact Phone *</label>
+              <input class="form__input" type="tel" id="w-ec-phone" placeholder="(555) 000-0000" required>
+            </div>
+          </div>
+
+          <p class="intake-error" id="error-1"></p>
+
+          <div class="intake-nav intake-nav--right">
+            <button type="button" class="btn btn--primary" id="next-1">Next →</button>
+          </div>
+
+        </div>
+      </div>
+
+
+      <!-- ====================================================
+           STEP 2 — Waiver Sections B–G
+           ==================================================== -->
+      <div class="intake-panel" id="panel-2">
+        <p class="intake-panel__title">Sections B–G — Read &amp; Agree</p>
+        <p style="font-size:var(--text-sm);color:var(--color-gray);margin-bottom:var(--space-lg);max-width:none;">
+          Please read each section carefully and check the box to confirm your agreement before proceeding.
+        </p>
+
+        <!-- Section B -->
+        <div class="waiver-section" id="section-b">
+          <p class="waiver-section__label">Section B — Assumption of Risk</p>
+          <p class="waiver-section__text">
+            Brazilian Jiu-Jitsu and related training involve inherent risks, including the risk of serious injury
+            or death. By participating, you acknowledge and voluntarily assume all such risks associated with
+            these activities.
+          </p>
+          <label class="waiver-section__agree">
+            <input type="checkbox" id="agree-b" class="waiver-checkbox">
+            <span class="waiver-section__agree-label">
+              <strong>I have read and agree</strong> to the Assumption of Risk statement above.
+            </span>
+          </label>
+        </div>
+
+        <!-- Section C -->
+        <div class="waiver-section" id="section-c">
+          <p class="waiver-section__label">Section C — Medical Responsibility</p>
+          <p class="waiver-section__text">
+            I confirm that I am physically able and/or medically cleared to participate in Brazilian Jiu-Jitsu
+            and related activities. I accept full responsibility for my medical condition and any related expenses.
+          </p>
+          <label class="waiver-section__agree">
+            <input type="checkbox" id="agree-c" class="waiver-checkbox">
+            <span class="waiver-section__agree-label">
+              <strong>I have read and agree</strong> to the Medical Responsibility statement above.
+            </span>
+          </label>
+        </div>
+
+        <!-- Section D -->
+        <div class="waiver-section" id="section-d">
+          <p class="waiver-section__label">Section D — Liability Waiver &amp; Release (North Carolina)</p>
+          <p class="waiver-section__text">
+            I hereby release True Jiu-Jitsu and Fitness, its owners, staff, instructors, and affiliates from
+            any liability for injury or death arising from participation, including ordinary negligence, but not
+            for gross negligence or intentional wrongdoing.
+          </p>
+          <label class="waiver-section__agree">
+            <input type="checkbox" id="agree-d" class="waiver-checkbox">
+            <span class="waiver-section__agree-label">
+              <strong>I have read and agree</strong> to the Liability Waiver &amp; Release statement above.
+            </span>
+          </label>
+        </div>
+
+        <!-- Section E -->
+        <div class="waiver-section" id="section-e">
+          <p class="waiver-section__label">Section E — Hold Harmless &amp; Indemnification</p>
+          <p class="waiver-section__text">
+            I agree to defend, indemnify, and hold harmless True Jiu-Jitsu and Fitness and related parties
+            from any claims arising from my participation, my own negligence, or injuries caused to others.
+            I acknowledge responsibility for attorney's fees where permitted by North Carolina law and agree
+            not to sue other students for ordinary supervised contact.
+          </p>
+          <label class="waiver-section__agree">
+            <input type="checkbox" id="agree-e" class="waiver-checkbox">
+            <span class="waiver-section__agree-label">
+              <strong>I have read and agree</strong> to the Hold Harmless &amp; Indemnification statement above.
+            </span>
+          </label>
+        </div>
+
+        <!-- Section F -->
+        <div class="waiver-section" id="section-f">
+          <p class="waiver-section__label">Section F — Gym Rules &amp; Conduct</p>
+          <p class="waiver-section__text">
+            I agree to follow all gym safety, hygiene, and anti-bullying rules, and understand that misconduct
+            may result in suspension or termination of participation.
+          </p>
+          <label class="waiver-section__agree">
+            <input type="checkbox" id="agree-f" class="waiver-checkbox">
+            <span class="waiver-section__agree-label">
+              <strong>I have read and agree</strong> to the Gym Rules &amp; Conduct statement above.
+            </span>
+          </label>
+        </div>
+
+        <!-- Section G — Photo Release (optional) -->
+        <div class="waiver-section" id="section-g" style="border-color:transparent;background:transparent;border-style:dashed;">
+          <p class="waiver-section__label" style="color:var(--color-gray);">Section G — Photo &amp; Media Release (Optional)</p>
+          <p class="waiver-section__text">
+            Do you allow True Jiu-Jitsu and Fitness to use photos or videos of you for promotional media?
+          </p>
+          <label class="waiver-section__agree">
+            <input type="checkbox" id="agree-g">
+            <span class="waiver-section__agree-label">
+              Yes, I allow the use of my photo or video for promotional purposes.
+            </span>
+          </label>
+        </div>
+
+        <p class="intake-error" id="error-2"></p>
+
+        <div class="intake-nav">
+          <button type="button" class="btn btn--secondary" id="back-1">← Back</button>
+          <button type="button" class="btn btn--primary" id="next-2">Next →</button>
+        </div>
+      </div>
+
+
+      <!-- ====================================================
+           STEP 3 — Signature + Submit
+           ==================================================== -->
+      <div class="intake-panel" id="panel-3">
+        <p class="intake-panel__title">Section H — Electronic Signature</p>
+
+        <div class="signature-field">
+          <p class="waiver-section__text">
+            By typing your full legal name below, you confirm that you have read and agree to all sections of
+            this participation waiver, release, and hold harmless agreement. If the participant is under 18,
+            the parent or guardian must sign.
+          </p>
+
+          <div class="form__group">
+            <label class="form__label" for="w-signature">
+              Type your full name to sign *
+            </label>
+            <input class="signature-field__input" type="text" id="w-signature"
+              placeholder="Your full legal name" autocomplete="name" required>
+          </div>
+
+          <!-- Guardian name (shown only if minor) -->
+          <div id="guardian-field" style="display:none;margin-top:var(--space-lg);">
+            <div class="form__group">
+              <label class="form__label" for="w-guardian">Parent / Guardian Full Name *</label>
+              <input class="signature-field__input" type="text" id="w-guardian"
+                placeholder="Parent or guardian full legal name" required>
+            </div>
+          </div>
+
+          <p class="signature-field__disclaimer">
+            This electronic signature is legally binding under the Electronic Signatures in Global and
+            National Commerce Act (E-SIGN) and North Carolina's Uniform Electronic Transactions Act.
+            Your IP address, browser, and timestamp are recorded.
+          </p>
+        </div>
+
+        <p class="intake-error" id="error-3"></p>
+
+        <div class="intake-nav">
+          <button type="button" class="btn btn--secondary" id="back-2">← Back</button>
+          <button type="button" class="btn btn--primary" id="submit-btn">
+            Submit Waiver
+          </button>
+        </div>
+      </div>
+
+
+      <!-- ====================================================
+           SUCCESS
+           ==================================================== -->
+      <div class="intake-panel" id="panel-success">
+        <div class="intake-success">
+          <div class="intake-success__icon">✅</div>
+          <h2 class="intake-success__title">Waiver Signed</h2>
+          <p class="intake-success__text">
+            Thank you — your waiver has been received and your electronic signature recorded.
+            A confirmation has been sent to your email address.
+          </p>
+          <p style="font-size:var(--text-sm);color:var(--color-gray);max-width:none;">
+            See you on the mats!
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <p style="font-size:var(--text-xs);color:var(--color-gray);text-align:center;margin-top:var(--space-xl);">
+    True Jiu Jitsu &amp; Fitness &nbsp;·&nbsp; Hickory, NC
+  </p>
+
+  <script src="/js/waiver.js"></script>
+
+</body>
+</html>

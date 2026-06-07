@@ -104,6 +104,18 @@ function renderAdminShell(activePage = '', pageTitle = '') {
         ${iconPlaylist()}
         <span>Membership Plans</span>
       </a>
+      <a href="/pages/admin/waivers.html"
+         class="admin-nav__item ${activePage === 'waivers' ? 'admin-nav__item--active' : ''}"
+         data-page="waivers">
+        ${iconWaivers()}
+        <span>Waivers</span>
+      </a>
+      <a href="/pages/admin/announcements.html"
+         class="admin-nav__item ${activePage === 'announcements' ? 'admin-nav__item--active' : ''}"
+         data-page="announcements">
+        ${iconAnnouncement()}
+        <span>Announcements</span>
+      </a>
       <a href="/pages/admin/analytics.html"
          class="admin-nav__item ${activePage === 'analytics' ? 'admin-nav__item--active' : ''}"
          data-page="analytics">
@@ -256,6 +268,12 @@ function iconBack() {
 }
 function iconSignOut() {
   return `<svg class="admin-nav__icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`;
+}
+function iconWaivers() {
+  return `<svg class="admin-nav__icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg>`;
+}
+function iconAnnouncement() {
+  return `<svg class="admin-nav__icon" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>`;
 }
 function iconMenu() {
   return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>`;

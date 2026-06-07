@@ -49,3 +49,13 @@
   from = "/account"
   to   = "/pages/account.html"
   status = 200
+
+[[redirects]]
+  from = "/waiver"
+  to   = "/pages/waiver.html"
+  status = 200
+
+[[redirects]]
+  from = "/join"
+  to   = "/pages/onboard.html"
+  status = 200
