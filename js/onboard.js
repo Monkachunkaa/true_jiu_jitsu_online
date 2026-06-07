@@ -334,6 +334,7 @@ function wireMinorToggle() {
    INIT
    ---------------------------------------------------------- */
 document.addEventListener('DOMContentLoaded', async () => {
+  document.body.classList.add('page-ready');
   showPanel(1);
   wireWaiverSections();
   wireMinorToggle();
