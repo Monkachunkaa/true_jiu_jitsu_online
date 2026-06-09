@@ -147,6 +147,8 @@ exports.handler = async (event) => {
   const fromAddress = process.env.SES_FROM_ADDRESS;
   if (!fromAddress) return respond(500, { error: 'SES_FROM_ADDRESS not configured' });
 
+  const fromFormatted = `True Jiu-Jitsu <${fromAddress}>`;
+
   /* ----------------------------------------------------------
      Send emails one by one.
      We track sent / failed counts and never throw — a single
@@ -161,7 +163,7 @@ exports.handler = async (event) => {
 
     try {
       await ses.sendEmail({
-        Source:      fromAddress,
+        Source:      fromFormatted,
         Destination: { ToAddresses: [member.email] },
         Message: {
           Subject: { Data: subject, Charset: 'UTF-8' },

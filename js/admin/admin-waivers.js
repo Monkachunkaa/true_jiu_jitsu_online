@@ -229,26 +229,6 @@ function buildPage(content) {
       </div>
     </div>
 
-    <!-- Stats -->
-    <div class="stat-grid" style="margin-bottom:var(--space-xl);">
-      <div class="stat-card">
-        <p class="stat-card__label">Total Submissions</p>
-        <p class="stat-card__value" id="stat-total">—</p>
-      </div>
-      <div class="stat-card">
-        <p class="stat-card__label">Member Onboardings</p>
-        <p class="stat-card__value" id="stat-onboarding">—</p>
-      </div>
-      <div class="stat-card">
-        <p class="stat-card__label">Drop-in Waivers</p>
-        <p class="stat-card__value" id="stat-dropin">—</p>
-      </div>
-      <div class="stat-card">
-        <p class="stat-card__label">Photo Release Granted</p>
-        <p class="stat-card__value" id="stat-photo">—</p>
-      </div>
-    </div>
-
     <!-- Waivers table -->
     <div id="waivers-table-wrap">
       <div class="spinner" style="margin:var(--space-2xl) auto;"></div>
@@ -283,12 +263,6 @@ function buildPage(content) {
   await loadWaivers();
   renderWaivers(allWaivers);
   setupFilters();
-
-  // Stats
-  document.getElementById('stat-total').textContent      = allWaivers.length;
-  document.getElementById('stat-onboarding').textContent = allWaivers.filter(w => w.submission_type === 'onboarding').length;
-  document.getElementById('stat-dropin').textContent     = allWaivers.filter(w => w.submission_type === 'drop-in').length;
-  document.getElementById('stat-photo').textContent      = allWaivers.filter(w => w.photo_release).length;
 
   // Modal
   document.getElementById('close-waiver-modal')?.addEventListener('click', closeWaiverModal);

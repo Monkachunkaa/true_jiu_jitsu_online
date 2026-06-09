@@ -97,7 +97,7 @@ async function sendConfirmationEmail(email, name, mode) {
 </body></html>`;
 
   await ses.sendEmail({
-    Source:      fromAddress,
+    Source:      `True Jiu-Jitsu <${fromAddress}>`,
     Destination: { ToAddresses: [email] },
     Message: {
       Subject: { Data: subject, Charset: 'UTF-8' },
@@ -117,7 +117,7 @@ async function sendAdminNotification(data, mode) {
   const adminEmail   = process.env.WAIVER_NOTIFICATION_EMAIL || process.env.SES_TO_ADDRESS;
   if (!fromAddress || !adminEmail) return;
 
-  const subject = `New ${mode === 'onboarding' ? 'member onboarding' : 'drop-in waiver'} — ${data.firstName} ${data.lastName}`;
+  const subject = `New waiver — ${data.firstName} ${data.lastName}`;
   const text    = [
     `New waiver submitted`,
     ``,
@@ -135,7 +135,7 @@ async function sendAdminNotification(data, mode) {
   ].filter(Boolean).join('\n');
 
   await ses.sendEmail({
-    Source:      fromAddress,
+    Source:      `True Jiu-Jitsu <${fromAddress}>`,
     Destination: { ToAddresses: [adminEmail] },
     Message: {
       Subject: { Data: subject, Charset: 'UTF-8' },

@@ -20,7 +20,7 @@ const ses = new AWS.SES({
   region:          process.env.TJJ_AWS_REGION,
 });
 
-const FROM_NAME    = 'True Jiu Jitsu Online';
+const FROM_NAME    = 'True Jiu-Jitsu';
 const FROM_ADDRESS = process.env.SES_FROM_ADDRESS
   ? `${FROM_NAME} <${process.env.SES_FROM_ADDRESS}>`
   : null;
@@ -524,7 +524,7 @@ async function sendEmail({ to, name, type, extra = {} }) {
   else throw new Error(`Unknown email type: ${type}`);
 
   const params = {
-    Source:      FROM_RAW,   // bare email — SES verifies against the domain
+    Source:      FROM_ADDRESS,  // 'True Jiu-Jitsu <no-reply@truebjj.academy>'
     ReplyToAddresses: [],
     Destination: { ToAddresses: [to] },
     Message: {
