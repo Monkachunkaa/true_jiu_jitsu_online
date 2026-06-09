@@ -118,7 +118,7 @@ exports.handler = async (event) => {
   try { body = JSON.parse(event.body || '{}'); }
   catch { return respond(400, { error: 'Invalid JSON' }); }
 
-  const { subject, message } = body;
+  const { subject, message, excludeIds = [] } = body;
   if (!subject?.trim()) return respond(400, { error: 'Subject is required' });
   if (!message?.trim()) return respond(400, { error: 'Message is required' });
 
@@ -144,6 +144,11 @@ exports.handler = async (event) => {
     return respond(200, { sent: 0, skipped: 0, failed: 0, message: 'No eligible recipients' });
   }
 
+  // Filter out any members Daniel manually excluded in the UI
+  const excludeSet   = new Set(excludeIds);
+  const toSend       = members.filter(m => !excludeSet.has(m.id));
+  const skippedCount = members.length - toSend.length;
+
   const fromAddress = process.env.SES_FROM_ADDRESS;
   if (!fromAddress) return respond(500, { error: 'SES_FROM_ADDRESS not configured' });
 
@@ -154,11 +159,10 @@ exports.handler = async (event) => {
      We track sent / failed counts and never throw — a single
      failed send shouldn't abort the whole batch.
      ---------------------------------------------------------- */
-  let sent    = 0;
+  let sent   = 0;
   let failed  = 0;
-  const skipped = 0; // reserved for future use (e.g. invalid emails)
 
-  for (const member of members) {
+  for (const member of toSend) {
     const { html, text } = buildEmail(member.name, subject, message);
 
     try {
@@ -181,6 +185,6 @@ exports.handler = async (event) => {
     }
   }
 
-  console.log(`Announcement sent — subject: "${subject}", sent: ${sent}, failed: ${failed}`);
-  return respond(200, { sent, skipped, failed });
+  console.log(`Announcement sent — subject: "${subject}", sent: ${sent}, skipped: ${skippedCount}, failed: ${failed}`);
+  return respond(200, { sent, skipped: skippedCount, failed });
 };

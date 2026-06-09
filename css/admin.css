@@ -448,6 +448,87 @@
 
 
 /* ==========================
+   QUICK ACTION CARDS
+   Large clickable cards on the Home page
+   ========================== */
+.quick-action-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  background: var(--color-dark-gray);
+  border: 1px solid var(--color-mid-gray);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-xl);
+  text-decoration: none;
+  transition: border-color var(--transition-fast),
+              background var(--transition-fast),
+              transform var(--transition-fast);
+  cursor: pointer;
+}
+
+.quick-action-card:hover {
+  border-color: var(--color-red);
+  background: rgba(196, 30, 42, 0.06);
+  transform: translateY(-2px);
+}
+
+.quick-action-card__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--border-radius);
+  background: rgba(196, 30, 42, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.quick-action-card__icon svg {
+  width: 22px;
+  height: 22px;
+  stroke: var(--color-red-accessible);
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.quick-action-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.quick-action-card__title {
+  font-family: var(--font-heading);
+  font-size: var(--text-base);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-white);
+  margin-bottom: 4px;
+}
+
+.quick-action-card__desc {
+  font-size: var(--text-sm);
+  color: var(--color-gray);
+  line-height: 1.5;
+  max-width: none;
+  margin: 0;
+}
+
+.quick-action-card__arrow {
+  font-size: var(--text-lg);
+  color: var(--color-mid-gray);
+  flex-shrink: 0;
+  transition: color var(--transition-fast), transform var(--transition-fast);
+}
+
+.quick-action-card:hover .quick-action-card__arrow {
+  color: var(--color-red-accessible);
+  transform: translateX(4px);
+}
+
+
+/* ==========================
    TAG PICKER
    Searchable grouped tag selection component
    ========================== */

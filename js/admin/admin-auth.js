@@ -69,7 +69,7 @@ function renderAdminShell(activePage = '', pageTitle = '') {
          class="admin-nav__item ${activePage === 'dashboard' ? 'admin-nav__item--active' : ''}"
          data-page="dashboard">
         ${iconDashboard()}
-        <span>Dashboard</span>
+        <span>Home</span>
       </a>
       <a href="/pages/admin/videos.html"
          class="admin-nav__item ${activePage === 'videos' ? 'admin-nav__item--active' : ''}"

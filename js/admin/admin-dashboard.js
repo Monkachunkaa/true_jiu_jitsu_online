@@ -1,14 +1,9 @@
 /* ==========================================================
-   admin-dashboard.js — Admin dashboard
+   admin-dashboard.js — Home page
    True Jiu Jitsu Online
 
-   At-a-glance overview of the full platform:
-     - Gym members (active, pending, past due)
-     - Online members (active video subscribers)
-     - Estimated MRR (actual plan pricing + discounts)
-     - Content library count
-     - Alerts for members needing attention
-     - Recent activity (new members + recent videos)
+   Quick-access cards for the four most common admin actions,
+   plus a stat summary at the top.
    ========================================================== */
 
 (async function init() {
@@ -16,11 +11,12 @@
   const auth = await requireAdmin();
   if (!auth) return;
 
-  const content = renderAdminShell('dashboard', 'Dashboard');
+  const content = renderAdminShell('dashboard', 'Home');
 
   content.innerHTML = `
+
     <!-- Stat cards -->
-    <div class="stat-grid" id="stat-grid">
+    <div class="stat-grid" style="margin-bottom:var(--space-2xl);">
       <div class="stat-card">
         <p class="stat-card__label">Active Gym Members</p>
         <p class="stat-card__value" id="stat-gym-members">—</p>
@@ -37,45 +33,66 @@
         <p class="stat-card__delta">gym + online, after discounts</p>
       </div>
       <div class="stat-card">
-        <p class="stat-card__label">Content Library</p>
-        <p class="stat-card__value" id="stat-content">—</p>
-        <p class="stat-card__delta" id="stat-content-delta"></p>
+        <p class="stat-card__label">Needs Attention</p>
+        <p class="stat-card__value" id="stat-alerts" style="font-size:var(--text-lg);">—</p>
       </div>
     </div>
 
-    <!-- Alerts — only shown when there are members needing attention -->
-    <div id="alert-row" style="display:none;margin-top:var(--space-xl);"></div>
+    <!-- Alerts row -->
+    <div id="alert-row" style="display:none;margin-bottom:var(--space-2xl);"></div>
 
-    <!-- Two-column activity section -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-xl);margin-top:var(--space-2xl);">
+    <!-- Quick action cards -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-lg);">
 
-      <!-- Recent members -->
-      <div>
-        <div class="admin-section-header">
-          <h2>Recent Members</h2>
-          <a href="/pages/admin/gym-members.html" class="btn btn--secondary btn--sm">All Members</a>
+      <a href="/pages/admin/gym-members.html" class="quick-action-card">
+        <div class="quick-action-card__icon">
+          <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="12" y1="3" x2="12" y2="11" style="display:none"/><line x1="16" y1="11" x2="8" y2="11" style="display:none"/></svg>
         </div>
-        <div id="recent-members" style="margin-top:var(--space-md);">
-          <div class="spinner" style="margin:var(--space-xl) auto;"></div>
+        <div class="quick-action-card__body">
+          <h3 class="quick-action-card__title">Add Member</h3>
+          <p class="quick-action-card__desc">Enroll a new gym member and send their billing link.</p>
         </div>
-      </div>
+        <span class="quick-action-card__arrow">→</span>
+      </a>
 
-      <!-- Recent videos -->
-      <div>
-        <div class="admin-section-header">
-          <h2>Recent Videos</h2>
-          <a href="/pages/admin/videos.html" class="btn btn--secondary btn--sm">Add Video</a>
+      <a href="/pages/admin/announcements.html" class="quick-action-card">
+        <div class="quick-action-card__icon">
+          <svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
         </div>
-        <div id="recent-videos" style="margin-top:var(--space-md);">
-          <div class="spinner" style="margin:var(--space-xl) auto;"></div>
+        <div class="quick-action-card__body">
+          <h3 class="quick-action-card__title">Send Announcement</h3>
+          <p class="quick-action-card__desc">Broadcast an email to all active gym members.</p>
         </div>
-      </div>
+        <span class="quick-action-card__arrow">→</span>
+      </a>
+
+      <a href="/pages/admin/videos.html" class="quick-action-card">
+        <div class="quick-action-card__icon">
+          <svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+        </div>
+        <div class="quick-action-card__body">
+          <h3 class="quick-action-card__title">Upload Video</h3>
+          <p class="quick-action-card__desc">Add new instructional content to the library.</p>
+        </div>
+        <span class="quick-action-card__arrow">→</span>
+      </a>
+
+      <a href="/pages/admin/analytics.html" class="quick-action-card">
+        <div class="quick-action-card__icon">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        </div>
+        <div class="quick-action-card__body">
+          <h3 class="quick-action-card__title">View Analytics</h3>
+          <p class="quick-action-card__desc">Revenue, membership trends, and content engagement.</p>
+        </div>
+        <span class="quick-action-card__arrow">→</span>
+      </a>
 
     </div>
   `;
 
   /* ----------------------------------------------------------
-     Fetch everything in parallel
+     Fetch stats
      ---------------------------------------------------------- */
   const thisMonth = new Date().toISOString().slice(0, 7);
 
@@ -83,76 +100,34 @@
     { data: gymMembers },
     { data: onlineMembers },
     { data: plans },
-    { count: videoCount },
-    { count: publishedVideos },
-    { count: playlistCount },
-    { data: recentGym },
-    { data: recentVideos },
   ] = await Promise.all([
     window.supabaseClient
       .from('gym_members')
       .select('id, subscription_status, plan_id, discount_percent, joined_at'),
-
     window.supabaseClient
       .from('members')
       .select('id, subscription_status, subscribed_at'),
-
     window.supabaseClient
       .from('membership_plans')
-      .select('id, name, price_cents'),
-
-    window.supabaseClient
-      .from('videos')
-      .select('*', { count: 'exact', head: true }),
-
-    window.supabaseClient
-      .from('videos')
-      .select('*', { count: 'exact', head: true })
-      .eq('published', true),
-
-    window.supabaseClient
-      .from('playlists')
-      .select('*', { count: 'exact', head: true })
-      .eq('published', true),
-
-    window.supabaseClient
-      .from('gym_members')
-      .select('id, name, email, belt_rank, subscription_status, plan_id, joined_at')
-      .order('joined_at', { ascending: false })
-      .limit(5),
-
-    window.supabaseClient
-      .from('videos')
-      .select('id, title, thumbnail_url, created_at, published')
-      .order('created_at', { ascending: false })
-      .limit(5),
+      .select('id, price_cents'),
   ]);
 
-  /* ----------------------------------------------------------
-     Calculate stats
-     ---------------------------------------------------------- */
   const planMap = Object.fromEntries((plans || []).map(p => [p.id, p]));
 
   const activeGym    = (gymMembers || []).filter(m => m.subscription_status === 'active').length;
-  const pendingGym   = (gymMembers || []).filter(m => m.subscription_status === 'pending').length;
   const pastDueGym   = (gymMembers || []).filter(m => m.subscription_status === 'past_due').length;
+  const pendingGym   = (gymMembers || []).filter(m => m.subscription_status === 'pending').length;
   const newGymMonth  = (gymMembers || []).filter(m => m.joined_at?.startsWith(thisMonth)).length;
-
-  const activeOnline   = (onlineMembers || []).filter(m => m.subscription_status === 'active').length;
+  const activeOnline = (onlineMembers || []).filter(m => m.subscription_status === 'active').length;
   const newOnlineMonth = (onlineMembers || []).filter(m => m.subscribed_at?.startsWith(thisMonth)).length;
 
-  // MRR — gym plans (actual price × discount) + online at $8.99
   const gymMRR = (gymMembers || [])
     .filter(m => m.subscription_status === 'active' && m.plan_id)
     .reduce((sum, m) => {
-      const plan  = planMap[m.plan_id];
-      const base  = plan?.price_cents || 0;
-      const disc  = m.discount_percent || 0;
-      return sum + Math.round(base * (1 - disc / 100));
+      const plan = planMap[m.plan_id];
+      return sum + Math.round((plan?.price_cents || 0) * (1 - (m.discount_percent || 0) / 100));
     }, 0);
-
-  const onlineMRR = activeOnline * 899;
-  const totalMRR  = gymMRR + onlineMRR;
+  const totalMRR = gymMRR + activeOnline * 899;
 
   const mrrStr = new Intl.NumberFormat('en-US', {
     style: 'currency', currency: 'USD', maximumFractionDigits: 0,
@@ -161,24 +136,26 @@
   /* ----------------------------------------------------------
      Populate stat cards
      ---------------------------------------------------------- */
-  document.getElementById('stat-gym-members').textContent  = activeGym;
-  document.getElementById('stat-gym-delta').textContent    = newGymMonth
-    ? `+${newGymMonth} this month`
-    : 'No new members this month';
+  document.getElementById('stat-gym-members').textContent = activeGym;
+  document.getElementById('stat-gym-delta').textContent   = newGymMonth
+    ? `+${newGymMonth} this month` : 'No new members this month';
 
   document.getElementById('stat-online-members').textContent = activeOnline;
   document.getElementById('stat-online-delta').textContent   = newOnlineMonth
-    ? `+${newOnlineMonth} this month`
-    : 'No new this month';
+    ? `+${newOnlineMonth} this month` : 'No new this month';
 
   document.getElementById('stat-mrr').textContent = mrrStr;
 
-  document.getElementById('stat-content').textContent  = `${publishedVideos ?? 0} videos`;
-  document.getElementById('stat-content-delta').textContent =
-    `${playlistCount ?? 0} playlists · ${videoCount ?? 0} total videos`;
+  const needsAttention = pastDueGym + pendingGym;
+  document.getElementById('stat-alerts').textContent = needsAttention > 0
+    ? `${needsAttention}`
+    : 'All good';
+  if (needsAttention > 0) {
+    document.getElementById('stat-alerts').style.color = 'var(--color-red-accessible)';
+  }
 
   /* ----------------------------------------------------------
-     Alerts — past due and pending billing
+     Alerts
      ---------------------------------------------------------- */
   const alertRow = document.getElementById('alert-row');
   const alerts   = [];
@@ -206,81 +183,10 @@
   }
 
   if (alerts.length) {
-    alertRow.style.display = 'flex';
-    alertRow.style.flexDirection = 'column';
-    alertRow.style.gap = 'var(--space-sm)';
-    alertRow.innerHTML = alerts.join('');
-  }
-
-  /* ----------------------------------------------------------
-     Recent gym members
-     ---------------------------------------------------------- */
-  const recentMembersEl = document.getElementById('recent-members');
-
-  if (!recentGym?.length) {
-    recentMembersEl.innerHTML = `
-      <div class="empty-state" style="padding:var(--space-xl) 0;">
-        <p>No members yet. <a href="/pages/admin/gym-members.html">Add your first member.</a></p>
-      </div>
-    `;
-  } else {
-    const beltColors = {
-      unknown: '#444', white: '#fff', blue: '#1a73e8',
-      purple: '#8b5cf6', brown: '#92400e', black: '#1a1a1a',
-    };
-
-    recentMembersEl.innerHTML = recentGym.map(m => {
-      const plan     = planMap[m.plan_id];
-      const belt     = (m.belt_rank || 'unknown').toLowerCase();
-      const beltColor = beltColors[belt] || '#444';
-      const beltText  = belt.charAt(0).toUpperCase() + belt.slice(1);
-      const isDark    = belt === 'white';
-
-      return `
-        <div class="content-list-item" style="padding:var(--space-sm) 0;border-bottom:1px solid var(--color-mid-gray);">
-          <div style="width:8px;height:8px;border-radius:50%;background:${m.subscription_status === 'active' ? '#2a9d5c' : m.subscription_status === 'pending' ? '#888' : '#c41e2a'};flex-shrink:0;"></div>
-          <div class="content-list-item__info" style="padding:0;">
-            <p class="content-list-item__title" style="font-size:var(--text-sm);">${m.name}</p>
-            <div class="content-list-item__meta">
-              <span style="display:inline-block;padding:1px 8px;border-radius:100px;font-size:10px;font-weight:600;background:${beltColor};color:${isDark ? '#111' : '#fff'};border:1px solid rgba(255,255,255,0.1);">${beltText}</span>
-              ${plan ? `<span>${plan.name}</span>` : ''}
-            </div>
-          </div>
-          <span style="font-size:var(--text-xs);color:var(--color-gray);">${new Date(m.joined_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-        </div>
-      `;
-    }).join('');
-  }
-
-  /* ----------------------------------------------------------
-     Recent videos
-     ---------------------------------------------------------- */
-  const recentVideosEl = document.getElementById('recent-videos');
-
-  if (!recentVideos?.length) {
-    recentVideosEl.innerHTML = `
-      <div class="empty-state" style="padding:var(--space-xl) 0;">
-        <p>No videos yet. <a href="/pages/admin/videos.html">Upload your first video.</a></p>
-      </div>
-    `;
-  } else {
-    recentVideosEl.innerHTML = recentVideos.map(v => `
-      <div class="content-list-item" style="padding:var(--space-sm) 0;border-bottom:1px solid var(--color-mid-gray);">
-        ${v.thumbnail_url
-          ? `<img src="${v.thumbnail_url}" class="content-list-item__thumbnail" alt="${v.title}" style="width:56px;">`
-          : `<div style="width:56px;aspect-ratio:16/9;background:var(--color-dark-gray);border-radius:var(--border-radius);flex-shrink:0;"></div>`
-        }
-        <div class="content-list-item__info" style="padding:0;">
-          <p class="content-list-item__title" style="font-size:var(--text-sm);">${v.title}</p>
-          <div class="content-list-item__meta">
-            <span>${new Date(v.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-          </div>
-        </div>
-        <span class="badge ${v.published ? 'badge--active' : 'badge--draft'}" style="font-size:10px;">
-          ${v.published ? 'Live' : 'Draft'}
-        </span>
-      </div>
-    `).join('');
+    alertRow.style.display        = 'flex';
+    alertRow.style.flexDirection  = 'column';
+    alertRow.style.gap            = 'var(--space-sm)';
+    alertRow.innerHTML            = alerts.join('');
   }
 
 })();
