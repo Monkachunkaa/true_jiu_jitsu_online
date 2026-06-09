@@ -591,6 +591,13 @@ function wireEvents() {
   document.getElementById('edit-video-form')?.addEventListener('submit', saveEditedVideo);
   safeModalClose('edit-modal-overlay', closeEditModal);
 
+  // Auto-open upload modal if ?action=upload in URL
+  const actionParam = new URLSearchParams(window.location.search).get('action');
+  if (actionParam === 'upload') {
+    window.history.replaceState({}, '', window.location.pathname);
+    openUploadModal();
+  }
+
   // Auto-open edit if ?edit=<id> in URL
   const editId = new URLSearchParams(window.location.search).get('edit');
   if (editId) openEditModal(editId);

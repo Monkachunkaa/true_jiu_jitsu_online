@@ -15,26 +15,26 @@
 
   content.innerHTML = `
 
-    <!-- Stat cards -->
-    <div class="stat-grid" style="margin-bottom:var(--space-2xl);">
-      <div class="stat-card">
+    <!-- Stat cards — compact row -->
+    <div class="stat-grid" style="margin-bottom:var(--space-lg);grid-template-columns:repeat(4,1fr);">
+      <div class="stat-card" style="padding:var(--space-md) var(--space-lg);">
         <p class="stat-card__label">Active Gym Members</p>
-        <p class="stat-card__value" id="stat-gym-members">—</p>
+        <p class="stat-card__value" id="stat-gym-members" style="font-size:var(--text-2xl);">&#x2014;</p>
         <p class="stat-card__delta" id="stat-gym-delta"></p>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" style="padding:var(--space-md) var(--space-lg);">
         <p class="stat-card__label">Active Online Members</p>
-        <p class="stat-card__value" id="stat-online-members">—</p>
+        <p class="stat-card__value" id="stat-online-members" style="font-size:var(--text-2xl);">&#x2014;</p>
         <p class="stat-card__delta" id="stat-online-delta"></p>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" style="padding:var(--space-md) var(--space-lg);">
         <p class="stat-card__label">Est. Monthly Revenue</p>
-        <p class="stat-card__value" id="stat-mrr">—</p>
+        <p class="stat-card__value" id="stat-mrr" style="font-size:var(--text-2xl);">&#x2014;</p>
         <p class="stat-card__delta">gym + online, after discounts</p>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" style="padding:var(--space-md) var(--space-lg);">
         <p class="stat-card__label">Needs Attention</p>
-        <p class="stat-card__value" id="stat-alerts" style="font-size:var(--text-lg);">—</p>
+        <p class="stat-card__value" id="stat-alerts" style="font-size:var(--text-2xl);">&#x2014;</p>
       </div>
     </div>
 
@@ -44,7 +44,7 @@
     <!-- Quick action cards -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-lg);">
 
-      <a href="/pages/admin/gym-members.html" class="quick-action-card">
+      <a href="/pages/admin/gym-members.html?action=add" class="quick-action-card">
         <div class="quick-action-card__icon">
           <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="12" y1="3" x2="12" y2="11" style="display:none"/><line x1="16" y1="11" x2="8" y2="11" style="display:none"/></svg>
         </div>
@@ -66,7 +66,7 @@
         <span class="quick-action-card__arrow">→</span>
       </a>
 
-      <a href="/pages/admin/videos.html" class="quick-action-card">
+      <a href="/pages/admin/videos.html?action=upload" class="quick-action-card">
         <div class="quick-action-card__icon">
           <svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
         </div>

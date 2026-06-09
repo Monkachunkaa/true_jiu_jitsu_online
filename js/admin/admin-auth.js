@@ -61,10 +61,9 @@ function renderAdminShell(activePage = '', pageTitle = '') {
       <img src="/img/true_jiu_jitsu_logo_white.webp" alt="True Jiu Jitsu">
     </div>
 
-    <p class="admin-sidebar__label">Content</p>
-
     <!-- Navigation -->
     <nav class="admin-nav" aria-label="Admin navigation">
+
       <a href="/pages/admin/index.html"
          class="admin-nav__item ${activePage === 'dashboard' ? 'admin-nav__item--active' : ''}"
          data-page="dashboard">

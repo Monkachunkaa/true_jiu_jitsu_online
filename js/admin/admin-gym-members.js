@@ -727,6 +727,19 @@ function buildPage(content) {
     window.history.replaceState({}, '', window.location.pathname);
   }
 
+  if (params.get('action') === 'add') {
+    window.history.replaceState({}, '', window.location.pathname);
+    // Wait for data and DOM to be ready before opening
+    await loadData();
+    updateStats();
+    applyFilters();
+    setupFilters();
+    wireDiscountSection('add-member');
+    wireDiscountSection('edit-member');
+    openAddModal();
+    return;
+  }
+
   await loadData();
   updateStats();
   applyFilters();

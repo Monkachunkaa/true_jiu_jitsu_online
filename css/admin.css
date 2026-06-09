@@ -40,10 +40,13 @@
 .admin-sidebar__logo {
   padding: var(--space-xl) var(--space-lg);
   border-bottom: 1px solid var(--color-mid-gray);
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .admin-sidebar__logo img {
-  height: 42px;
+  height: 84px;
   width: auto;
 }
 
