@@ -4,19 +4,17 @@
 
    Shows all gym members in one table with an Online Access
    column indicating whether they also have an active video
-   subscription. Filter pills let Daniel slice by status
+   subscription. Filter dropdowns let Daniel slice by status
    and online access quickly.
    ========================================================== */
 
-let allGymMembers  = [];
-let allOnlineMembers = [];   // members table (video subscribers)
-let allPlans       = [];
-let editingId      = null;
+let allGymMembers    = [];
+let allOnlineMembers = [];
+let allPlans         = [];
+let editingId        = null;
 
-let activeStatusFilter = '';  // '', 'active', 'past_due', 'pending', 'cancelled'
-let activeOnlineFilter = '';  // '', 'yes', 'no'
-
-const BELT_RANKS = ['Unknown', 'White', 'Blue', 'Purple', 'Brown', 'Black'];
+let activeStatusFilter = '';
+let activeOnlineFilter = '';
 
 
 /* ----------------------------------------------------------
@@ -59,17 +57,6 @@ function statusBadge(status) {
   return `<span class="badge ${map[status] || 'badge--draft'}">${status || 'pending'}</span>`;
 }
 
-function beltBadge(belt) {
-  const colors = {
-    unknown: '#444444', white: '#ffffff', blue: '#1a73e8',
-    purple: '#8b5cf6', brown: '#92400e', black: '#1a1a1a',
-  };
-  const color    = colors[(belt || 'unknown').toLowerCase()] || '#444444';
-  const text     = (belt || 'Unknown').charAt(0).toUpperCase() + (belt || 'Unknown').slice(1);
-  const darkText = ['white'].includes((belt || '').toLowerCase());
-  return `<span style="display:inline-block;padding:2px 10px;border-radius:100px;font-size:10px;font-weight:600;background:${color};color:${darkText ? '#111' : '#fff'};border:1px solid rgba(255,255,255,0.1);">${text}</span>`;
-}
-
 function discountLabel(member) {
   if (!member.discount_percent) return '';
   const duration = member.discount_months ? `${member.discount_months}mo` : 'forever';
@@ -97,7 +84,7 @@ function getOnlineAccess(gymMember) {
 
 
 /* ----------------------------------------------------------
-   Discount section HTML
+   Discount section HTML — reused in both modals
    ---------------------------------------------------------- */
 function wireDiscountSection(prefix) {
   const sel  = document.getElementById(`${prefix}-discount-duration`);
@@ -109,7 +96,7 @@ function wireDiscountSection(prefix) {
 }
 
 function readDiscountFields(prefix) {
-  const pct  = parseInt(document.getElementById(`${prefix}-discount-percent`)?.value) || 0;
+  const pct = parseInt(document.getElementById(`${prefix}-discount-percent`)?.value) || 0;
   if (!pct) return { discountPercent: null, discountMonths: null };
   const sel    = document.getElementById(`${prefix}-discount-duration`);
   const months = sel?.value === 'months'
@@ -199,7 +186,6 @@ function renderMembers(members) {
         <thead>
           <tr>
             <th>Name</th>
-            <th>Belt</th>
             <th>Plan</th>
             <th>Status</th>
             <th>Online Access</th>
@@ -226,7 +212,6 @@ function renderMembers(members) {
           ${member.phone ? `<p style="margin:0;font-size:var(--text-xs);color:var(--color-gray);">${member.phone}</p>` : ''}
         </div>
       </td>
-      <td>${beltBadge(member.belt_rank)}</td>
       <td style="font-size:var(--text-sm);">
         ${plan
           ? `${plan.name} <span style="color:var(--color-gray);">(${formatPrice(plan.price_cents)}/mo)</span>${discountLabel(member)}`
@@ -266,7 +251,7 @@ function renderMembers(members) {
 
 
 /* ----------------------------------------------------------
-   Set up filter pills
+   Filter dropdowns
    ---------------------------------------------------------- */
 function setupFilters() {
   document.getElementById('status-filter')?.addEventListener('change', (e) => {
@@ -302,29 +287,35 @@ function closeAddModal() {
 
 async function saveMember(e) {
   e.preventDefault();
+
   const name   = document.getElementById('add-member-name').value.trim();
   const email  = document.getElementById('add-member-email').value.trim();
   const phone  = document.getElementById('add-member-phone').value.trim();
-  const belt   = document.getElementById('add-member-belt').value;
   const planId = document.getElementById('add-member-plan').value || null;
   const notes  = document.getElementById('add-member-notes').value.trim();
   const { discountPercent, discountMonths } = readDiscountFields('add-member');
 
   if (!name) { showToast('Name is required', 'error'); return; }
 
-  const saveBtn = document.getElementById('save-member-btn');
-  saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+  const saveBtn       = document.getElementById('save-member-btn');
+  saveBtn.disabled    = true;
+  saveBtn.textContent = 'Saving…';
 
   const { error } = await window.supabaseClient.from('gym_members').insert({
-    name, email: email || null, phone: phone || null,
-    belt_rank: belt || 'unknown', plan_id: planId,
-    notes: notes || null, discount_percent: discountPercent,
-    discount_months: discountMonths, subscription_status: 'pending',
+    name,
+    email:               email  || null,
+    phone:               phone  || null,
+    plan_id:             planId,
+    notes:               notes  || null,
+    discount_percent:    discountPercent,
+    discount_months:     discountMonths,
+    subscription_status: 'pending',
   });
 
   if (error) {
     showToast('Failed to add member', 'error');
-    saveBtn.disabled = false; saveBtn.textContent = 'Add Member';
+    saveBtn.disabled    = false;
+    saveBtn.textContent = 'Add Member';
     return;
   }
 
@@ -344,11 +335,10 @@ function openEditModal(memberId) {
   const member = allGymMembers.find(m => m.id === memberId);
   if (!member) return;
 
-  document.getElementById('edit-member-name').value  = member.name      || '';
-  document.getElementById('edit-member-email').value = member.email     || '';
-  document.getElementById('edit-member-phone').value = member.phone     || '';
-  document.getElementById('edit-member-belt').value  = member.belt_rank || 'unknown';
-  document.getElementById('edit-member-notes').value = member.notes     || '';
+  document.getElementById('edit-member-name').value  = member.name  || '';
+  document.getElementById('edit-member-email').value = member.email || '';
+  document.getElementById('edit-member-phone').value = member.phone || '';
+  document.getElementById('edit-member-notes').value = member.notes || '';
 
   const pctInput    = document.getElementById('edit-member-discount-percent');
   const durSelect   = document.getElementById('edit-member-discount-duration');
@@ -377,15 +367,15 @@ async function saveEditedMember(e) {
   const name   = document.getElementById('edit-member-name').value.trim();
   const email  = document.getElementById('edit-member-email').value.trim();
   const phone  = document.getElementById('edit-member-phone').value.trim();
-  const belt   = document.getElementById('edit-member-belt').value;
   const planId = document.getElementById('edit-member-plan').value || null;
   const notes  = document.getElementById('edit-member-notes').value.trim();
   const { discountPercent, discountMonths } = readDiscountFields('edit-member');
 
   if (!name) { showToast('Name is required', 'error'); return; }
 
-  const saveBtn = document.getElementById('save-edit-member-btn');
-  saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+  const saveBtn       = document.getElementById('save-edit-member-btn');
+  saveBtn.disabled    = true;
+  saveBtn.textContent = 'Saving…';
 
   const currentMember   = allGymMembers.find(m => m.id === editingId);
   const discountChanged = discountPercent !== (currentMember?.discount_percent || null)
@@ -394,24 +384,28 @@ async function saveEditedMember(e) {
   const { error } = await window.supabaseClient
     .from('gym_members')
     .update({
-      name, email: email || null, phone: phone || null,
-      belt_rank: belt || 'unknown', plan_id: planId,
-      notes: notes || null, updated_at: new Date().toISOString(),
+      name,
+      email:      email  || null,
+      phone:      phone  || null,
+      plan_id:    planId,
+      notes:      notes  || null,
+      updated_at: new Date().toISOString(),
     })
     .eq('id', editingId);
 
   if (error) {
     showToast('Failed to save changes', 'error');
-    saveBtn.disabled = false; saveBtn.textContent = 'Save Changes';
+    saveBtn.disabled    = false;
+    saveBtn.textContent = 'Save Changes';
     return;
   }
 
   if (discountChanged) {
     const { data: { session } } = await window.supabaseClient.auth.getSession();
     const res = await fetch('/.netlify/functions/admin-apply-gym-discount', {
-      method: 'POST',
+      method:  'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-      body: JSON.stringify({ gymMemberId: editingId, discountPercent, discountMonths }),
+      body:    JSON.stringify({ gymMemberId: editingId, discountPercent, discountMonths }),
     });
     if (!res.ok) showToast('Saved, but discount update failed — check Stripe manually', 'error');
   }
@@ -430,23 +424,26 @@ async function saveEditedMember(e) {
 async function sendBillingLink(memberId, btn) {
   const member = allGymMembers.find(m => m.id === memberId);
   if (!member) return;
-  if (!member.email) { showToast('This member has no email — add one first', 'error'); return; }
-  if (!member.plan_id) { showToast('No plan assigned — assign a plan first', 'error'); return; }
+  if (!member.email)   { showToast('This member has no email — add one first', 'error'); return; }
+  if (!member.plan_id) { showToast('No plan assigned — assign a plan first',   'error'); return; }
 
-  const originalText = btn.textContent;
-  btn.disabled = true; btn.textContent = 'Sending…';
+  const originalText  = btn.textContent;
+  btn.disabled        = true;
+  btn.textContent     = 'Sending…';
 
   const { data: { session } } = await window.supabaseClient.auth.getSession();
+
   const checkoutRes = await fetch('/.netlify/functions/create-gym-checkout', {
-    method: 'POST',
+    method:  'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-    body: JSON.stringify({ gymMemberId: memberId }),
+    body:    JSON.stringify({ gymMemberId: memberId }),
   });
   const { checkoutUrl, error: checkoutError } = await checkoutRes.json();
 
   if (checkoutError || !checkoutUrl) {
     showToast('Failed to create billing link', 'error');
-    btn.disabled = false; btn.textContent = originalText;
+    btn.disabled    = false;
+    btn.textContent = originalText;
     return;
   }
 
@@ -454,16 +451,22 @@ async function sendBillingLink(memberId, btn) {
   const priceStr = plan ? `$${(plan.price_cents / 100).toFixed(0)}` : '';
 
   const emailRes = await fetch('/.netlify/functions/send-email', {
-    method: 'POST',
+    method:  'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      type: 'gym-billing-invite', to: member.email, name: member.name,
+    body:    JSON.stringify({
+      type:  'gym-billing-invite',
+      to:    member.email,
+      name:  member.name,
       extra: { checkoutUrl, planName: plan?.name || 'Membership', priceStr },
     }),
   });
 
-  showToast(emailRes.ok ? `Billing link sent to ${member.email}` : 'Link created but email failed', emailRes.ok ? 'success' : 'error');
-  btn.disabled = false; btn.textContent = originalText;
+  showToast(
+    emailRes.ok ? `Billing link sent to ${member.email}` : 'Link created but email failed',
+    emailRes.ok ? 'success' : 'error'
+  );
+  btn.disabled    = false;
+  btn.textContent = originalText;
 }
 
 
@@ -477,13 +480,14 @@ async function cancelMembership(memberId) {
   if (member.stripe_subscription_id) {
     const { data: { session } } = await window.supabaseClient.auth.getSession();
     const res = await fetch('/.netlify/functions/admin-revoke-member', {
-      method: 'POST',
+      method:  'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-      body: JSON.stringify({ gymMemberId: memberId }),
+      body:    JSON.stringify({ gymMemberId: memberId }),
     });
     if (!res.ok) { showToast('Failed to cancel membership', 'error'); return; }
   } else {
-    await window.supabaseClient.from('gym_members')
+    await window.supabaseClient
+      .from('gym_members')
       .update({ subscription_status: 'cancelled', cancelled_at: new Date().toISOString() })
       .eq('id', memberId);
   }
@@ -503,8 +507,8 @@ function populatePlanDropdown(selectId, selectedId = null) {
   if (!select) return;
   select.innerHTML = `<option value="">No plan assigned</option>`;
   allPlans.filter(p => p.active).forEach(plan => {
-    const opt = document.createElement('option');
-    opt.value = plan.id;
+    const opt       = document.createElement('option');
+    opt.value       = plan.id;
     opt.textContent = `${plan.name} — ${formatPrice(plan.price_cents)}/mo`;
     if (plan.id === selectedId) opt.selected = true;
     select.appendChild(opt);
@@ -516,9 +520,9 @@ function populatePlanDropdown(selectId, selectedId = null) {
    Update stat cards
    ---------------------------------------------------------- */
 function updateStats() {
-  const active   = allGymMembers.filter(m => m.subscription_status === 'active').length;
-  const pastDue  = allGymMembers.filter(m => m.subscription_status === 'past_due').length;
-  const pending  = allGymMembers.filter(m => m.subscription_status === 'pending').length;
+  const active     = allGymMembers.filter(m => m.subscription_status === 'active').length;
+  const pastDue    = allGymMembers.filter(m => m.subscription_status === 'past_due').length;
+  const pending    = allGymMembers.filter(m => m.subscription_status === 'pending').length;
   const withOnline = allGymMembers.filter(m => getOnlineAccess(m)).length;
 
   const mrr = allGymMembers
@@ -544,9 +548,9 @@ async function loadData() {
     window.supabaseClient.from('members').select('id, name, email, subscription_status'),
     window.supabaseClient.from('membership_plans').select('*').order('display_order'),
   ]);
-  allGymMembers    = gymData   || [];
+  allGymMembers    = gymData    || [];
   allOnlineMembers = onlineData || [];
-  allPlans         = planData  || [];
+  allPlans         = planData   || [];
 }
 
 
@@ -556,9 +560,9 @@ async function loadData() {
 function buildPage(content) {
   const actions = getAdminActions();
   if (actions) {
-    const plansLink     = document.createElement('a');
-    plansLink.href      = '/pages/admin/gym-plans.html';
-    plansLink.className = 'btn btn--ghost btn--sm';
+    const plansLink       = document.createElement('a');
+    plansLink.href        = '/pages/admin/gym-plans.html';
+    plansLink.className   = 'btn btn--ghost btn--sm';
     plansLink.textContent = 'Manage Plans';
     actions.appendChild(plansLink);
 
@@ -596,8 +600,6 @@ function buildPage(content) {
     <div style="display:flex;flex-wrap:wrap;gap:var(--space-md);align-items:center;margin-bottom:var(--space-lg);">
       <input class="form__input" type="text" id="member-search"
         placeholder="Search by name, email, phone…" style="max-width:240px;flex-shrink:0;">
-
-      <!-- Status filter dropdown -->
       <select class="form__select" id="status-filter" style="max-width:160px;" aria-label="Filter by status">
         <option value="">All Statuses</option>
         <option value="active">Active</option>
@@ -605,8 +607,6 @@ function buildPage(content) {
         <option value="pending">Pending</option>
         <option value="cancelled">Cancelled</option>
       </select>
-
-      <!-- Online access filter dropdown -->
       <select class="form__select" id="online-filter" style="max-width:180px;" aria-label="Filter by online access">
         <option value="">All Members</option>
         <option value="yes">Has Online Access</option>
@@ -624,7 +624,7 @@ function buildPage(content) {
          ADD MEMBER MODAL
          ==================================================== -->
     <div class="modal-overlay" id="add-member-overlay">
-      <div class="modal" style="max-width:520px;">
+      <div class="modal" style="max-width:500px;">
         <div class="modal__header">
           <h2 class="modal__title">Add Member</h2>
           <button class="modal__close" id="close-add-member" aria-label="Close">✕</button>
@@ -632,29 +632,24 @@ function buildPage(content) {
         <form class="form" id="add-member-form">
           <div class="form__group">
             <label class="form__label" for="add-member-name">Full Name *</label>
-            <input class="form__input" type="text" id="add-member-name" placeholder="e.g. John Smith" required>
+            <input class="form__input" type="text" id="add-member-name"
+              placeholder="e.g. John Smith" required>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
             <div class="form__group">
               <label class="form__label" for="add-member-email">Email</label>
-              <input class="form__input" type="email" id="add-member-email" placeholder="john@example.com">
+              <input class="form__input" type="email" id="add-member-email"
+                placeholder="john@example.com">
             </div>
             <div class="form__group">
               <label class="form__label" for="add-member-phone">Phone</label>
-              <input class="form__input" type="tel" id="add-member-phone" placeholder="(555) 000-0000">
+              <input class="form__input" type="tel" id="add-member-phone"
+                placeholder="(555) 000-0000">
             </div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
-            <div class="form__group">
-              <label class="form__label" for="add-member-belt">Belt Rank</label>
-              <select class="form__select" id="add-member-belt">
-                ${BELT_RANKS.map(b => `<option value="${b.toLowerCase()}">${b}</option>`).join('')}
-              </select>
-            </div>
-            <div class="form__group">
-              <label class="form__label" for="add-member-plan">Membership Plan</label>
-              <select class="form__select" id="add-member-plan"></select>
-            </div>
+          <div class="form__group">
+            <label class="form__label" for="add-member-plan">Membership Plan</label>
+            <select class="form__select" id="add-member-plan"></select>
           </div>
           ${discountSectionHTML('add-member')}
           <div class="form__group">
@@ -675,7 +670,7 @@ function buildPage(content) {
          EDIT MEMBER MODAL
          ==================================================== -->
     <div class="modal-overlay" id="edit-member-overlay">
-      <div class="modal" style="max-width:520px;">
+      <div class="modal" style="max-width:500px;">
         <div class="modal__header">
           <h2 class="modal__title">Edit Member</h2>
           <button class="modal__close" id="close-edit-member" aria-label="Close">✕</button>
@@ -695,17 +690,9 @@ function buildPage(content) {
               <input class="form__input" type="tel" id="edit-member-phone">
             </div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
-            <div class="form__group">
-              <label class="form__label" for="edit-member-belt">Belt Rank</label>
-              <select class="form__select" id="edit-member-belt">
-                ${BELT_RANKS.map(b => `<option value="${b.toLowerCase()}">${b}</option>`).join('')}
-              </select>
-            </div>
-            <div class="form__group">
-              <label class="form__label" for="edit-member-plan">Membership Plan</label>
-              <select class="form__select" id="edit-member-plan"></select>
-            </div>
+          <div class="form__group">
+            <label class="form__label" for="edit-member-plan">Membership Plan</label>
+            <select class="form__select" id="edit-member-plan"></select>
           </div>
           ${discountSectionHTML('edit-member')}
           <div class="form__group">

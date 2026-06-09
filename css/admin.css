@@ -884,6 +884,23 @@
 }
 
 @media (max-width: 768px) {
+
+  /* Slide the sidebar off-screen by default on mobile */
+  .admin-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+  }
+
+  /* Slide in when the hamburger is tapped */
+  .admin-sidebar.is-open {
+    transform: translateX(0);
+  }
+
+  /* Remove the left margin since the sidebar is hidden */
+  .admin-main {
+    margin-left: 0;
+  }
+
   .admin-topbar__hamburger {
     display: flex;
     align-items: center;

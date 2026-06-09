@@ -71,24 +71,6 @@ function renderAdminShell(activePage = '', pageTitle = '') {
         ${iconDashboard()}
         <span>Home</span>
       </a>
-      <a href="/pages/admin/videos.html"
-         class="admin-nav__item ${activePage === 'videos' ? 'admin-nav__item--active' : ''}"
-         data-page="videos">
-        ${iconVideo()}
-        <span>Videos</span>
-      </a>
-      <a href="/pages/admin/articles.html"
-         class="admin-nav__item ${activePage === 'articles' ? 'admin-nav__item--active' : ''}"
-         data-page="articles">
-        ${iconArticle()}
-        <span>Articles</span>
-      </a>
-      <a href="/pages/admin/playlists.html"
-         class="admin-nav__item ${activePage === 'playlists' ? 'admin-nav__item--active' : ''}"
-         data-page="playlists">
-        ${iconPlaylist()}
-        <span>Playlists</span>
-      </a>
 
       <p class="admin-sidebar__label" style="margin-top:var(--space-lg);">Members</p>
 
@@ -115,6 +97,27 @@ function renderAdminShell(activePage = '', pageTitle = '') {
          data-page="announcements">
         ${iconAnnouncement()}
         <span>Announcements</span>
+      </a>
+
+      <p class="admin-sidebar__label" style="margin-top:var(--space-lg);">Content</p>
+
+      <a href="/pages/admin/videos.html"
+         class="admin-nav__item ${activePage === 'videos' ? 'admin-nav__item--active' : ''}"
+         data-page="videos">
+        ${iconVideo()}
+        <span>Videos</span>
+      </a>
+      <a href="/pages/admin/articles.html"
+         class="admin-nav__item ${activePage === 'articles' ? 'admin-nav__item--active' : ''}"
+         data-page="articles">
+        ${iconArticle()}
+        <span>Articles</span>
+      </a>
+      <a href="/pages/admin/playlists.html"
+         class="admin-nav__item ${activePage === 'playlists' ? 'admin-nav__item--active' : ''}"
+         data-page="playlists">
+        ${iconPlaylist()}
+        <span>Playlists</span>
       </a>
       <a href="/pages/admin/analytics.html"
          class="admin-nav__item ${activePage === 'analytics' ? 'admin-nav__item--active' : ''}"
@@ -199,6 +202,11 @@ function renderAdminShell(activePage = '', pageTitle = '') {
 
   hamburger?.addEventListener('click', openSidebar);
   overlayEl?.addEventListener('click', closeSidebar);
+
+  // Close sidebar when a nav link is tapped on mobile
+  sidebarEl.querySelectorAll('.admin-nav__item').forEach(link => {
+    link.addEventListener('click', closeSidebar);
+  });
 
   return content;
 }
