@@ -126,8 +126,12 @@
   height: var(--nav-height);
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  /* Gap between hamburger, title, and actions */
+  gap: var(--space-md);
   backdrop-filter: blur(8px);
+  /* Prevent the topbar itself from ever overflowing its container */
+  min-width: 0;
+  overflow: hidden;
 }
 
 .admin-topbar__title {
@@ -136,12 +140,20 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-white);
+  /* Allow title to shrink so action buttons are never pushed off-screen */
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .admin-topbar__actions {
   display: flex;
   align-items: center;
   gap: var(--space-md);
+  /* Never let action buttons shrink or clip */
+  flex-shrink: 0;
 }
 
 .admin-content {
@@ -869,8 +881,21 @@
 
 
 /* ==========================
-   MOBILE SIDEBAR OVERLAY
+   ADMIN — base overflow guard
+   Prevents any admin page from causing horizontal scroll
+   regardless of what content is rendered into it.
    ========================== */
+.admin-main {
+  /* Hard cap — content must not push past the viewport edge */
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+.admin-content {
+  /* Ensure children that use percentage widths have a
+     well-defined containing block */
+  min-width: 0;
+}
 .admin-sidebar-overlay {
   display: none;
   position: fixed;
@@ -949,4 +974,85 @@
 .chart-card__canvas {
   width: 100% !important;
   max-height: 240px;
+}
+
+
+/* ==========================
+   CHOICE OPTION BUTTONS
+   The two-option "Add Member" picker used in the choice
+   modal on both the dashboard and gym-members pages.
+   ========================== */
+.choice-option-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  width: 100%;
+  background: var(--color-dark-gray);
+  border: 1px solid var(--color-mid-gray);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-lg) var(--space-xl);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--transition-fast),
+              background   var(--transition-fast);
+}
+
+.choice-option-btn:hover {
+  border-color: var(--color-red);
+  background: rgba(196, 30, 42, 0.06);
+}
+
+.choice-option-btn__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--border-radius);
+  background: rgba(196, 30, 42, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background var(--transition-fast);
+}
+
+.choice-option-btn:hover .choice-option-btn__icon {
+  background: rgba(196, 30, 42, 0.22);
+}
+
+.choice-option-btn__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.choice-option-btn__title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: var(--text-base);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-white);
+  max-width: none;
+}
+
+.choice-option-btn__desc {
+  margin: 2px 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-gray);
+  max-width: none;
+  transition: color var(--transition-fast);
+}
+
+.choice-option-btn:hover .choice-option-btn__desc {
+  color: var(--color-light-gray);
+}
+
+.choice-option-btn__arrow {
+  color: var(--color-mid-gray);
+  font-size: var(--text-lg);
+  flex-shrink: 0;
+  transition: color var(--transition-fast), transform var(--transition-fast);
+}
+
+.choice-option-btn:hover .choice-option-btn__arrow {
+  color: var(--color-red-accessible);
+  transform: translateX(4px);
 }

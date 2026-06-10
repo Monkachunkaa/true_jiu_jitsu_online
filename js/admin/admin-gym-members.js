@@ -3,9 +3,18 @@
    True Jiu Jitsu Online
 
    Shows all gym members in one table with an Online Access
-   column indicating whether they also have an active video
-   subscription. Filter dropdowns let Daniel slice by status
-   and online access quickly.
+   column. Members can have one of five statuses:
+
+     visitor  — signed waiver, no billing yet (created by
+                the waiver form for drop-ins and new faces)
+     pending  — admin assigned a plan, billing link sent,
+                awaiting payment setup
+     active   — billing live
+     past_due — payment failed
+     cancelled — left the gym
+
+   Filter dropdowns let Daniel slice by status and online
+   access quickly.
    ========================================================== */
 
 let allGymMembers    = [];
@@ -26,7 +35,6 @@ let activeOnlineFilter = '';
    ---------------------------------------------------------- */
 
 function formatPrice(cents) {
-  // Returns a dollar-formatted price string, e.g. "$150"
   return '$' + (cents / 100).toFixed(0);
 }
 
@@ -41,6 +49,7 @@ function statusBadge(status) {
     cancelled: 'badge--cancelled',
     inactive:  'badge--cancelled',
     pending:   'badge--draft',
+    visitor:   'badge--visitor',  // neutral blue — been in, no billing
   };
   return '<span class="badge ' + (map[status] || 'badge--draft') + '">' + (status || 'pending') + '</span>';
 }
@@ -60,7 +69,7 @@ function onlineBadge(hasOnline) {
 
 /* ----------------------------------------------------------
    Determine if a gym member has an active online subscription.
-   Checks online_member_id first, then falls back to email match.
+   Checks online_member_id first, then falls back to email.
    ---------------------------------------------------------- */
 function getOnlineAccess(gymMember) {
   if (!gymMember.email) return false;
@@ -73,10 +82,9 @@ function getOnlineAccess(gymMember) {
 
 
 /* ----------------------------------------------------------
-   Discount section helpers — reused in both add and edit modals
+   Discount section helpers — reused in both add/edit modals
    ---------------------------------------------------------- */
 
-// Wire up the duration dropdown to show/hide the months input
 function wireDiscountSection(prefix) {
   const sel  = document.getElementById(prefix + '-discount-duration');
   const wrap = document.getElementById(prefix + '-discount-months-wrap');
@@ -86,7 +94,6 @@ function wireDiscountSection(prefix) {
   });
 }
 
-// Read the discount fields from the form and return a clean object
 function readDiscountFields(prefix) {
   const pct = parseInt(document.getElementById(prefix + '-discount-percent')?.value) || 0;
   if (!pct) return { discountPercent: null, discountMonths: null };
@@ -97,7 +104,6 @@ function readDiscountFields(prefix) {
   return { discountPercent: pct, discountMonths: months };
 }
 
-// Returns the HTML for the discount section, pre-filled for edit mode
 function discountSectionHTML(prefix, existingPercent, existingMonths) {
   existingPercent = existingPercent || '';
   existingMonths  = existingMonths  || null;
@@ -106,7 +112,7 @@ function discountSectionHTML(prefix, existingPercent, existingMonths) {
   return `
     <div class="form__group">
       <label class="form__label">Discount <span style="color:var(--color-gray);font-weight:400;">(optional)</span></label>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
+      <div class="form__2col" style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
         <div>
           <label class="form__hint" style="display:block;margin-bottom:4px;">Percentage Off</label>
           <input class="form__input" type="number" id="${prefix}-discount-percent"
@@ -199,6 +205,15 @@ function renderMembers(members) {
     const plan      = allPlans.find(p => p.id === member.plan_id);
     const hasOnline = getOnlineAccess(member);
 
+    // Show "Send Billing Link" for visitors and pending members (no active billing yet)
+    const showBillingBtn = (
+      member.subscription_status === 'visitor' ||
+      member.subscription_status === 'pending' ||
+      (!member.stripe_subscription_id &&
+        member.subscription_status !== 'cancelled' &&
+        member.subscription_status !== 'active')
+    );
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>
@@ -220,7 +235,7 @@ function renderMembers(members) {
       <td>
         <div class="data-table__actions">
           <button class="btn btn--ghost btn--sm js-edit-member" data-id="${member.id}">Edit</button>
-          ${member.subscription_status === 'pending' || !member.stripe_subscription_id
+          ${showBillingBtn
             ? `<button class="btn btn--secondary btn--sm js-send-billing" data-id="${member.id}">Send Billing Link</button>`
             : ''
           }
@@ -242,7 +257,7 @@ function renderMembers(members) {
     btn.addEventListener('click', () => sendBillingLink(btn.dataset.id, btn));
   });
 
-  // Use inline confirmation for cancellations instead of browser confirm()
+  // Inline confirmation for cancellations
   tbody.querySelectorAll('.js-cancel-member').forEach(btn => {
     btn.addEventListener('click', () => {
       const member = allGymMembers.find(m => m.id === btn.dataset.id);
@@ -272,7 +287,7 @@ function setupFilters() {
 
 
 /* ----------------------------------------------------------
-   Choice modal — shown when + Add Member is clicked
+   Choice modal
    ---------------------------------------------------------- */
 function openChoiceModal() {
   document.getElementById('add-choice-overlay').classList.add('is-open');
@@ -459,7 +474,6 @@ async function saveEditedMember(e) {
     return;
   }
 
-  // If the discount changed, apply it via Netlify function (which updates Stripe)
   if (discountChanged) {
     const { data: { session } } = await window.supabaseClient.auth.getSession();
     const res = await fetch('/.netlify/functions/admin-apply-gym-discount', {
@@ -479,7 +493,7 @@ async function saveEditedMember(e) {
 
 
 /* ----------------------------------------------------------
-   Send billing invite to a pending member
+   Send billing link to a visitor or pending member
    ---------------------------------------------------------- */
 async function sendBillingLink(memberId, btn) {
   const member = allGymMembers.find(m => m.id === memberId);
@@ -531,14 +545,13 @@ async function sendBillingLink(memberId, btn) {
 
 
 /* ----------------------------------------------------------
-   Cancel membership — called after inline confirmation
+   Cancel membership
    ---------------------------------------------------------- */
 async function cancelMembership(memberId) {
   const member = allGymMembers.find(m => m.id === memberId);
   if (!member) return;
 
   if (member.stripe_subscription_id) {
-    // Cancel via Netlify function, which also cancels the Stripe subscription
     const { data: { session } } = await window.supabaseClient.auth.getSession();
     const res = await fetch('/.netlify/functions/admin-revoke-member', {
       method:  'POST',
@@ -547,7 +560,6 @@ async function cancelMembership(memberId) {
     });
     if (!res.ok) { showToast('Failed to cancel membership', 'error'); return; }
   } else {
-    // No Stripe subscription — just update the DB directly
     await window.supabaseClient
       .from('gym_members')
       .update({ subscription_status: 'cancelled', cancelled_at: new Date().toISOString() })
@@ -565,8 +577,8 @@ async function cancelMembership(memberId) {
    Populate a plan <select> element with active plans
    ---------------------------------------------------------- */
 function populatePlanDropdown(selectId, selectedId) {
-  selectedId     = selectedId || null;
-  const select   = document.getElementById(selectId);
+  selectedId   = selectedId || null;
+  const select = document.getElementById(selectId);
   if (!select) return;
 
   select.innerHTML = '<option value="">No plan assigned</option>';
@@ -587,9 +599,9 @@ function updateStats() {
   const active     = allGymMembers.filter(m => m.subscription_status === 'active').length;
   const pastDue    = allGymMembers.filter(m => m.subscription_status === 'past_due').length;
   const pending    = allGymMembers.filter(m => m.subscription_status === 'pending').length;
+  const visitors   = allGymMembers.filter(m => m.subscription_status === 'visitor').length;
   const withOnline = allGymMembers.filter(m => getOnlineAccess(m)).length;
 
-  // Calculate MRR from active members with plans, accounting for discounts
   const mrr = allGymMembers
     .filter(m => m.subscription_status === 'active' && m.plan_id)
     .reduce((sum, m) => {
@@ -600,7 +612,11 @@ function updateStats() {
   document.getElementById('stat-active-gym').textContent  = active;
   document.getElementById('stat-mrr').textContent         = '$' + (mrr / 100).toFixed(0);
   document.getElementById('stat-with-online').textContent = withOnline;
-  document.getElementById('stat-past-due').textContent    = pastDue + ' past due \u00b7 ' + pending + ' pending';
+
+  // Visitors signed waivers but haven't set up billing — prompt to follow up
+  const visitorLabel = visitors + ' visitor' + (visitors !== 1 ? 's' : '');
+  document.getElementById('stat-past-due').textContent =
+    pastDue + ' past due \u00b7 ' + pending + ' pending \u00b7 ' + visitorLabel;
 }
 
 
@@ -620,7 +636,7 @@ async function loadData() {
 
 
 /* ----------------------------------------------------------
-   Build the page HTML and inject it into the content area
+   Build the page HTML
    ---------------------------------------------------------- */
 function buildPage(content) {
   const actions = getAdminActions();
@@ -668,6 +684,7 @@ function buildPage(content) {
       <select class="form__select" id="status-filter" style="max-width:160px;" aria-label="Filter by status">
         <option value="">All Statuses</option>
         <option value="active">Active</option>
+        <option value="visitor">Visitor</option>
         <option value="past_due">Past Due</option>
         <option value="pending">Pending</option>
         <option value="cancelled">Cancelled</option>
@@ -679,15 +696,14 @@ function buildPage(content) {
       </select>
     </div>
 
-    <!-- Members table (populated by renderMembers) -->
+    <!-- Members table -->
     <div id="members-table-wrap">
       <div class="spinner" style="margin:var(--space-2xl) auto;"></div>
     </div>
 
 
     <!-- ====================================================
-         CHOICE MODAL — shown when + Add Member is clicked.
-         Two paths: fill the form here, or send an email link.
+         CHOICE MODAL
          ==================================================== -->
     <div class="modal-overlay" id="add-choice-overlay">
       <div class="modal" style="max-width:460px;">
@@ -697,42 +713,30 @@ function buildPage(content) {
         </div>
         <div style="display:flex;flex-direction:column;gap:var(--space-md);padding:var(--space-md) 0;">
 
-          <button type="button" id="choice-fill-form"
-            style="display:flex;align-items:center;gap:var(--space-lg);
-                   background:var(--color-dark-gray);border:1px solid var(--color-mid-gray);
-                   border-radius:var(--border-radius-lg);padding:var(--space-lg) var(--space-xl);
-                   cursor:pointer;text-align:left;width:100%;">
-            <div style="width:40px;height:40px;border-radius:var(--border-radius);
-                        background:rgba(196,30,42,0.12);display:flex;align-items:center;
-                        justify-content:center;flex-shrink:0;">
+          <button type="button" id="choice-fill-form" class="choice-option-btn">
+            <div class="choice-option-btn__icon">
               <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:var(--color-red-accessible);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;">
                 <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
               </svg>
             </div>
-            <div style="flex:1;">
-              <p style="margin:0;font-family:var(--font-heading);font-size:var(--text-base);text-transform:uppercase;letter-spacing:0.05em;color:var(--color-white);">Fill out on this device</p>
-              <p style="margin:0;font-size:var(--text-sm);color:var(--color-gray);max-width:none;">Enter their details directly into the admin portal.</p>
+            <div class="choice-option-btn__body">
+              <p class="choice-option-btn__title">Fill out on this device</p>
+              <p class="choice-option-btn__desc">Enter their details directly into the admin portal.</p>
             </div>
-            <span style="color:var(--color-mid-gray);font-size:var(--text-lg);">&#x2192;</span>
+            <span class="choice-option-btn__arrow">&#x2192;</span>
           </button>
 
-          <button type="button" id="choice-send-link"
-            style="display:flex;align-items:center;gap:var(--space-lg);
-                   background:var(--color-dark-gray);border:1px solid var(--color-mid-gray);
-                   border-radius:var(--border-radius-lg);padding:var(--space-lg) var(--space-xl);
-                   cursor:pointer;text-align:left;width:100%;">
-            <div style="width:40px;height:40px;border-radius:var(--border-radius);
-                        background:rgba(196,30,42,0.12);display:flex;align-items:center;
-                        justify-content:center;flex-shrink:0;">
+          <button type="button" id="choice-send-link" class="choice-option-btn">
+            <div class="choice-option-btn__icon">
               <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:var(--color-red-accessible);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;">
                 <path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/>
               </svg>
             </div>
-            <div style="flex:1;">
-              <p style="margin:0;font-family:var(--font-heading);font-size:var(--text-base);text-transform:uppercase;letter-spacing:0.05em;color:var(--color-white);">Send onboarding link</p>
-              <p style="margin:0;font-size:var(--text-sm);color:var(--color-gray);max-width:none;">Email them a link to fill out the form themselves.</p>
+            <div class="choice-option-btn__body">
+              <p class="choice-option-btn__title">Send onboarding link</p>
+              <p class="choice-option-btn__desc">Email them a link to fill out the form themselves.</p>
             </div>
-            <span style="color:var(--color-mid-gray);font-size:var(--text-lg);">&#x2192;</span>
+            <span class="choice-option-btn__arrow">&#x2192;</span>
           </button>
 
         </div>
@@ -751,8 +755,8 @@ function buildPage(content) {
         </div>
         <div class="form">
           <p style="font-size:var(--text-sm);color:var(--color-gray);margin-bottom:var(--space-xl);max-width:none;">
-            Enter the new member's email address. They'll receive a link to fill out their information,
-            sign the waiver, and set up billing &mdash; all in one flow.
+            Enter the new member's email address. They'll receive a link to fill out their
+            information, sign the waiver, and set up billing &mdash; all in one flow.
           </p>
           <div class="form__group">
             <label class="form__label" for="send-link-email">Email Address *</label>
@@ -780,16 +784,19 @@ function buildPage(content) {
         <form class="form" id="add-member-form">
           <div class="form__group">
             <label class="form__label" for="add-member-name">Full Name *</label>
-            <input class="form__input" type="text" id="add-member-name" placeholder="e.g. John Smith" required>
+            <input class="form__input" type="text" id="add-member-name"
+              placeholder="e.g. John Smith" required>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);" class="form__2col">
             <div class="form__group">
               <label class="form__label" for="add-member-email">Email</label>
-              <input class="form__input" type="email" id="add-member-email" placeholder="john@example.com">
+              <input class="form__input" type="email" id="add-member-email"
+                placeholder="john@example.com">
             </div>
             <div class="form__group">
               <label class="form__label" for="add-member-phone">Phone</label>
-              <input class="form__input" type="tel" id="add-member-phone" placeholder="(555) 000-0000">
+              <input class="form__input" type="tel" id="add-member-phone"
+                placeholder="(555) 000-0000">
             </div>
           </div>
           <div class="form__group">
@@ -866,14 +873,28 @@ function buildPage(content) {
   const content = renderAdminShell('members', 'Members');
   buildPage(content);
 
-  // Handle return from Stripe billing setup
   const params = new URLSearchParams(window.location.search);
+
   if (params.get('billing') === 'success') {
     showToast('Billing setup complete \u2014 member is now active');
     window.history.replaceState({}, '', window.location.pathname);
   }
 
-  // If ?action=add, open the add modal immediately after loading
+  // ?action=send-link — open the send-link modal directly
+  if (params.get('action') === 'send-link') {
+    window.history.replaceState({}, '', window.location.pathname);
+    await loadData();
+    updateStats();
+    applyFilters();
+    setupFilters();
+    wireDiscountSection('add-member');
+    wireDiscountSection('edit-member');
+    wireAllModals();
+    openSendLinkModal();
+    return;
+  }
+
+  // ?action=add — open the add-member form directly
   if (params.get('action') === 'add') {
     window.history.replaceState({}, '', window.location.pathname);
     await loadData();
@@ -900,8 +921,7 @@ function buildPage(content) {
 
 /* ----------------------------------------------------------
    Wire all modal event listeners.
-   Extracted into its own function so the ?action=add early-
-   return path above can share the same wiring code.
+   Extracted so ?action= early-return paths share the same code.
    ---------------------------------------------------------- */
 function wireAllModals() {
   document.getElementById('close-add-member')?.addEventListener('click', closeAddModal);

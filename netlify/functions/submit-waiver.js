@@ -233,63 +233,86 @@ exports.handler = async (event) => {
   }
 
   /* ----------------------------------------------------------
-     If onboarding mode: create a gym_members record
+     Find or create a gym_members record.
+
+     Both drop-in and onboarding modes go through the same
+     logic now:
+
+       - If an active/pending member already exists with
+         this email, just add a new waiver row linked to
+         them — don’t touch their status.
+
+       - If a visitor record exists, add the waiver and
+         keep them as a visitor (they’ve been in before).
+
+       - If no record exists at all, create one:
+           • drop-in  → status 'visitor'
+           • onboarding → status 'pending'
+
+     Either way we link the waiver to the member record
+     via gym_member_id so there are no orphaned waivers.
      ---------------------------------------------------------- */
   let gymMemberId = null;
 
-  if (body.mode === 'onboarding') {
-    // Check if a gym member with this email already exists
-    const { data: existingMember } = await supabase
+  const email = body.email.trim().toLowerCase();
+
+  const { data: existingMember } = await supabase
+    .from('gym_members')
+    .select('id, subscription_status')
+    .eq('email', email)
+    .order('joined_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (existingMember) {
+    // Member already exists — link this new waiver to them.
+    // We never downgrade status (e.g. an active member doing
+    // a new drop-in waiver stays active).
+    gymMemberId = existingMember.id;
+
+    await supabase
       .from('gym_members')
+      .update({
+        // Only fill in phone/plan if the existing record is missing them
+        ...(body.planId ? { plan_id: body.planId } : {}),
+        waiver_signed:    true,
+        waiver_signed_at: new Date().toISOString(),
+        updated_at:       new Date().toISOString(),
+      })
+      .eq('id', gymMemberId);
+
+  } else {
+    // No existing record — create one
+    const newStatus = body.mode === 'onboarding' ? 'pending' : 'visitor';
+
+    const { data: newMember, error: memberError } = await supabase
+      .from('gym_members')
+      .insert({
+        name:                `${body.firstName.trim()} ${body.lastName.trim()}`,
+        email,
+        phone:               body.phone.trim(),
+        plan_id:             body.planId || null,
+        waiver_signed:       true,
+        waiver_signed_at:    new Date().toISOString(),
+        subscription_status: newStatus,
+      })
       .select('id')
-      .eq('email', body.email.trim().toLowerCase())
       .single();
 
-    if (existingMember) {
-      // Update existing member with waiver info
-      gymMemberId = existingMember.id;
-      await supabase
-        .from('gym_members')
-        .update({
-          waiver_signed:    true,
-          waiver_signed_at: new Date().toISOString(),
-          waiver_id:        waiver.id,
-          plan_id:          body.planId || null,
-          updated_at:       new Date().toISOString(),
-        })
-        .eq('id', gymMemberId);
+    if (memberError || !newMember) {
+      console.error('Gym member insert error:', memberError);
+      // Non-fatal — waiver is saved even if member record fails
     } else {
-      // Create a new gym member record
-      const { data: newMember, error: memberError } = await supabase
-        .from('gym_members')
-        .insert({
-          name:             `${body.firstName.trim()} ${body.lastName.trim()}`,
-          email:            body.email.trim().toLowerCase(),
-          phone:            body.phone.trim(),
-          plan_id:          body.planId || null,
-          waiver_signed:    true,
-          waiver_signed_at: new Date().toISOString(),
-          waiver_id:        waiver.id,
-          subscription_status: 'pending',
-        })
-        .select('id')
-        .single();
-
-      if (memberError || !newMember) {
-        console.error('Gym member insert error:', memberError);
-        // Non-fatal — waiver is saved, just couldn't create member
-      } else {
-        gymMemberId = newMember.id;
-      }
+      gymMemberId = newMember.id;
     }
+  }
 
-    // Link gym member back to waiver
-    if (gymMemberId) {
-      await supabase
-        .from('waiver_submissions')
-        .update({ gym_member_id: gymMemberId })
-        .eq('id', waiver.id);
-    }
+  // Link the waiver back to the member record
+  if (gymMemberId) {
+    await supabase
+      .from('waiver_submissions')
+      .update({ gym_member_id: gymMemberId })
+      .eq('id', waiver.id);
   }
 
   /* ----------------------------------------------------------

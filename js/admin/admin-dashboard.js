@@ -34,7 +34,7 @@
       </div>
       <div class="stat-card" style="padding:var(--space-md) var(--space-lg);">
         <p class="stat-card__label">Needs Attention</p>
-        <p class="stat-card__value" id="stat-alerts" style="font-size:var(--text-2xl);">&#x2014;</p>
+        <p class="stat-card__value" id="stat-alerts" style="font-size:var(--text-base);line-height:1.4;">&#x2014;</p>
       </div>
     </div>
 
@@ -44,16 +44,17 @@
     <!-- Quick action cards -->
     <div class="admin-action-grid">
 
-      <a href="/pages/admin/gym-members.html?action=add" class="quick-action-card">
+      <!-- Add Member opens a local choice modal instead of navigating directly -->
+      <button class="quick-action-card" id="dash-add-member-btn">
         <div class="quick-action-card__icon">
-          <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="12" y1="3" x2="12" y2="11" style="display:none"/><line x1="16" y1="11" x2="8" y2="11" style="display:none"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </div>
         <div class="quick-action-card__body">
           <h3 class="quick-action-card__title">Add Member</h3>
           <p class="quick-action-card__desc">Enroll a new gym member and send their billing link.</p>
         </div>
         <span class="quick-action-card__arrow">→</span>
-      </a>
+      </button>
 
       <a href="/pages/admin/announcements.html" class="quick-action-card">
         <div class="quick-action-card__icon">
@@ -147,10 +148,10 @@
 
   document.getElementById('stat-mrr').textContent = mrrStr;
 
+  // Always show the breakdown so the numbers are readable at a glance,
+  // even when everything is fine. Red only when there's something to act on.
   const needsAttention = pastDueGym + pendingGym;
-  document.getElementById('stat-alerts').textContent = needsAttention > 0
-    ? `${needsAttention}`
-    : 'All good';
+  document.getElementById('stat-alerts').textContent = `${pastDueGym} past due \u00b7 ${pendingGym} pending`;
   if (needsAttention > 0) {
     document.getElementById('stat-alerts').style.color = 'var(--color-red-accessible)';
   }
@@ -190,4 +191,73 @@
     alertRow.innerHTML            = alerts.join('');
   }
 
-})();
+  /* ----------------------------------------------------------
+     Dashboard "Add Member" choice modal
+     Mirrors the same two-option flow on the gym-members page:
+       A) Fill out the form on this device  → gym-members.html?action=add
+       B) Send an onboarding link by email  → gym-members.html?send-link
+     We navigate to gym-members for both paths so the full
+     form and Supabase logic lives in one place.
+     ---------------------------------------------------------- */
+
+  // Inject the modal into the page
+  const choiceModal = document.createElement('div');
+  choiceModal.innerHTML = `
+    <div class="modal-overlay" id="dash-choice-overlay">
+      <div class="modal" style="max-width:460px;">
+        <div class="modal__header">
+          <h2 class="modal__title">Add Member</h2>
+          <button class="modal__close" id="dash-close-choice" aria-label="Close">&times;</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:var(--space-md);padding:var(--space-md) 0;">
+
+          <button type="button" id="dash-choice-fill-form" class="choice-option-btn">
+            <div class="choice-option-btn__icon">
+              <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <div class="choice-option-btn__body">
+              <p class="choice-option-btn__title">Fill out on this device</p>
+              <p class="choice-option-btn__desc">Enter their details directly into the admin portal.</p>
+            </div>
+            <span class="choice-option-btn__arrow">&rarr;</span>
+          </button>
+
+          <button type="button" id="dash-choice-send-link" class="choice-option-btn">
+            <div class="choice-option-btn__icon">
+              <svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+            </div>
+            <div class="choice-option-btn__body">
+              <p class="choice-option-btn__title">Send onboarding link</p>
+              <p class="choice-option-btn__desc">Email them a link to fill out the form themselves.</p>
+            </div>
+            <span class="choice-option-btn__arrow">&rarr;</span>
+          </button>
+
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(choiceModal);
+
+  // Open / close helpers
+  const openChoice  = () => document.getElementById('dash-choice-overlay').classList.add('is-open');
+  const closeChoice = () => document.getElementById('dash-choice-overlay').classList.remove('is-open');
+
+  // Wire the card button
+  document.getElementById('dash-add-member-btn').addEventListener('click', openChoice);
+
+  // Close button and overlay click
+  document.getElementById('dash-close-choice').addEventListener('click', closeChoice);
+  safeModalClose('dash-choice-overlay', closeChoice);
+
+  // Option A: navigate to gym-members and open the add form directly
+  document.getElementById('dash-choice-fill-form').addEventListener('click', () => {
+    window.location.href = '/pages/admin/gym-members.html?action=add';
+  });
+
+  // Option B: navigate to gym-members and open the send-link modal directly
+  document.getElementById('dash-choice-send-link').addEventListener('click', () => {
+    window.location.href = '/pages/admin/gym-members.html?action=send-link';
+  });
+
+})()

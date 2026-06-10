@@ -151,6 +151,8 @@ input, textarea, select {
 .badge--cancelled { background: rgba(136, 136, 136, 0.2); color: var(--color-gray);  }
 .badge--draft     { background: rgba(136, 136, 136, 0.2); color: var(--color-gray);  }
 .badge--published { background: rgba(42, 157, 92, 0.2);  color: var(--color-success); }
+/* Visitor — signed waiver, no billing relationship yet */
+.badge--visitor   { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
 
 
 /* ---- Progress Ring ---- */

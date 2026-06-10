@@ -486,12 +486,22 @@
   border: none;
   color: var(--color-gray);
   cursor: pointer;
-  padding: var(--space-xs);
-  transition: color var(--transition-fast);
+  /* Explicit size so the × is easy to tap on mobile too */
+  font-size: var(--text-xl);
+  line-height: 1;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius);
+  flex-shrink: 0;
+  transition: color var(--transition-fast), background var(--transition-fast);
 }
 
 .modal__close:hover {
   color: var(--color-white);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 

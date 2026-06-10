@@ -1,1 +1,1 @@
-// This file can be deleted — it was a temporary scratch file used during refactoring.
+// SAFE TO DELETE — temporary scratch file from a refactoring session.
