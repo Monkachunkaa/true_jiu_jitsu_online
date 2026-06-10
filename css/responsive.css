@@ -55,6 +55,27 @@
   .catalogue { padding-top: calc(var(--nav-height) + var(--space-lg)); }
   .catalogue__grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 
+  /* Filter pills — single swipeable row instead of a messy
+     multi-line wrap. Scrollbar hidden; momentum scrolling on. */
+  .filter-pills {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;          /* Firefox */
+    padding-bottom: 2px;            /* keep focus rings visible */
+  }
+  .filter-pills::-webkit-scrollbar { display: none; }
+  .filter-pill { flex-shrink: 0; }
+
+  /* Prevent iOS Safari from auto-zooming when an input is
+     focused — it zooms any input whose font-size is < 16px */
+  .form__input,
+  .form__select,
+  .form__textarea,
+  .search__input,
+  .member-tag-picker__input { font-size: 16px; }
+
   /* Page padding */
   .playlist-page { padding-top: calc(var(--nav-height) + var(--space-lg)); }
   .article-page  { padding-top: calc(var(--nav-height) + var(--space-xl)); }
@@ -108,8 +129,14 @@
     letter-spacing: 0.05em;
   }
 
-  /* Stat grid — 2×2 */
-  .stat-grid { grid-template-columns: 1fr 1fr !important; }
+  /* Stat grid — 2×2 with tighter cards and smaller values
+     so the scorecards don't dominate the screen */
+  .stat-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: var(--space-md);
+  }
+  .stat-card { padding: var(--space-lg); }
+  .stat-card__value { font-size: var(--text-3xl); }
 
   /* Quick action cards — single column */
   .admin-action-grid { grid-template-columns: 1fr !important; }
@@ -123,6 +150,9 @@
   .data-table-wrap {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    /* Don't let a horizontal table swipe trigger the browser's
+       back/forward navigation gesture */
+    overscroll-behavior-x: contain;
     /* Negative margin trick: let the table bleed to the content
        edge so scrolling feels natural without a gap */
     margin-left:  calc(-1 * var(--space-lg));
@@ -132,11 +162,12 @@
     border-radius: 0; /* Remove rounding when full-bleed */
   }
 
-  /* Hide less-critical table columns: Online Access + Joined date */
-  .data-table th:nth-child(4),
-  .data-table td:nth-child(4),
-  .data-table th:nth-child(5),
-  .data-table td:nth-child(5) { display: none; }
+  /* Hide secondary table columns on mobile.
+     Each page's JS marks its own non-essential columns with
+     .dt-hide-md (hidden ≤768px) or .dt-hide-sm (hidden ≤480px),
+     so the rule can't accidentally hide an Actions column on a
+     table with a different layout. */
+  .data-table .dt-hide-md { display: none; }
 
   /* Filter bar — stack inputs vertically */
   .admin-filter-bar { flex-direction: column; align-items: stretch; }
@@ -230,8 +261,17 @@
      because that's the one thing admins need on every page */
   .admin-topbar__actions .btn--primary { display: inline-flex; }
 
-  /* Stat grid — single column */
-  .stat-grid { grid-template-columns: 1fr !important; }
+  /* Stat grid — keep the 2×2 layout but shrink values further.
+     A single column made the page scroll forever; smaller cards
+     side-by-side read better on a phone. */
+  .stat-grid { gap: var(--space-sm); }
+  .stat-card { padding: var(--space-md); }
+  .stat-card__label {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    margin-bottom: var(--space-xs);
+  }
+  .stat-card__value { font-size: var(--text-2xl); }
 
   /* Modals — near full screen with small inset */
   .modal-overlay { padding: var(--space-md); align-items: flex-end; }
@@ -250,9 +290,9 @@
   }
 
   /* Data tables on very small screens:
-     hide the Plan column too (col 2) so Name + Status + Actions fits */
-  .data-table th:nth-child(2),
-  .data-table td:nth-child(2) { display: none; }
+     hide the columns each page marked as .dt-hide-sm so the
+     essentials (name, status, actions) fit without scrolling */
+  .data-table .dt-hide-sm { display: none; }
 
   /* Tighten table cell padding so rows are less cramped */
   .data-table th,
@@ -299,7 +339,7 @@
   .landing-pitch__description { display: none; }
   .landing-logo img { height: 72px; }
 
-  /* Stat card value */
-  .stat-card__value { font-size: var(--text-3xl); }
+  /* Stat card value — smallest size for the narrowest phones */
+  .stat-card__value { font-size: var(--text-xl); }
 
 }

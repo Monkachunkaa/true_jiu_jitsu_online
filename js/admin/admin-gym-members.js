@@ -193,10 +193,10 @@ function renderMembers(members) {
         <thead>
           <tr>
             <th>Name</th>
-            <th>Plan</th>
+            <th class="dt-hide-sm">Plan</th>
             <th>Status</th>
-            <th>Waivers Signed</th>
-            <th>${showingArchived ? 'Archived' : 'Joined'}</th>
+            <th class="dt-hide-md">Waivers Signed</th>
+            <th class="dt-hide-md">${showingArchived ? 'Archived' : 'Joined'}</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -240,15 +240,15 @@ function renderMembers(members) {
           ${member.phone ? `<p style="margin:0;font-size:var(--text-xs);color:var(--color-gray);">${member.phone}</p>` : ''}
         </div>
       </td>
-      <td style="font-size:var(--text-sm);">
+      <td class="dt-hide-sm" style="font-size:var(--text-sm);">
         ${plan
           ? `${plan.name} <span style="color:var(--color-gray);">(${formatPrice(plan.price_cents)}/mo)</span>${discountLabel(member)}`
           : '<span style="color:var(--color-gray);">No plan</span>'
         }
       </td>
       <td>${statusBadge(member.subscription_status)}</td>
-      <td style="font-size:var(--text-sm);">${waiverCell}</td>
-      <td style="font-size:var(--text-sm);color:var(--color-gray);">${dateCell}</td>
+      <td class="dt-hide-md" style="font-size:var(--text-sm);">${waiverCell}</td>
+      <td class="dt-hide-md" style="font-size:var(--text-sm);color:var(--color-gray);">${dateCell}</td>
       <td>
         <div class="data-table__actions">
           ${!isArchived ? `<button class="btn btn--ghost btn--sm js-edit-member" data-id="${member.id}">Edit</button>` : ''}

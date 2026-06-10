@@ -44,8 +44,8 @@ function renderWaivers(waivers) {
         <thead>
           <tr>
             <th>Name</th>
-            <th>Email</th>
-            <th>Photo Release</th>
+            <th class="dt-hide-md">Email</th>
+            <th class="dt-hide-md">Photo Release</th>
             <th>Signed</th>
             <th>Actions</th>
           </tr>
@@ -65,8 +65,8 @@ function renderWaivers(waivers) {
           ${waiver.is_minor ? `<span style="font-size:10px;color:var(--color-gray);">Minor</span>` : ''}
         </div>
       </td>
-      <td style="font-size:var(--text-sm);color:var(--color-gray);">${waiver.email || '&mdash;'}</td>
-      <td style="font-size:var(--text-sm);">
+      <td class="dt-hide-md" style="font-size:var(--text-sm);color:var(--color-gray);">${waiver.email || '&mdash;'}</td>
+      <td class="dt-hide-md" style="font-size:var(--text-sm);">
         ${waiver.photo_release
           ? `<span style="color:var(--color-success);">&#x2713; Yes</span>`
           : `<span style="color:var(--color-gray);">No</span>`
