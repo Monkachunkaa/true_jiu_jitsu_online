@@ -1056,3 +1056,75 @@
   color: var(--color-red-accessible);
   transform: translateX(4px);
 }
+
+
+/* ==========================
+   ROW OVERFLOW MENU
+   The ⋯ button on table rows that reveals infrequent
+   actions like Delete without cluttering the row.
+   ========================== */
+.row-overflow {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.row-overflow__trigger {
+  background: none;
+  border: none;
+  color: var(--color-gray);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: var(--border-radius);
+  letter-spacing: 2px;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.row-overflow__trigger:hover {
+  color: var(--color-white);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.row-overflow__menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  background: var(--color-dark-gray);
+  border: 1px solid var(--color-mid-gray);
+  border-radius: var(--border-radius);
+  min-width: 140px;
+  z-index: 100;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.row-overflow__menu.is-open {
+  display: block;
+}
+
+.row-overflow__item {
+  display: block;
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: var(--text-sm);
+  color: var(--color-light-gray);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.row-overflow__item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.row-overflow__item--danger {
+  color: var(--color-red-accessible);
+}
+
+.row-overflow__item--danger:hover {
+  background: rgba(196, 30, 42, 0.12);
+}

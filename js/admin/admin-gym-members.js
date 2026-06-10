@@ -2,19 +2,17 @@
    admin-gym-members.js — Unified member management
    True Jiu Jitsu Online
 
-   Shows all gym members in one table with an Online Access
-   column. Members can have one of five statuses:
+   Shows all gym members in one table. Members can have one
+   of five statuses:
 
-     visitor  — signed waiver, no billing yet (created by
-                the waiver form for drop-ins and new faces)
-     pending  — admin assigned a plan, billing link sent,
-                awaiting payment setup
+     visitor  — signed waiver, no billing yet
+     pending  — plan assigned, awaiting billing setup
      active   — billing live
      past_due — payment failed
      cancelled — left the gym
 
-   Filter dropdowns let Daniel slice by status and online
-   access quickly.
+   The Waivers Signed column shows how many waiver records
+   are linked to each member in waiver_submissions.
    ========================================================== */
 
 let allGymMembers    = [];
@@ -23,7 +21,10 @@ let allPlans         = [];
 let editingId        = null;
 
 let activeStatusFilter = '';
-let activeOnlineFilter = '';
+
+// Waiver count per gym member — populated by loadData()
+// Shape: { [gym_member_id]: count }
+let allWaiverCounts = {};
 
 
 /* ----------------------------------------------------------
@@ -49,7 +50,7 @@ function statusBadge(status) {
     cancelled: 'badge--cancelled',
     inactive:  'badge--cancelled',
     pending:   'badge--draft',
-    visitor:   'badge--visitor',  // neutral blue — been in, no billing
+    visitor:   'badge--visitor',
   };
   return '<span class="badge ' + (map[status] || 'badge--draft') + '">' + (status || 'pending') + '</span>';
 }
@@ -60,16 +61,10 @@ function discountLabel(member) {
   return '<span class="badge badge--draft" style="margin-left:4px;font-size:10px;">-' + member.discount_percent + '% (' + duration + ')</span>';
 }
 
-function onlineBadge(hasOnline) {
-  return hasOnline
-    ? '<span class="badge badge--active" style="font-size:10px;">\u2713 Active</span>'
-    : '<span style="color:var(--color-gray);font-size:var(--text-sm);">\u2014</span>';
-}
-
 
 /* ----------------------------------------------------------
    Determine if a gym member has an active online subscription.
-   Checks online_member_id first, then falls back to email.
+   Kept for potential use elsewhere; no longer shown in table.
    ---------------------------------------------------------- */
 function getOnlineAccess(gymMember) {
   if (!gymMember.email) return false;
@@ -137,14 +132,12 @@ function discountSectionHTML(prefix, existingPercent, existingMonths) {
 
 
 /* ----------------------------------------------------------
-   Apply all active filters and re-render the table
+   Apply the status filter and search, then re-render
    ---------------------------------------------------------- */
 function applyFilters() {
   const query = (document.getElementById('member-search')?.value || '').toLowerCase().trim();
 
   const filtered = allGymMembers.filter(m => {
-    const hasOnline = getOnlineAccess(m);
-
     const matchesSearch = !query
       || (m.name  || '').toLowerCase().includes(query)
       || (m.email || '').toLowerCase().includes(query)
@@ -153,11 +146,7 @@ function applyFilters() {
     const matchesStatus = !activeStatusFilter
       || m.subscription_status === activeStatusFilter;
 
-    const matchesOnline = !activeOnlineFilter
-      || (activeOnlineFilter === 'yes' &&  hasOnline)
-      || (activeOnlineFilter === 'no'  && !hasOnline);
-
-    return matchesSearch && matchesStatus && matchesOnline;
+    return matchesSearch && matchesStatus;
   });
 
   renderMembers(filtered);
@@ -190,7 +179,7 @@ function renderMembers(members) {
             <th>Name</th>
             <th>Plan</th>
             <th>Status</th>
-            <th>Online Access</th>
+            <th>Waivers Signed</th>
             <th>Joined</th>
             <th>Actions</th>
           </tr>
@@ -202,10 +191,13 @@ function renderMembers(members) {
 
   const tbody = document.getElementById('members-tbody');
   members.forEach(member => {
-    const plan      = allPlans.find(p => p.id === member.plan_id);
-    const hasOnline = getOnlineAccess(member);
+    const plan        = allPlans.find(p => p.id === member.plan_id);
+    const waiverCount = allWaiverCounts[member.id] || 0;
+    const waiverCell  = waiverCount > 0
+      ? waiverCount + ' waiver' + (waiverCount !== 1 ? 's' : '')
+      : '<span style="color:var(--color-gray);">None</span>';
 
-    // Show "Send Billing Link" for visitors and pending members (no active billing yet)
+    // Show "Send Billing Link" for anyone not yet active or cancelled
     const showBillingBtn = (
       member.subscription_status === 'visitor' ||
       member.subscription_status === 'pending' ||
@@ -230,7 +222,7 @@ function renderMembers(members) {
         }
       </td>
       <td>${statusBadge(member.subscription_status)}</td>
-      <td>${onlineBadge(hasOnline)}</td>
+      <td style="font-size:var(--text-sm);">${waiverCell}</td>
       <td style="font-size:var(--text-sm);color:var(--color-gray);">${formatDate(member.joined_at)}</td>
       <td>
         <div class="data-table__actions">
@@ -243,6 +235,16 @@ function renderMembers(members) {
             ? `<button class="btn btn--danger btn--sm js-cancel-member" data-id="${member.id}">Cancel</button>`
             : ''
           }
+          <!-- Overflow menu — holds infrequent actions like Delete -->
+          <div class="row-overflow" data-id="${member.id}">
+            <button class="row-overflow__trigger" aria-label="More options" title="More options">
+              &bull;&bull;&bull;
+            </button>
+            <div class="row-overflow__menu">
+              <button class="row-overflow__item row-overflow__item--danger js-delete-member"
+                data-id="${member.id}">Delete member</button>
+            </div>
+          </div>
         </div>
       </td>
     `;
@@ -257,12 +259,47 @@ function renderMembers(members) {
     btn.addEventListener('click', () => sendBillingLink(btn.dataset.id, btn));
   });
 
-  // Inline confirmation for cancellations
   tbody.querySelectorAll('.js-cancel-member').forEach(btn => {
     btn.addEventListener('click', () => {
       const member = allGymMembers.find(m => m.id === btn.dataset.id);
       if (!member) return;
       confirmAction(btn, 'Cancel ' + member.name + '?', () => cancelMembership(member.id));
+    });
+  });
+
+  // Overflow menu — toggle open/closed on trigger click,
+  // close when clicking anywhere else on the page
+  tbody.querySelectorAll('.row-overflow').forEach(wrap => {
+    const trigger = wrap.querySelector('.row-overflow__trigger');
+    const menu    = wrap.querySelector('.row-overflow__menu');
+
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      // Close any other open menus first
+      document.querySelectorAll('.row-overflow__menu.is-open').forEach(m => {
+        if (m !== menu) m.classList.remove('is-open');
+      });
+      menu.classList.toggle('is-open');
+    });
+  });
+
+  // Close all overflow menus when clicking outside
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.row-overflow__menu.is-open')
+      .forEach(m => m.classList.remove('is-open'));
+  }, { once: false, capture: false });
+
+  // Delete — uses inline confirmation
+  tbody.querySelectorAll('.js-delete-member').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      // Close the menu immediately so confirm row appears cleanly
+      btn.closest('.row-overflow__menu').classList.remove('is-open');
+      const member = allGymMembers.find(m => m.id === btn.dataset.id);
+      if (!member) return;
+      // Confirmation target is the overflow trigger so it replaces that button
+      const trigger = btn.closest('.row-overflow').querySelector('.row-overflow__trigger');
+      confirmAction(trigger, 'Delete ' + member.name + '?', () => deleteMember(member.id));
     });
   });
 }
@@ -274,11 +311,6 @@ function renderMembers(members) {
 function setupFilters() {
   document.getElementById('status-filter')?.addEventListener('change', (e) => {
     activeStatusFilter = e.target.value;
-    applyFilters();
-  });
-
-  document.getElementById('online-filter')?.addEventListener('change', (e) => {
-    activeOnlineFilter = e.target.value;
     applyFilters();
   });
 
@@ -545,6 +577,26 @@ async function sendBillingLink(memberId, btn) {
 
 
 /* ----------------------------------------------------------
+   Delete member — permanently removes the record.
+   Called after inline confirmation from the overflow menu.
+   ---------------------------------------------------------- */
+async function deleteMember(memberId) {
+  const { error } = await window.supabaseClient
+    .from('gym_members')
+    .delete()
+    .eq('id', memberId);
+
+  if (error) { showToast('Failed to delete member', 'error'); return; }
+
+  showToast('Member deleted');
+  allGymMembers = allGymMembers.filter(m => m.id !== memberId);
+  delete allWaiverCounts[memberId];
+  updateStats();
+  applyFilters();
+}
+
+
+/* ----------------------------------------------------------
    Cancel membership
    ---------------------------------------------------------- */
 async function cancelMembership(memberId) {
@@ -596,11 +648,10 @@ function populatePlanDropdown(selectId, selectedId) {
    Update the stat cards at the top of the page
    ---------------------------------------------------------- */
 function updateStats() {
-  const active     = allGymMembers.filter(m => m.subscription_status === 'active').length;
-  const pastDue    = allGymMembers.filter(m => m.subscription_status === 'past_due').length;
-  const pending    = allGymMembers.filter(m => m.subscription_status === 'pending').length;
-  const visitors   = allGymMembers.filter(m => m.subscription_status === 'visitor').length;
-  const withOnline = allGymMembers.filter(m => getOnlineAccess(m)).length;
+  const active   = allGymMembers.filter(m => m.subscription_status === 'active').length;
+  const pastDue  = allGymMembers.filter(m => m.subscription_status === 'past_due').length;
+  const pending  = allGymMembers.filter(m => m.subscription_status === 'pending').length;
+  const visitors = allGymMembers.filter(m => m.subscription_status === 'visitor').length;
 
   const mrr = allGymMembers
     .filter(m => m.subscription_status === 'active' && m.plan_id)
@@ -609,11 +660,13 @@ function updateStats() {
       return sum + Math.round((plan?.price_cents || 0) * (1 - (m.discount_percent || 0) / 100));
     }, 0);
 
-  document.getElementById('stat-active-gym').textContent  = active;
-  document.getElementById('stat-mrr').textContent         = '$' + (mrr / 100).toFixed(0);
-  document.getElementById('stat-with-online').textContent = withOnline;
+  document.getElementById('stat-active-gym').textContent = active;
+  document.getElementById('stat-mrr').textContent        = '$' + (mrr / 100).toFixed(0);
 
-  // Visitors signed waivers but haven't set up billing — prompt to follow up
+  // Total waivers on file — sum across all members
+  const totalWaivers = Object.values(allWaiverCounts).reduce((s, n) => s + n, 0);
+  document.getElementById('stat-with-online').textContent = totalWaivers;
+
   const visitorLabel = visitors + ' visitor' + (visitors !== 1 ? 's' : '');
   document.getElementById('stat-past-due').textContent =
     pastDue + ' past due \u00b7 ' + pending + ' pending \u00b7 ' + visitorLabel;
@@ -621,17 +674,38 @@ function updateStats() {
 
 
 /* ----------------------------------------------------------
-   Load all data from Supabase in parallel
+   Load all data from Supabase in parallel.
+   Waiver counts are fetched alongside members so the table
+   can show them without a second round-trip per row.
    ---------------------------------------------------------- */
 async function loadData() {
-  const [{ data: gymData }, { data: onlineData }, { data: planData }] = await Promise.all([
+  const [
+    { data: gymData },
+    { data: onlineData },
+    { data: planData },
+    { data: waiverRows },
+  ] = await Promise.all([
     window.supabaseClient.from('gym_members').select('*').order('joined_at', { ascending: false }),
     window.supabaseClient.from('members').select('id, name, email, subscription_status'),
     window.supabaseClient.from('membership_plans').select('*').order('display_order'),
+    // Fetch only the gym_member_id column from waiver_submissions so we can
+    // count waivers per member without pulling down full waiver content.
+    window.supabaseClient
+      .from('waiver_submissions')
+      .select('gym_member_id')
+      .not('gym_member_id', 'is', null),
   ]);
+
   allGymMembers    = gymData    || [];
   allOnlineMembers = onlineData || [];
   allPlans         = planData   || [];
+
+  // Build a count map: { gym_member_id: count }
+  allWaiverCounts = {};
+  (waiverRows || []).forEach(row => {
+    if (!row.gym_member_id) return;
+    allWaiverCounts[row.gym_member_id] = (allWaiverCounts[row.gym_member_id] || 0) + 1;
+  });
 }
 
 
@@ -668,7 +742,7 @@ function buildPage(content) {
         <p class="stat-card__delta">after discounts</p>
       </div>
       <div class="stat-card">
-        <p class="stat-card__label">With Online Access</p>
+        <p class="stat-card__label">Total Waivers on File</p>
         <p class="stat-card__value" id="stat-with-online">&mdash;</p>
       </div>
       <div class="stat-card">
@@ -688,11 +762,6 @@ function buildPage(content) {
         <option value="past_due">Past Due</option>
         <option value="pending">Pending</option>
         <option value="cancelled">Cancelled</option>
-      </select>
-      <select class="form__select" id="online-filter" style="max-width:180px;" aria-label="Filter by online access">
-        <option value="">All Members</option>
-        <option value="yes">Has Online Access</option>
-        <option value="no">No Online Access</option>
       </select>
     </div>
 
@@ -880,7 +949,6 @@ function buildPage(content) {
     window.history.replaceState({}, '', window.location.pathname);
   }
 
-  // ?action=send-link — open the send-link modal directly
   if (params.get('action') === 'send-link') {
     window.history.replaceState({}, '', window.location.pathname);
     await loadData();
@@ -894,7 +962,6 @@ function buildPage(content) {
     return;
   }
 
-  // ?action=add — open the add-member form directly
   if (params.get('action') === 'add') {
     window.history.replaceState({}, '', window.location.pathname);
     await loadData();

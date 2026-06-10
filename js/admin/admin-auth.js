@@ -305,49 +305,47 @@ function getAdminActions() {
    confirmAction — inline, theme-consistent alternative to
    the native browser confirm() dialog.
 
-   Replaces a button with a "Are you sure? [Confirm] [Cancel]"
-   row so destructive actions stay within the dark UI.
+   Hides the trigger button and inserts a "prompt + Yes/No"
+   row next to it. On No, the confirm row is removed and the
+   original button is shown again — with its event listeners
+   still intact because we never replaced it in the DOM.
 
    Usage:
      confirmAction(buttonEl, 'Cancel membership?', async () => {
        await doTheDangerousThing();
      });
-
-   The button's original text is restored if the user cancels
-   or after the action completes.
    ---------------------------------------------------------- */
 function confirmAction(triggerBtn, promptText, onConfirm) {
-  // Prevent double-triggering
+  // Prevent double-triggering while the confirm row is visible
   if (triggerBtn.dataset.confirming === 'true') return;
   triggerBtn.dataset.confirming = 'true';
 
-  const originalHTML = triggerBtn.outerHTML;
+  // Hide the original button rather than removing it,
+  // so its event listeners survive the cancel path.
+  triggerBtn.style.display = 'none';
 
-  // Build the confirmation row
-  const wrap       = document.createElement('span');
+  // Build the confirmation row and insert it after the trigger
+  const wrap = document.createElement('span');
   wrap.style.cssText = 'display:inline-flex;align-items:center;gap:6px;white-space:nowrap;';
   wrap.innerHTML = `
     <span style="font-size:var(--text-xs);color:var(--color-light-gray);">${promptText}</span>
     <button class="btn btn--danger btn--sm" data-confirm-yes style="padding:3px 10px;">Yes</button>
     <button class="btn btn--ghost btn--sm"  data-confirm-no  style="padding:3px 10px;">No</button>
   `;
+  triggerBtn.insertAdjacentElement('afterend', wrap);
 
-  triggerBtn.replaceWith(wrap);
-
-  // Restore the original button
+  // Restore: remove the confirm row, unhide the original button
   function restore() {
-    const temp  = document.createElement('span');
-    temp.innerHTML = originalHTML;
-    const restored = temp.firstChild;
-    delete restored.dataset.confirming;
-    wrap.replaceWith(restored);
+    wrap.remove();
+    triggerBtn.style.display = '';
+    delete triggerBtn.dataset.confirming;
   }
 
   wrap.querySelector('[data-confirm-yes]').addEventListener('click', async () => {
     wrap.innerHTML = '<span style="font-size:var(--text-xs);color:var(--color-gray);">Working…</span>';
     await onConfirm();
-    // The caller's onConfirm usually re-renders the table, which removes this element.
-    // If it's still in the DOM for some reason, restore it.
+    // onConfirm usually re-renders the table, removing both elements.
+    // If the confirm row is still in the DOM (e.g. an error occurred), clean up.
     if (wrap.isConnected) restore();
   });
 
