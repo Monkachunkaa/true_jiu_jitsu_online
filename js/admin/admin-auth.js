@@ -176,6 +176,15 @@ function renderAdminShell(activePage = '', pageTitle = '') {
         ${iconAnalytics()}
         <span>Analytics</span>
       </a>
+
+      <p class="admin-sidebar__label" style="margin-top:var(--space-lg);">Help</p>
+
+      <a href="/pages/admin/manual.html"
+         class="admin-nav__item ${activePage === 'manual' ? 'admin-nav__item--active' : ''}"
+         data-page="manual">
+        ${iconManual()}
+        <span>Admin Manual</span>
+      </a>
     </nav>
 
     <!-- Footer: back to site + sign out -->
@@ -388,4 +397,7 @@ function iconAnnouncement() {
 }
 function iconMenu() {
   return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>`;
+}
+function iconManual() {
+  return `<svg class="admin-nav__icon" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>`;
 }

@@ -3,13 +3,17 @@
    True Jiu Jitsu Online
 
    Shows all gym members in one table. Members can have one
-   of five statuses:
+   of five active statuses:
 
      visitor  — signed waiver, no billing yet
      pending  — plan assigned, awaiting billing setup
      active   — billing live
      past_due — payment failed
      cancelled — left the gym
+
+   Archived members (archived_at IS NOT NULL) are hidden from
+   the default view but never deleted. A "Show archived" toggle
+   in the filter bar reveals them for audit / legal purposes.
 
    The Waivers Signed column shows how many waiver records
    are linked to each member in waiver_submissions.
@@ -21,6 +25,7 @@ let allPlans         = [];
 let editingId        = null;
 
 let activeStatusFilter = '';
+let showingArchived    = false;
 
 // Waiver count per gym member — populated by loadData()
 // Shape: { [gym_member_id]: count }
@@ -64,7 +69,7 @@ function discountLabel(member) {
 
 /* ----------------------------------------------------------
    Determine if a gym member has an active online subscription.
-   Kept for potential use elsewhere; no longer shown in table.
+   Kept for potential use elsewhere; not shown in table.
    ---------------------------------------------------------- */
 function getOnlineAccess(gymMember) {
   if (!gymMember.email) return false;
@@ -132,18 +137,26 @@ function discountSectionHTML(prefix, existingPercent, existingMonths) {
 
 
 /* ----------------------------------------------------------
-   Apply the status filter and search, then re-render
+   Apply the status filter and search, then re-render.
+   Archived members are a completely separate view — when
+   showingArchived is true, only archived rows are shown and
+   the status filter is ignored (they're already gone).
    ---------------------------------------------------------- */
 function applyFilters() {
   const query = (document.getElementById('member-search')?.value || '').toLowerCase().trim();
 
   const filtered = allGymMembers.filter(m => {
+    // Gate on archived state first
+    const isArchived = !!m.archived_at;
+    if (showingArchived !== isArchived) return false;
+
     const matchesSearch = !query
       || (m.name  || '').toLowerCase().includes(query)
       || (m.email || '').toLowerCase().includes(query)
       || (m.phone || '').toLowerCase().includes(query);
 
-    const matchesStatus = !activeStatusFilter
+    // Status filter only applies to active (non-archived) view
+    const matchesStatus = showingArchived || !activeStatusFilter
       || m.subscription_status === activeStatusFilter;
 
     return matchesSearch && matchesStatus;
@@ -161,10 +174,13 @@ function renderMembers(members) {
   if (!container) return;
 
   if (!members.length) {
+    const msg = showingArchived
+      ? 'No archived members found.'
+      : 'No members match your filters.';
     container.innerHTML = `
       <div class="empty-state">
         <div class="empty-state__icon">&#x1F94B;</div>
-        <h3>No members match your filters</h3>
+        <h3>${msg}</h3>
         <p>Try adjusting the search or filter options above.</p>
       </div>
     `;
@@ -180,7 +196,7 @@ function renderMembers(members) {
             <th>Plan</th>
             <th>Status</th>
             <th>Waivers Signed</th>
-            <th>Joined</th>
+            <th>${showingArchived ? 'Archived' : 'Joined'}</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -197,8 +213,10 @@ function renderMembers(members) {
       ? waiverCount + ' waiver' + (waiverCount !== 1 ? 's' : '')
       : '<span style="color:var(--color-gray);">None</span>';
 
-    // Show "Send Billing Link" for anyone not yet active or cancelled
-    const showBillingBtn = (
+    const isArchived = !!member.archived_at;
+
+    // Show "Send Billing Link" for anyone not yet active or cancelled (non-archived only)
+    const showBillingBtn = !isArchived && (
       member.subscription_status === 'visitor' ||
       member.subscription_status === 'pending' ||
       (!member.stripe_subscription_id &&
@@ -206,7 +224,14 @@ function renderMembers(members) {
         member.subscription_status !== 'active')
     );
 
+    const dateCell = isArchived
+      ? formatDate(member.archived_at)
+      : formatDate(member.joined_at);
+
     const tr = document.createElement('tr');
+    // Mute archived rows slightly so they read as historical
+    if (isArchived) tr.style.opacity = '0.6';
+
     tr.innerHTML = `
       <td>
         <div>
@@ -223,26 +248,28 @@ function renderMembers(members) {
       </td>
       <td>${statusBadge(member.subscription_status)}</td>
       <td style="font-size:var(--text-sm);">${waiverCell}</td>
-      <td style="font-size:var(--text-sm);color:var(--color-gray);">${formatDate(member.joined_at)}</td>
+      <td style="font-size:var(--text-sm);color:var(--color-gray);">${dateCell}</td>
       <td>
         <div class="data-table__actions">
-          <button class="btn btn--ghost btn--sm js-edit-member" data-id="${member.id}">Edit</button>
+          ${!isArchived ? `<button class="btn btn--ghost btn--sm js-edit-member" data-id="${member.id}">Edit</button>` : ''}
           ${showBillingBtn
             ? `<button class="btn btn--secondary btn--sm js-send-billing" data-id="${member.id}">Send Billing Link</button>`
             : ''
           }
-          ${member.subscription_status === 'active'
+          ${!isArchived && member.subscription_status === 'active'
             ? `<button class="btn btn--danger btn--sm js-cancel-member" data-id="${member.id}">Cancel</button>`
             : ''
           }
-          <!-- Overflow menu — holds infrequent actions like Delete -->
+          <!-- Overflow menu -->
           <div class="row-overflow" data-id="${member.id}">
             <button class="row-overflow__trigger" aria-label="More options" title="More options">
               &bull;&bull;&bull;
             </button>
             <div class="row-overflow__menu">
-              <button class="row-overflow__item row-overflow__item--danger js-delete-member"
-                data-id="${member.id}">Delete member</button>
+              ${isArchived
+                ? `<button class="row-overflow__item js-unarchive-member" data-id="${member.id}">Unarchive member</button>`
+                : `<button class="row-overflow__item row-overflow__item--danger js-archive-member" data-id="${member.id}">Archive member</button>`
+              }
             </div>
           </div>
         </div>
@@ -267,15 +294,13 @@ function renderMembers(members) {
     });
   });
 
-  // Overflow menu — toggle open/closed on trigger click,
-  // close when clicking anywhere else on the page
+  // Overflow menu — toggle on trigger click, close on outside click
   tbody.querySelectorAll('.row-overflow').forEach(wrap => {
     const trigger = wrap.querySelector('.row-overflow__trigger');
     const menu    = wrap.querySelector('.row-overflow__menu');
 
     trigger.addEventListener('click', (e) => {
       e.stopPropagation();
-      // Close any other open menus first
       document.querySelectorAll('.row-overflow__menu.is-open').forEach(m => {
         if (m !== menu) m.classList.remove('is-open');
       });
@@ -283,30 +308,39 @@ function renderMembers(members) {
     });
   });
 
-  // Close all overflow menus when clicking outside
   document.addEventListener('click', () => {
     document.querySelectorAll('.row-overflow__menu.is-open')
       .forEach(m => m.classList.remove('is-open'));
-  }, { once: false, capture: false });
+  });
 
-  // Delete — uses inline confirmation
-  tbody.querySelectorAll('.js-delete-member').forEach(btn => {
+  // Archive — confirm text is context-aware for active members
+  tbody.querySelectorAll('.js-archive-member').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      // Close the menu immediately so confirm row appears cleanly
       btn.closest('.row-overflow__menu').classList.remove('is-open');
       const member = allGymMembers.find(m => m.id === btn.dataset.id);
       if (!member) return;
-      // Confirmation target is the overflow trigger so it replaces that button
       const trigger = btn.closest('.row-overflow').querySelector('.row-overflow__trigger');
-      confirmAction(trigger, 'Delete ' + member.name + '?', () => deleteMember(member.id));
+      const prompt  = member.subscription_status === 'active'
+        ? 'Archive ' + member.name + '? Their active subscription will be cancelled.'
+        : 'Archive ' + member.name + '?';
+      confirmAction(trigger, prompt, () => archiveMember(member.id));
+    });
+  });
+
+  // Unarchive — no confirmation needed, it's a safe action
+  tbody.querySelectorAll('.js-unarchive-member').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      btn.closest('.row-overflow__menu').classList.remove('is-open');
+      await unarchiveMember(btn.dataset.id);
     });
   });
 }
 
 
 /* ----------------------------------------------------------
-   Filter dropdowns
+   Filter dropdowns + archive toggle
    ---------------------------------------------------------- */
 function setupFilters() {
   document.getElementById('status-filter')?.addEventListener('change', (e) => {
@@ -315,6 +349,20 @@ function setupFilters() {
   });
 
   document.getElementById('member-search')?.addEventListener('input', applyFilters);
+
+  document.getElementById('show-archived-toggle')?.addEventListener('click', () => {
+    showingArchived = !showingArchived;
+    const btn = document.getElementById('show-archived-toggle');
+    btn.textContent = showingArchived ? 'Hide Archived' : 'Show Archived';
+    btn.classList.toggle('btn--secondary', !showingArchived);
+    btn.classList.toggle('btn--ghost',     showingArchived);
+
+    // Status filter is irrelevant in archived view — disable it visually
+    const statusFilter = document.getElementById('status-filter');
+    if (statusFilter) statusFilter.disabled = showingArchived;
+
+    applyFilters();
+  });
 }
 
 
@@ -577,20 +625,58 @@ async function sendBillingLink(memberId, btn) {
 
 
 /* ----------------------------------------------------------
-   Delete member — permanently removes the record.
-   Called after inline confirmation from the overflow menu.
+   Archive member — soft delete.
+   Cancels any active Stripe subscription, stamps archived_at,
+   and hides the member from the default view. The record and
+   all linked waivers are preserved permanently.
    ---------------------------------------------------------- */
-async function deleteMember(memberId) {
+async function archiveMember(memberId) {
+  const member = allGymMembers.find(m => m.id === memberId);
+  if (!member) return;
+
+  // Cancel Stripe subscription first if one exists
+  if (member.stripe_subscription_id) {
+    const { data: { session } } = await window.supabaseClient.auth.getSession();
+    const res = await fetch('/.netlify/functions/admin-revoke-member', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+      body:    JSON.stringify({ gymMemberId: memberId }),
+    });
+    if (!res.ok) {
+      showToast('Failed to cancel subscription \u2014 member not archived', 'error');
+      return;
+    }
+  }
+
   const { error } = await window.supabaseClient
     .from('gym_members')
-    .delete()
+    .update({ archived_at: new Date().toISOString() })
     .eq('id', memberId);
 
-  if (error) { showToast('Failed to delete member', 'error'); return; }
+  if (error) { showToast('Failed to archive member', 'error'); return; }
 
-  showToast('Member deleted');
-  allGymMembers = allGymMembers.filter(m => m.id !== memberId);
-  delete allWaiverCounts[memberId];
+  showToast(member.name + ' archived');
+  await loadData();
+  updateStats();
+  applyFilters();
+}
+
+
+/* ----------------------------------------------------------
+   Unarchive member — restores a member to the active view.
+   Clears archived_at. Does not reinstate any subscription.
+   ---------------------------------------------------------- */
+async function unarchiveMember(memberId) {
+  const { error } = await window.supabaseClient
+    .from('gym_members')
+    .update({ archived_at: null })
+    .eq('id', memberId);
+
+  if (error) { showToast('Failed to unarchive member', 'error'); return; }
+
+  const member = allGymMembers.find(m => m.id === memberId);
+  showToast((member?.name || 'Member') + ' unarchived');
+  await loadData();
   updateStats();
   applyFilters();
 }
@@ -645,15 +731,19 @@ function populatePlanDropdown(selectId, selectedId) {
 
 
 /* ----------------------------------------------------------
-   Update the stat cards at the top of the page
+   Update the stat cards.
+   Archived members are excluded — they're not active members
+   and shouldn't affect counts or MRR.
    ---------------------------------------------------------- */
 function updateStats() {
-  const active   = allGymMembers.filter(m => m.subscription_status === 'active').length;
-  const pastDue  = allGymMembers.filter(m => m.subscription_status === 'past_due').length;
-  const pending  = allGymMembers.filter(m => m.subscription_status === 'pending').length;
-  const visitors = allGymMembers.filter(m => m.subscription_status === 'visitor').length;
+  const live = allGymMembers.filter(m => !m.archived_at);
 
-  const mrr = allGymMembers
+  const active   = live.filter(m => m.subscription_status === 'active').length;
+  const pastDue  = live.filter(m => m.subscription_status === 'past_due').length;
+  const pending  = live.filter(m => m.subscription_status === 'pending').length;
+  const visitors = live.filter(m => m.subscription_status === 'visitor').length;
+
+  const mrr = live
     .filter(m => m.subscription_status === 'active' && m.plan_id)
     .reduce((sum, m) => {
       const plan = allPlans.find(p => p.id === m.plan_id);
@@ -663,7 +753,7 @@ function updateStats() {
   document.getElementById('stat-active-gym').textContent = active;
   document.getElementById('stat-mrr').textContent        = '$' + (mrr / 100).toFixed(0);
 
-  // Total waivers on file — sum across all members
+  // Total waivers on file — sum across all members (including archived)
   const totalWaivers = Object.values(allWaiverCounts).reduce((s, n) => s + n, 0);
   document.getElementById('stat-with-online').textContent = totalWaivers;
 
@@ -675,8 +765,8 @@ function updateStats() {
 
 /* ----------------------------------------------------------
    Load all data from Supabase in parallel.
-   Waiver counts are fetched alongside members so the table
-   can show them without a second round-trip per row.
+   Fetches ALL gym_members (archived and non-archived) so the
+   toggle can switch views without a second network request.
    ---------------------------------------------------------- */
 async function loadData() {
   const [
@@ -688,8 +778,6 @@ async function loadData() {
     window.supabaseClient.from('gym_members').select('*').order('joined_at', { ascending: false }),
     window.supabaseClient.from('members').select('id, name, email, subscription_status'),
     window.supabaseClient.from('membership_plans').select('*').order('display_order'),
-    // Fetch only the gym_member_id column from waiver_submissions so we can
-    // count waivers per member without pulling down full waiver content.
     window.supabaseClient
       .from('waiver_submissions')
       .select('gym_member_id')
@@ -700,7 +788,6 @@ async function loadData() {
   allOnlineMembers = onlineData || [];
   allPlans         = planData   || [];
 
-  // Build a count map: { gym_member_id: count }
   allWaiverCounts = {};
   (waiverRows || []).forEach(row => {
     if (!row.gym_member_id) return;
@@ -763,6 +850,11 @@ function buildPage(content) {
         <option value="pending">Pending</option>
         <option value="cancelled">Cancelled</option>
       </select>
+      <!-- Deliberate toggle — placed after the main filters so it feels separate -->
+      <button class="btn btn--secondary btn--sm" id="show-archived-toggle"
+        style="margin-left:auto;" title="Show or hide archived members">
+        Show Archived
+      </button>
     </div>
 
     <!-- Members table -->
@@ -988,7 +1080,6 @@ function buildPage(content) {
 
 /* ----------------------------------------------------------
    Wire all modal event listeners.
-   Extracted so ?action= early-return paths share the same code.
    ---------------------------------------------------------- */
 function wireAllModals() {
   document.getElementById('close-add-member')?.addEventListener('click', closeAddModal);

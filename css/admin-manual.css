@@ -1,0 +1,384 @@
+/* ==========================================================
+   admin-manual.css — Styles for the admin user manual page
+   True Jiu Jitsu Online
+
+   Scoped to .manual-* classes so nothing bleeds into the
+   rest of the admin UI.
+   ========================================================== */
+
+
+/* ==========================
+   LAYOUT
+   Two-column: sticky TOC on
+   the left, content on right
+   ========================== */
+.manual-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: var(--space-2xl);
+  align-items: start;
+  max-width: 1100px;
+}
+
+.manual-toc {
+  position: sticky;
+  top: calc(var(--nav-height) + var(--space-lg));
+  background: var(--color-dark);
+  border: 1px solid var(--color-mid-gray);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-lg);
+}
+
+.manual-toc__heading {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-gray);
+  margin-bottom: var(--space-md);
+  max-width: none;
+}
+
+.manual-toc ul {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.manual-toc__link {
+  display: block;
+  padding: 6px var(--space-sm);
+  font-size: var(--text-sm);
+  color: var(--color-gray);
+  text-decoration: none;
+  border-radius: var(--border-radius);
+  border-left: 2px solid transparent;
+  transition: color var(--transition-fast),
+              background var(--transition-fast),
+              border-color var(--transition-fast);
+  line-height: 1.4;
+}
+
+.manual-toc__link:hover {
+  color: var(--color-white);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.manual-toc__link.is-active {
+  color: var(--color-white);
+  border-left-color: var(--color-red);
+  background: rgba(196, 30, 42, 0.08);
+}
+
+
+/* ==========================
+   HEADER
+   ========================== */
+.manual-header {
+  margin-bottom: var(--space-3xl);
+  padding-bottom: var(--space-xl);
+  border-bottom: 1px solid var(--color-mid-gray);
+}
+
+.manual-title {
+  font-size: var(--text-4xl);
+  margin-bottom: var(--space-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.manual-subtitle {
+  font-size: var(--text-base);
+  color: var(--color-gray);
+  max-width: none;
+  margin: 0;
+}
+
+
+/* ==========================
+   SECTIONS
+   ========================== */
+.manual-section {
+  margin-bottom: var(--space-3xl);
+  padding-bottom: var(--space-2xl);
+  border-bottom: 1px solid var(--color-mid-gray);
+}
+
+.manual-section:last-child {
+  border-bottom: none;
+}
+
+.manual-section__title {
+  font-size: var(--text-2xl);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: var(--space-xl);
+  color: var(--color-white);
+}
+
+
+/* ==========================
+   TYPOGRAPHY
+   ========================== */
+.manual-p {
+  font-size: var(--text-base);
+  line-height: 1.75;
+  color: var(--color-light-gray);
+  margin-bottom: var(--space-lg);
+  max-width: 72ch;
+}
+
+/* Allow inline code in paragraphs */
+.manual-p code,
+.manual-h3 code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+  background: var(--color-dark-gray);
+  border: 1px solid var(--color-mid-gray);
+  border-radius: 3px;
+  padding: 1px 6px;
+  color: var(--color-red-accessible);
+}
+
+.manual-h3 {
+  font-size: var(--text-lg);
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-white);
+  margin: var(--space-xl) 0 var(--space-md);
+}
+
+/* First h3 in a section needs less top margin */
+.manual-section__title + .manual-h3 {
+  margin-top: 0;
+}
+
+
+/* ==========================
+   LISTS
+   ========================== */
+.manual-list {
+  padding-left: var(--space-xl);
+  margin-bottom: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.manual-list li {
+  font-size: var(--text-base);
+  line-height: 1.65;
+  color: var(--color-light-gray);
+  max-width: 68ch;
+}
+
+.manual-list--ordered {
+  list-style: decimal;
+}
+
+.manual-list:not(.manual-list--ordered) {
+  list-style: disc;
+}
+
+/* Bold and code inside list items */
+.manual-list li strong { color: var(--color-white); }
+.manual-list li code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.88em;
+  background: var(--color-dark-gray);
+  border: 1px solid var(--color-mid-gray);
+  border-radius: 3px;
+  padding: 1px 5px;
+  color: var(--color-red-accessible);
+}
+.manual-list li em { color: var(--color-gray); font-style: italic; }
+
+
+/* ==========================
+   CALLOUTS
+   ========================== */
+.manual-callout {
+  display: flex;
+  gap: var(--space-md);
+  align-items: flex-start;
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--border-radius-lg);
+  margin-bottom: var(--space-lg);
+  max-width: 72ch;
+}
+
+.manual-callout p {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.65;
+  max-width: none;
+}
+
+.manual-callout__icon {
+  font-size: var(--text-lg);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.manual-callout--info {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+.manual-callout--info p { color: #93c5fd; }
+
+.manual-callout--warning {
+  background: rgba(224, 155, 42, 0.1);
+  border: 1px solid rgba(224, 155, 42, 0.35);
+}
+.manual-callout--warning p { color: var(--color-warning); }
+
+.manual-callout--tip {
+  background: rgba(42, 157, 92, 0.1);
+  border: 1px solid rgba(42, 157, 92, 0.3);
+}
+.manual-callout--tip p { color: #6ee7b7; }
+
+
+/* ==========================
+   SCREENSHOT PLACEHOLDERS
+   Replaced with real images
+   once screenshots are taken
+   ========================== */
+.manual-screenshot {
+  margin-bottom: var(--space-lg);
+  max-width: 680px;
+}
+
+.manual-screenshot__placeholder {
+  background: var(--color-dark-gray);
+  border: 2px dashed var(--color-mid-gray);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-2xl);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.manual-screenshot__placeholder span {
+  font-size: 2rem;
+  opacity: 0.4;
+}
+
+.manual-screenshot__placeholder p {
+  font-size: var(--text-sm);
+  color: var(--color-gray);
+  margin: 0;
+  max-width: none;
+  font-style: italic;
+}
+
+
+/* ==========================
+   TABLES
+   ========================== */
+.manual-table-wrap {
+  overflow-x: auto;
+  margin-bottom: var(--space-lg);
+  border: 1px solid var(--color-mid-gray);
+  border-radius: var(--border-radius-lg);
+}
+
+.manual-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.manual-table th {
+  padding: var(--space-sm) var(--space-lg);
+  text-align: left;
+  font-family: var(--font-heading);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-gray);
+  border-bottom: 1px solid var(--color-mid-gray);
+  background: var(--color-dark);
+  white-space: nowrap;
+}
+
+.manual-table td {
+  padding: var(--space-md) var(--space-lg);
+  color: var(--color-light-gray);
+  border-bottom: 1px solid var(--color-mid-gray);
+  vertical-align: top;
+  line-height: 1.55;
+}
+
+.manual-table tr:last-child td {
+  border-bottom: none;
+}
+
+.manual-table tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.manual-table td strong { color: var(--color-white); }
+
+
+/* ==========================
+   CODE BLOCKS
+   ========================== */
+.manual-code {
+  background: var(--color-dark);
+  border: 1px solid var(--color-mid-gray);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-lg) var(--space-xl);
+  margin-bottom: var(--space-lg);
+  overflow-x: auto;
+  max-width: 680px;
+}
+
+.manual-code code {
+  font-family: 'Courier New', monospace;
+  font-size: var(--text-sm);
+  color: var(--color-red-accessible);
+  line-height: 1.7;
+  white-space: pre;
+}
+
+
+/* ==========================
+   RESPONSIVE
+   ========================== */
+@media (max-width: 900px) {
+  .manual-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .manual-toc {
+    position: static;
+    /* Collapse into a horizontal scroll row on small screens */
+    overflow-x: auto;
+  }
+
+  .manual-toc ul {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+  }
+
+  .manual-toc__link {
+    white-space: nowrap;
+    border-left: none;
+    border-bottom: 2px solid transparent;
+  }
+
+  .manual-toc__link.is-active {
+    border-left-color: transparent;
+    border-bottom-color: var(--color-red);
+  }
+}
+
+@media (max-width: 480px) {
+  .manual-title { font-size: var(--text-2xl); }
+  .manual-section__title { font-size: var(--text-xl); }
+  .manual-p, .manual-list li { font-size: var(--text-sm); }
+}
