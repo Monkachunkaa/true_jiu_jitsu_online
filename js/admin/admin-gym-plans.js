@@ -15,24 +15,14 @@ let allPlans = [];
 
 /* ----------------------------------------------------------
    Helpers
-   ---------------------------------------------------------- */
-function formatPrice(cents) {
-  return `$${(cents / 100).toFixed(2)}`;
-}
 
-function showToast(message, type = 'success') {
-  let container = document.getElementById('toast-container');
-  if (!container) {
-    container = document.createElement('div');
-    container.id        = 'toast-container';
-    container.className = 'toast-container';
-    document.body.appendChild(container);
-  }
-  const toast = document.createElement('div');
-  toast.className   = `toast toast--${type}`;
-  toast.textContent = message;
-  container.appendChild(toast);
-  setTimeout(() => toast.remove(), 3500);
+   formatDate and showToast are defined in admin-auth.js,
+   which is loaded before this file on every admin page.
+   ---------------------------------------------------------- */
+
+function formatPrice(cents) {
+  // Returns a dollar-formatted price string, e.g. "$150.00"
+  return '$' + (cents / 100).toFixed(2);
 }
 
 
@@ -46,7 +36,7 @@ function renderPlans() {
   if (!allPlans.length) {
     list.innerHTML = `
       <div class="empty-state">
-        <div class="empty-state__icon">📋</div>
+        <div class="empty-state__icon">&#x1F4CB;</div>
         <h3>No plans yet</h3>
         <p>Create your first membership plan to start billing members.</p>
       </div>
@@ -56,7 +46,7 @@ function renderPlans() {
 
   list.innerHTML = '';
   allPlans.forEach(plan => {
-    const item = document.createElement('div');
+    const item     = document.createElement('div');
     item.className = 'content-list-item';
 
     item.innerHTML = `
@@ -109,7 +99,6 @@ function renderPlans() {
     });
   });
 
-  // Edit buttons
   list.querySelectorAll('.js-edit-plan').forEach(btn => {
     btn.addEventListener('click', () => openEditPlanModal(btn.dataset.id));
   });
@@ -137,21 +126,22 @@ function closeCreateModal() {
 async function createPlan(e) {
   e.preventDefault();
 
-  const name                = document.getElementById('plan-name').value.trim();
-  const description         = document.getElementById('plan-description').value.trim();
-  const priceStr            = document.getElementById('plan-price').value.trim();
+  const name                 = document.getElementById('plan-name').value.trim();
+  const description          = document.getElementById('plan-description').value.trim();
+  const priceStr             = document.getElementById('plan-price').value.trim();
   const includesOnlineAccess = document.getElementById('plan-online-access').checked;
 
   if (!name || !priceStr) { showToast('Name and price are required', 'error'); return; }
 
   const priceCents = Math.round(parseFloat(priceStr) * 100);
   if (isNaN(priceCents) || priceCents <= 0) {
-    showToast('Please enter a valid price', 'error'); return;
+    showToast('Please enter a valid price', 'error');
+    return;
   }
 
   const saveBtn       = document.getElementById('create-plan-btn');
   saveBtn.disabled    = true;
-  saveBtn.textContent = 'Creating…';
+  saveBtn.textContent = 'Creating\u2026';
 
   const { data: { session } } = await window.supabaseClient.auth.getSession();
 
@@ -159,7 +149,7 @@ async function createPlan(e) {
     method:  'POST',
     headers: {
       'Content-Type':  'application/json',
-      'Authorization': `Bearer ${session.access_token}`,
+      'Authorization': 'Bearer ' + session.access_token,
     },
     body: JSON.stringify({ name, description: description || null, priceCents, includesOnlineAccess }),
   });
@@ -182,6 +172,8 @@ async function createPlan(e) {
 
 /* ----------------------------------------------------------
    Edit plan modal (name + description only)
+   Price is read-only because Stripe doesn't allow editing
+   live prices — a new plan must be created instead.
    ---------------------------------------------------------- */
 function openEditPlanModal(planId) {
   const plan = allPlans.find(p => p.id === planId);
@@ -212,7 +204,7 @@ async function saveEditedPlan(e) {
 
   const saveBtn       = document.getElementById('save-edit-plan-btn');
   saveBtn.disabled    = true;
-  saveBtn.textContent = 'Saving…';
+  saveBtn.textContent = 'Saving\u2026';
 
   const { error } = await window.supabaseClient
     .from('membership_plans')
@@ -244,7 +236,7 @@ async function loadPlans() {
 
   if (!data) { allPlans = []; return; }
 
-  // Count active gym members per plan
+  // Count active gym members per plan for the member count badge
   const { data: counts } = await window.supabaseClient
     .from('gym_members')
     .select('plan_id')
@@ -283,7 +275,7 @@ function buildPage(content) {
       <div class="modal" style="max-width:460px;">
         <div class="modal__header">
           <h2 class="modal__title">New Membership Plan</h2>
-          <button class="modal__close" id="close-create-plan" aria-label="Close">✕</button>
+          <button class="modal__close" id="close-create-plan" aria-label="Close">&times;</button>
         </div>
         <form class="form" id="create-plan-form">
 
@@ -296,14 +288,14 @@ function buildPage(content) {
           <div class="form__group">
             <label class="form__label" for="plan-description">Description</label>
             <input class="form__input" type="text" id="plan-description"
-              placeholder="Optional — e.g. Train as much as you want">
+              placeholder="Optional &mdash; e.g. Train as much as you want">
           </div>
 
           <div class="form__group">
             <label class="form__label" for="plan-price">Monthly Price ($) *</label>
             <input class="form__input" type="number" id="plan-price"
               placeholder="e.g. 150.00" step="0.01" min="1" required>
-            <span class="form__hint">Enter the dollar amount — e.g. 150 for $150/mo</span>
+            <span class="form__hint">Enter the dollar amount &mdash; e.g. 150 for $150/mo</span>
           </div>
 
           <div style="display:flex;align-items:center;gap:var(--space-md);">
@@ -335,7 +327,7 @@ function buildPage(content) {
       <div class="modal" style="max-width:460px;">
         <div class="modal__header">
           <h2 class="modal__title">Edit Plan</h2>
-          <button class="modal__close" id="close-edit-plan" aria-label="Close">✕</button>
+          <button class="modal__close" id="close-edit-plan" aria-label="Close">&times;</button>
         </div>
         <form class="form" id="edit-plan-form">
           <input type="hidden" id="edit-plan-id">

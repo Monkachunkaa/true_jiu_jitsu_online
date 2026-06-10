@@ -7,6 +7,9 @@
      - Gym memberships (gym_members + membership_plans)
      - Online video subscriptions (members)
      - Content engagement (video_progress)
+
+   NOTE: showToast, formatDate, and ONLINE_SUBSCRIPTION_PRICE_CENTS
+   are all defined in admin-auth.js, loaded before this file.
    ========================================================== */
 
 
@@ -21,9 +24,12 @@ function setChartDefaults() {
   Chart.defaults.plugins.legend.display  = false;
 }
 
+
 /* ----------------------------------------------------------
-   Helpers
+   Data helpers
    ---------------------------------------------------------- */
+
+// Count items per YYYY-MM month string
 function groupByMonth(dates) {
   const counts = {};
   (dates || []).forEach(iso => {
@@ -34,21 +40,24 @@ function groupByMonth(dates) {
   return counts;
 }
 
+// Return an array of the last N month strings, e.g. ["2025-01", "2025-02", ...]
 function lastNMonths(n) {
   const months = [];
   const now    = new Date();
   for (let i = n - 1; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+    months.push(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'));
   }
   return months;
 }
 
+// "2025-01" -> "Jan 2025"
 function formatMonth(ym) {
   const [y, m] = ym.split('-');
   return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 }
 
+// Format cents to "$1,234"
 function formatCurrency(cents) {
   return new Intl.NumberFormat('en-US', {
     style: 'currency', currency: 'USD', maximumFractionDigits: 0,
@@ -57,7 +66,7 @@ function formatCurrency(cents) {
 
 
 /* ----------------------------------------------------------
-   Stat cards — reflects both gym and online revenue
+   Stat cards
    ---------------------------------------------------------- */
 function renderStatCards(container, stats) {
   container.innerHTML = `
@@ -65,12 +74,12 @@ function renderStatCards(container, stats) {
       <div class="stat-card">
         <p class="stat-card__label">Total Active Members</p>
         <p class="stat-card__value">${stats.totalActive}</p>
-        <p class="stat-card__delta">${stats.activeGym} gym · ${stats.activeOnline} online</p>
+        <p class="stat-card__delta">${stats.activeGym} gym &middot; ${stats.activeOnline} online</p>
       </div>
       <div class="stat-card">
         <p class="stat-card__label">Est. Monthly Revenue</p>
         <p class="stat-card__value">${formatCurrency(stats.totalMRR)}</p>
-        <p class="stat-card__delta">${formatCurrency(stats.gymMRR)} gym · ${formatCurrency(stats.onlineMRR)} online</p>
+        <p class="stat-card__delta">${formatCurrency(stats.gymMRR)} gym &middot; ${formatCurrency(stats.onlineMRR)} online</p>
       </div>
       <div class="stat-card">
         <p class="stat-card__label">Published Videos</p>
@@ -88,7 +97,7 @@ function renderStatCards(container, stats) {
 
 
 /* ----------------------------------------------------------
-   Members Over Time — two lines: gym vs online
+   Members Over Time — line chart (gym vs online cumulative)
    ---------------------------------------------------------- */
 function renderMembersOverTime(canvas, gymMembers, onlineMembers) {
   const months = lastNMonths(6);
@@ -135,10 +144,7 @@ function renderMembersOverTime(canvas, gymMembers, onlineMembers) {
       responsive:          true,
       maintainAspectRatio: false,
       plugins: {
-        legend: {
-          display: true,
-          labels:  { color: '#888', boxWidth: 12 },
-        },
+        legend: { display: true, labels: { color: '#888', boxWidth: 12 } },
       },
       scales: {
         y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#2a2a2a' } },
@@ -150,14 +156,14 @@ function renderMembersOverTime(canvas, gymMembers, onlineMembers) {
 
 
 /* ----------------------------------------------------------
-   New vs Churned — combined gym + online per month
+   New vs Churned — grouped bar chart (last 6 months)
    ---------------------------------------------------------- */
 function renderNewVsChurned(canvas, gymMembers, onlineMembers) {
   const months = lastNMonths(6);
 
-  const newGymMap      = groupByMonth(gymMembers.map(m => m.joined_at));
-  const newOnlineMap   = groupByMonth(onlineMembers.map(m => m.subscribed_at));
-  const churnedGymMap  = groupByMonth(gymMembers.filter(m => m.cancelled_at).map(m => m.cancelled_at));
+  const newGymMap        = groupByMonth(gymMembers.map(m => m.joined_at));
+  const newOnlineMap     = groupByMonth(onlineMembers.map(m => m.subscribed_at));
+  const churnedGymMap    = groupByMonth(gymMembers.filter(m => m.cancelled_at).map(m => m.cancelled_at));
   const churnedOnlineMap = groupByMonth(onlineMembers.filter(m => m.cancelled_at).map(m => m.cancelled_at));
 
   const newData     = months.map(m => (newGymMap[m] || 0) + (newOnlineMap[m] || 0));
@@ -188,20 +194,16 @@ function renderNewVsChurned(canvas, gymMembers, onlineMembers) {
 
 
 /* ----------------------------------------------------------
-   Revenue by Plan — horizontal bar chart
-   Shows actual MRR contribution per membership plan
-   ---------------------------------------------------------- */
-function renderRevenueByPlan(canvas, gymMembers, plans) {
-  if (!plans.length) {
-    canvas.parentElement.innerHTML = `
-      <p style="color:var(--color-gray);font-size:var(--text-sm);padding:var(--space-xl);text-align:center;">
-        No plans yet.
-      </p>
-    `;
-    return;
-  }
+   Revenue by Plan — horizontal bar chart.
+   Shows actual MRR per gym membership plan PLUS online
+   subscriptions as their own bar.
 
-  // Calculate MRR per plan
+   Uses ONLINE_SUBSCRIPTION_PRICE_CENTS from admin-auth.js
+   so there's a single place to update the price.
+   ---------------------------------------------------------- */
+function renderRevenueByPlan(canvas, gymMembers, plans, activeOnline) {
+
+  // MRR per gym plan, accounting for per-member discounts
   const planRevenue = plans.map(plan => {
     const mrrCents = gymMembers
       .filter(m => m.plan_id === plan.id && m.subscription_status === 'active')
@@ -217,20 +219,22 @@ function renderRevenueByPlan(canvas, gymMembers, plans) {
     return { name: plan.name, mrrCents, memberCount };
   }).filter(p => p.mrrCents > 0);
 
-  // Add online as its own "plan"
-  const onlineActive = gymMembers.length; // placeholder — replaced in MAIN
-  // Note: onlineActive passed in as extra via canvas.dataset
+  // Append online subscriptions as their own bar
+  if (activeOnline > 0) {
+    planRevenue.push({
+      name:        'Online Subscriptions (' + activeOnline + ')',
+      mrrCents:    activeOnline * ONLINE_SUBSCRIPTION_PRICE_CENTS,
+      memberCount: activeOnline,
+    });
+  }
 
   if (!planRevenue.length) {
-    canvas.parentElement.innerHTML = `
-      <p style="color:var(--color-gray);font-size:var(--text-sm);padding:var(--space-xl);text-align:center;">
-        No active members with plans yet.
-      </p>
-    `;
+    canvas.parentElement.innerHTML =
+      '<p style="color:var(--color-gray);font-size:var(--text-sm);padding:var(--space-xl);text-align:center;">No active members with plans yet.</p>';
     return;
   }
 
-  const labels = planRevenue.map(p => `${p.name} (${p.memberCount})`);
+  const labels = planRevenue.map(p => p.name);
   const data   = planRevenue.map(p => p.mrrCents / 100);
 
   new Chart(canvas, {
@@ -252,14 +256,18 @@ function renderRevenueByPlan(canvas, gymMembers, plans) {
       scales: {
         x: {
           beginAtZero: true,
-          ticks: { callback: v => `$${v}` },
+          ticks: { callback: function(v) { return '$' + v; } },
           grid:  { color: '#2a2a2a' },
         },
         y: { grid: { display: false } },
       },
-      plugins: { tooltip: { callbacks: {
-        label: ctx => `$${ctx.parsed.x.toFixed(0)}/mo`,
-      }}},
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function(ctx) { return '$' + ctx.parsed.x.toFixed(0) + '/mo'; },
+          },
+        },
+      },
     },
   });
 }
@@ -270,11 +278,8 @@ function renderRevenueByPlan(canvas, gymMembers, plans) {
    ---------------------------------------------------------- */
 function renderMostWatched(canvas, watchData) {
   if (!watchData.length) {
-    canvas.parentElement.innerHTML = `
-      <p style="color:var(--color-gray);font-size:var(--text-sm);padding:var(--space-xl);text-align:center;">
-        No watch data yet.
-      </p>
-    `;
+    canvas.parentElement.innerHTML =
+      '<p style="color:var(--color-gray);font-size:var(--text-sm);padding:var(--space-xl);text-align:center;">No watch data yet.</p>';
     return;
   }
 
@@ -303,34 +308,36 @@ function renderMostWatched(canvas, watchData) {
         y: {
           grid: { display: false },
           ticks: {
-            callback: (val, i) => {
+            callback: function(val, i) {
               const label = labels[i];
-              return label.length > 28 ? label.slice(0, 28) + '…' : label;
+              return label.length > 28 ? label.slice(0, 28) + '\u2026' : label;
             },
           },
         },
       },
-      plugins: { tooltip: { callbacks: { label: ctx => `${ctx.parsed.x} views` } } },
+      plugins: {
+        tooltip: {
+          callbacks: { label: function(ctx) { return ctx.parsed.x + ' views'; } },
+        },
+      },
     },
   });
 }
 
 
 /* ----------------------------------------------------------
-   Playlist Completion — bar chart
+   Playlist Completion — bar chart (average % complete)
    ---------------------------------------------------------- */
 function renderPlaylistCompletion(canvas, playlists, playlistItems, videoProgress) {
   if (!playlists.length) {
-    canvas.parentElement.innerHTML = `
-      <p style="color:var(--color-gray);font-size:var(--text-sm);padding:var(--space-xl);text-align:center;">
-        No playlist data yet.
-      </p>
-    `;
+    canvas.parentElement.innerHTML =
+      '<p style="color:var(--color-gray);font-size:var(--text-sm);padding:var(--space-xl);text-align:center;">No playlist data yet.</p>';
     return;
   }
 
   const completedIds = new Set(videoProgress.filter(p => p.completed).map(p => p.video_id));
-  const labels = [], data = [];
+  const labels = [];
+  const data   = [];
 
   playlists.forEach(playlist => {
     const items = playlistItems.filter(i => i.playlist_id === playlist.id);
@@ -359,32 +366,36 @@ function renderPlaylistCompletion(canvas, playlists, playlistItems, videoProgres
       maintainAspectRatio: false,
       scales: {
         y: {
-          beginAtZero: true, max: 100,
-          ticks: { callback: v => `${v}%` },
-          grid:  { color: '#2a2a2a' },
+          beginAtZero: true,
+          max: 100,
+          ticks: { callback: function(v) { return v + '%'; } },
+          grid: { color: '#2a2a2a' },
         },
         x: { grid: { display: false } },
       },
-      plugins: { tooltip: { callbacks: { label: ctx => `${ctx.parsed.y}% avg completion` } } },
+      plugins: {
+        tooltip: {
+          callbacks: { label: function(ctx) { return ctx.parsed.y + '% avg completion'; } },
+        },
+      },
     },
   });
 }
 
 
 /* ----------------------------------------------------------
-   Page HTML skeleton
+   Page HTML skeleton — charts are populated after data loads
    ---------------------------------------------------------- */
 function buildPage(content) {
   content.innerHTML = `
 
+    <!-- Stat cards — populated after data fetch -->
     <div id="stat-cards">
       <div class="stat-grid">
-        ${[1,2,3,4].map(() => `
-          <div class="stat-card">
-            <p class="stat-card__label">Loading…</p>
-            <p class="stat-card__value">—</p>
-          </div>
-        `).join('')}
+        <div class="stat-card"><p class="stat-card__label">Loading&hellip;</p><p class="stat-card__value">&mdash;</p></div>
+        <div class="stat-card"><p class="stat-card__label">Loading&hellip;</p><p class="stat-card__value">&mdash;</p></div>
+        <div class="stat-card"><p class="stat-card__label">Loading&hellip;</p><p class="stat-card__value">&mdash;</p></div>
+        <div class="stat-card"><p class="stat-card__label">Loading&hellip;</p><p class="stat-card__value">&mdash;</p></div>
       </div>
     </div>
 
@@ -485,10 +496,10 @@ function buildPage(content) {
     window.supabaseClient.from('video_progress').select('video_id, completed'),
   ]);
 
-  /* Calculate MRR */
+  /* Calculate MRR using the shared price constant from admin-auth.js */
   const planMap = Object.fromEntries((plans || []).map(p => [p.id, p]));
 
-  const activeGym    = (gymMembers || []).filter(m => m.subscription_status === 'active').length;
+  const activeGym    = (gymMembers    || []).filter(m => m.subscription_status === 'active').length;
   const activeOnline = (onlineMembers || []).filter(m => m.subscription_status === 'active').length;
 
   const gymMRR = (gymMembers || [])
@@ -498,23 +509,28 @@ function buildPage(content) {
       return sum + Math.round((plan?.price_cents || 0) * (1 - (m.discount_percent || 0) / 100));
     }, 0);
 
-  const onlineMRR = activeOnline * 899;
+  const onlineMRR = activeOnline * ONLINE_SUBSCRIPTION_PRICE_CENTS;
   const totalMRR  = gymMRR + onlineMRR;
 
-  /* Aggregate watch data */
+  /* Aggregate watch counts per video */
   const watchMap = {};
   (watchRaw || []).forEach(row => {
     if (!row.video_id) return;
-    if (!watchMap[row.video_id]) watchMap[row.video_id] = { title: row.videos?.title || 'Unknown', watch_count: 0 };
+    if (!watchMap[row.video_id]) {
+      watchMap[row.video_id] = { title: row.videos?.title || 'Unknown', watch_count: 0 };
+    }
     watchMap[row.video_id].watch_count++;
   });
   const watchData = Object.values(watchMap).sort((a, b) => b.watch_count - a.watch_count);
 
-  /* Render */
+  /* Render all sections */
   renderStatCards(document.getElementById('stat-cards'), {
-    totalActive: activeGym + activeOnline,
-    activeGym, activeOnline,
-    gymMRR, onlineMRR, totalMRR,
+    totalActive:       activeGym + activeOnline,
+    activeGym,
+    activeOnline,
+    gymMRR,
+    onlineMRR,
+    totalMRR,
     videoCount:        videoCount        || 0,
     publishedVideos:   publishedVideos   || 0,
     playlistCount:     playlistCount     || 0,
@@ -533,10 +549,12 @@ function buildPage(content) {
     onlineMembers || []
   );
 
+  // Pass activeOnline so the chart includes online subscription revenue
   renderRevenueByPlan(
     document.getElementById('chart-revenue-by-plan'),
     gymMembers || [],
-    plans      || []
+    plans      || [],
+    activeOnline
   );
 
   renderMostWatched(

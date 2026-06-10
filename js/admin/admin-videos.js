@@ -22,32 +22,15 @@ let uploadVideoId = null;
 /* ----------------------------------------------------------
    Helpers
    ---------------------------------------------------------- */
+
+// formatDate and showToast are defined in admin-auth.js,
+// which is loaded before this file on every admin page.
+
 function formatDuration(seconds) {
   if (!seconds) return '—';
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
-}
-
-function formatDate(iso) {
-  return new Date(iso).toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric',
-  });
-}
-
-function showToast(message, type = 'success') {
-  let container = document.getElementById('toast-container');
-  if (!container) {
-    container = document.createElement('div');
-    container.id        = 'toast-container';
-    container.className = 'toast-container';
-    document.body.appendChild(container);
-  }
-  const toast = document.createElement('div');
-  toast.className   = `toast toast--${type}`;
-  toast.textContent = message;
-  container.appendChild(toast);
-  setTimeout(() => toast.remove(), 3500);
 }
 
 
@@ -404,15 +387,17 @@ async function confirmDelete(videoId) {
   const video = allVideos.find(v => v.id === videoId);
   if (!video) return;
 
-  if (!confirm(`Delete "${video.title}"? This cannot be undone.`)) return;
+  // Find the delete button and use inline confirmation instead of browser confirm()
+  const btn = document.querySelector(`.js-delete-video[data-id="${videoId}"]`);
+  if (!btn) return;
 
-  const { error } = await window.supabaseClient.from('videos').delete().eq('id', videoId);
-
-  if (error) { showToast('Failed to delete video', 'error'); return; }
-
-  showToast('Video deleted');
-  allVideos = allVideos.filter(v => v.id !== videoId);
-  renderVideoList();
+  confirmAction(btn, `Delete "${video.title}"?`, async () => {
+    const { error } = await window.supabaseClient.from('videos').delete().eq('id', videoId);
+    if (error) { showToast('Failed to delete video', 'error'); return; }
+    showToast('Video deleted');
+    allVideos = allVideos.filter(v => v.id !== videoId);
+    renderVideoList();
+  });
 }
 
 

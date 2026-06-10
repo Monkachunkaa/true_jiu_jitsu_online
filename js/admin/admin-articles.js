@@ -18,11 +18,9 @@ let quillEditor = null;
 /* ----------------------------------------------------------
    Helpers
    ---------------------------------------------------------- */
-function formatDate(iso) {
-  return new Date(iso).toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric',
-  });
-}
+
+// formatDate and showToast are defined in admin-auth.js,
+// which is loaded before this file on every admin page.
 
 function slugify(str) {
   return str.toLowerCase()
@@ -30,21 +28,6 @@ function slugify(str) {
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
     .trim();
-}
-
-function showToast(message, type = 'success') {
-  let container = document.getElementById('toast-container');
-  if (!container) {
-    container = document.createElement('div');
-    container.id        = 'toast-container';
-    container.className = 'toast-container';
-    document.body.appendChild(container);
-  }
-  const toast = document.createElement('div');
-  toast.className   = `toast toast--${type}`;
-  toast.textContent = message;
-  container.appendChild(toast);
-  setTimeout(() => toast.remove(), 3500);
 }
 
 
@@ -258,16 +241,18 @@ async function confirmDelete(articleId) {
   const article = allArticles.find(a => a.id === articleId);
   if (!article) return;
 
-  if (!confirm(`Delete "${article.title}"? This cannot be undone.`)) return;
+  // Use inline confirmation instead of browser confirm()
+  const btn = document.querySelector(`.js-delete-article[data-id="${articleId}"]`);
+  if (!btn) return;
 
-  const { error } = await window.supabaseClient
-    .from('articles').delete().eq('id', articleId);
-
-  if (error) { showToast('Failed to delete article', 'error'); return; }
-
-  showToast('Article deleted');
-  allArticles = allArticles.filter(a => a.id !== articleId);
-  renderArticleList();
+  confirmAction(btn, `Delete "${article.title}"?`, async () => {
+    const { error } = await window.supabaseClient
+      .from('articles').delete().eq('id', articleId);
+    if (error) { showToast('Failed to delete article', 'error'); return; }
+    showToast('Article deleted');
+    allArticles = allArticles.filter(a => a.id !== articleId);
+    renderArticleList();
+  });
 }
 
 

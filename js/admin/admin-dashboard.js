@@ -16,7 +16,7 @@
   content.innerHTML = `
 
     <!-- Stat cards — compact row -->
-    <div class="stat-grid" style="margin-bottom:var(--space-lg);grid-template-columns:repeat(4,1fr);">
+    <div class="stat-grid" style="margin-bottom:var(--space-lg);">
       <div class="stat-card" style="padding:var(--space-md) var(--space-lg);">
         <p class="stat-card__label">Active Gym Members</p>
         <p class="stat-card__value" id="stat-gym-members" style="font-size:var(--text-2xl);">&#x2014;</p>
@@ -42,7 +42,7 @@
     <div id="alert-row" style="display:none;margin-bottom:var(--space-2xl);"></div>
 
     <!-- Quick action cards -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-lg);">
+    <div class="admin-action-grid">
 
       <a href="/pages/admin/gym-members.html?action=add" class="quick-action-card">
         <div class="quick-action-card__icon">
@@ -127,7 +127,8 @@
       const plan = planMap[m.plan_id];
       return sum + Math.round((plan?.price_cents || 0) * (1 - (m.discount_percent || 0) / 100));
     }, 0);
-  const totalMRR = gymMRR + activeOnline * 899;
+  // Use shared price constant from admin-auth.js so it only needs updating in one place
+  const totalMRR = gymMRR + activeOnline * ONLINE_SUBSCRIPTION_PRICE_CENTS;
 
   const mrrStr = new Intl.NumberFormat('en-US', {
     style: 'currency', currency: 'USD', maximumFractionDigits: 0,

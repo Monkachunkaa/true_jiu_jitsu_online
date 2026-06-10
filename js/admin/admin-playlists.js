@@ -20,26 +20,9 @@ let playlistItems  = [];   // items currently in the playlist being edited
 /* ----------------------------------------------------------
    Helpers
    ---------------------------------------------------------- */
-function formatDate(iso) {
-  return new Date(iso).toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric',
-  });
-}
 
-function showToast(message, type = 'success') {
-  let container = document.getElementById('toast-container');
-  if (!container) {
-    container = document.createElement('div');
-    container.id        = 'toast-container';
-    container.className = 'toast-container';
-    document.body.appendChild(container);
-  }
-  const toast = document.createElement('div');
-  toast.className   = `toast toast--${type}`;
-  toast.textContent = message;
-  container.appendChild(toast);
-  setTimeout(() => toast.remove(), 3500);
-}
+// formatDate and showToast are defined in admin-auth.js,
+// which is loaded before this file on every admin page.
 
 
 /* ----------------------------------------------------------
@@ -167,7 +150,8 @@ async function openBuilder(playlistId = null) {
   } else {
     document.getElementById('playlist-title').value       = '';
     document.getElementById('playlist-description').value = '';
-    document.getElementById('playlist-thumbnail').value   = '';
+    // Reset the thumbnail uploader (it replaced the old #playlist-thumbnail input)
+    if (window._playlistUploader) window._playlistUploader.setUrl(null);
     document.getElementById('playlist-published').checked = false;
   }
 
@@ -402,16 +386,18 @@ async function confirmDelete(playlistId) {
   const playlist = allPlaylists.find(p => p.id === playlistId);
   if (!playlist) return;
 
-  if (!confirm(`Delete "${playlist.title}"? This cannot be undone.`)) return;
+  // Use inline confirmation instead of browser confirm()
+  const btn = document.querySelector(`.js-delete-playlist[data-id="${playlistId}"]`);
+  if (!btn) return;
 
-  const { error } = await window.supabaseClient
-    .from('playlists').delete().eq('id', playlistId);
-
-  if (error) { showToast('Failed to delete playlist', 'error'); return; }
-
-  showToast('Playlist deleted');
-  allPlaylists = allPlaylists.filter(p => p.id !== playlistId);
-  renderPlaylistList();
+  confirmAction(btn, `Delete "${playlist.title}"?`, async () => {
+    const { error } = await window.supabaseClient
+      .from('playlists').delete().eq('id', playlistId);
+    if (error) { showToast('Failed to delete playlist', 'error'); return; }
+    showToast('Playlist deleted');
+    allPlaylists = allPlaylists.filter(p => p.id !== playlistId);
+    renderPlaylistList();
+  });
 }
 
 
@@ -431,10 +417,11 @@ async function loadPlaylists() {
 }
 
 async function loadContent() {
-  const [{ data: videos }, { data: articles }] = await Promise.all([
+  const [{ data: videos, error: vErr }, { data: articles, error: aErr }] = await Promise.all([
     window.supabaseClient.from('videos').select('id, title, thumbnail_url').eq('published', true).order('title'),
     window.supabaseClient.from('articles').select('id, title, thumbnail_url').eq('published', true).order('title'),
   ]);
+  if (vErr || aErr) showToast('Failed to load content library', 'error');
   allVideos   = videos   || [];
   allArticles = articles || [];
 }

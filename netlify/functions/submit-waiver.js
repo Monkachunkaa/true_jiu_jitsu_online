@@ -125,7 +125,7 @@ async function sendAdminNotification(data, mode) {
     `Email: ${data.email}`,
     `Phone: ${data.phone}`,
     `DOB: ${data.dateOfBirth}`,
-    `Minor: ${data.isMinor ? 'Yes' : 'No'}`,
+    `Minor: ${calculateIsMinor(data.dateOfBirth) ? 'Yes' : 'No'}`,
     `Emergency Contact: ${data.emergencyContactName} (${data.emergencyContactPhone})`,
     `Photo Release: ${data.photoRelease ? 'Yes' : 'No'}`,
     `Signed As: ${data.signatureName}`,
@@ -142,6 +142,20 @@ async function sendAdminNotification(data, mode) {
       Body: { Text: { Data: text, Charset: 'UTF-8' } },
     },
   }).promise();
+}
+
+
+/* ----------------------------------------------------------
+   Calculate whether a DOB is under 18 today
+   ---------------------------------------------------------- */
+function calculateIsMinor(dateOfBirth) {
+  if (!dateOfBirth) return false;
+  const today = new Date();
+  const dob   = new Date(dateOfBirth);
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+  return age < 18;
 }
 
 
@@ -193,7 +207,7 @@ exports.handler = async (event) => {
       first_name:               body.firstName.trim(),
       last_name:                body.lastName.trim(),
       date_of_birth:            body.dateOfBirth,
-      is_minor:                 !!body.isMinor,
+      is_minor:                 calculateIsMinor(body.dateOfBirth),
       phone:                    body.phone.trim(),
       email:                    body.email.trim().toLowerCase(),
       emergency_contact_name:   body.emergencyContactName.trim(),
@@ -252,7 +266,6 @@ exports.handler = async (event) => {
           name:             `${body.firstName.trim()} ${body.lastName.trim()}`,
           email:            body.email.trim().toLowerCase(),
           phone:            body.phone.trim(),
-          belt_rank:        'unknown',
           plan_id:          body.planId || null,
           waiver_signed:    true,
           waiver_signed_at: new Date().toISOString(),

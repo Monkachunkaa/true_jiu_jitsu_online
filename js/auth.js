@@ -224,10 +224,24 @@ signupForm.addEventListener('submit', async (e) => {
     return;
   }
 
+  // Supabase returns a session immediately after signup when
+  // email confirmation is disabled. If it's null, the user
+  // needs to confirm their email before they can proceed.
+  if (!data.session) {
+    showError(signupError, 'Please check your email to confirm your account, then sign in.');
+    setLoading(signupBtn, false);
+    return;
+  }
+
   const response = await fetch('/.netlify/functions/create-checkout', {
     method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ authUserId: data.user.id, email, name }),
+    headers: {
+      'Content-Type':  'application/json',
+      'Authorization': `Bearer ${data.session.access_token}`,
+    },
+    // Only pass name — email and authUserId are extracted
+    // server-side from the verified JWT token
+    body: JSON.stringify({ name }),
   });
 
   const result = await response.json();

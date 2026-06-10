@@ -29,28 +29,15 @@
   }
 
   /* Playlist header — stack thumbnail above meta */
-  .playlist-page__header {
-    grid-template-columns: 1fr;
-  }
-
-  .playlist-page__thumbnail {
-    width: 100%;
-    max-width: 400px;
-  }
+  .playlist-page__header { grid-template-columns: 1fr; }
+  .playlist-page__thumbnail { width: 100%; max-width: 400px; }
 
   /* Account page — stack sidebar above main */
-  .account-page__grid {
-    grid-template-columns: 1fr;
-  }
-
-  .account-page__sidebar {
-    position: static;
-  }
+  .account-page__grid { grid-template-columns: 1fr; }
+  .account-page__sidebar { position: static; }
 
   /* Chart grid — single column */
-  .chart-grid {
-    grid-template-columns: 1fr;
-  }
+  .chart-grid { grid-template-columns: 1fr; }
 
 }
 
@@ -60,112 +47,84 @@
    ========================== */
 @media (max-width: 768px) {
 
-  /* Typography scale down */
+  /* Typography */
   h1 { font-size: var(--text-3xl); }
   h2 { font-size: var(--text-2xl); }
 
-  /* Catalogue grid — two columns */
-  .catalogue__grid {
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  }
+  /* Catalogue */
+  .catalogue { padding-top: calc(var(--nav-height) + var(--space-lg)); }
+  .catalogue__grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 
-  /* Catalogue padding */
-  .catalogue {
-    padding-top: calc(var(--nav-height) + var(--space-lg));
-  }
+  /* Page padding */
+  .playlist-page { padding-top: calc(var(--nav-height) + var(--space-lg)); }
+  .article-page  { padding-top: calc(var(--nav-height) + var(--space-xl)); }
+  .account-page  { padding-top: calc(var(--nav-height) + var(--space-xl)); }
 
-  /* Playlist page padding */
-  .playlist-page {
-    padding-top: calc(var(--nav-height) + var(--space-lg));
-  }
+  /* Video player */
+  .player-page__body { padding: var(--space-md) var(--space-lg); gap: var(--space-lg); }
 
-  /* Article page padding */
-  .article-page {
-    padding-top: calc(var(--nav-height) + var(--space-xl));
-  }
+  /* Playlist items */
+  .playlist-item__thumbnail { width: 64px; }
+  .playlist-item__title { white-space: normal; line-height: 1.3; }
 
-  /* Account page padding */
-  .account-page {
-    padding-top: calc(var(--nav-height) + var(--space-xl));
-  }
+  /* Misc */
+  .up-next-card   { max-width: none; }
+  .player-breadcrumb { flex-wrap: wrap; }
 
-  /* Video player body padding */
-  .player-page__body {
-    padding: var(--space-md) var(--space-lg);
-    gap: var(--space-lg);
-  }
+  /* ----------------------------------------
+     ADMIN — large mobile
+     ---------------------------------------- */
 
-  /* Playlist items — reduce thumbnail size */
-  .playlist-item__thumbnail {
-    width: 64px;
-  }
-
-  /* Playlist item title — allow wrapping */
-  .playlist-item__title {
-    white-space: normal;
-    line-height: 1.3;
-  }
-
-  /* Admin sidebar — slides in from left on mobile */
+  /* Sidebar slides in from left */
   .admin-sidebar {
     transform: translateX(-100%);
     transition: transform var(--transition-med);
     z-index: 200;
   }
+  .admin-sidebar.is-open { transform: translateX(0); }
+  .admin-main    { margin-left: 0; }
+  .admin-content { padding: var(--space-lg); }
 
-  .admin-sidebar.is-open {
-    transform: translateX(0);
-  }
-
-  .admin-main {
-    margin-left: 0;
-  }
-
-  .admin-content {
-    padding: var(--space-lg);
-  }
-
-  /* Admin topbar title — prevent overflow */
+  /* Topbar */
+  .admin-topbar { padding: 0 var(--space-lg); }
   .admin-topbar__title {
     font-size: var(--text-base);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 200px;
+    max-width: 180px;
   }
+  .admin-topbar__actions { gap: var(--space-sm); }
+  .admin-topbar__actions .btn { font-size: 11px; padding: 6px 10px; }
 
-  /* Stat grid — two columns */
-  .stat-grid {
-    grid-template-columns: 1fr 1fr;
-  }
+  /* Stat grid — 2×2 */
+  .stat-grid { grid-template-columns: 1fr 1fr !important; }
 
-  /* Content list items — simplify actions on mobile */
-  .content-list-item {
-    flex-wrap: wrap;
-    gap: var(--space-sm);
-  }
+  /* Quick action cards — single column */
+  .admin-action-grid { grid-template-columns: 1fr !important; }
 
+  /* Form 2-col grids — stack vertically */
+  .form__2col { grid-template-columns: 1fr !important; }
+
+  /* Data table — horizontal scroll + hide less critical columns */
+  .data-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .data-table th:nth-child(4),
+  .data-table td:nth-child(4),
+  .data-table th:nth-child(5),
+  .data-table td:nth-child(5) { display: none; }
+
+  /* Filter bar — stack */
+  .admin-filter-bar { flex-direction: column; align-items: stretch; }
+  .admin-filter-bar input,
+  .admin-filter-bar select { max-width: none !important; }
+
+  /* Content list items — wrap actions below */
+  .content-list-item { flex-wrap: wrap; }
   .content-list-item__actions {
     width: 100%;
     justify-content: flex-start;
     padding-top: var(--space-sm);
     border-top: 1px solid var(--color-mid-gray);
-  }
-
-  /* Data table — hide less important columns */
-  .data-table th:nth-child(4),
-  .data-table td:nth-child(4) {
-    display: none;
-  }
-
-  /* Up next card — full width on mobile */
-  .up-next-card {
-    max-width: none;
-  }
-
-  /* Breadcrumb — allow wrapping */
-  .player-breadcrumb {
-    flex-wrap: wrap;
   }
 
 }
@@ -176,130 +135,73 @@
    ========================== */
 @media (max-width: 480px) {
 
-  /* Wrapper — more edge-to-edge */
-  .wrapper {
-    width: 95%;
-  }
+  /* Wrapper */
+  .wrapper { width: 95%; }
 
   /* Typography */
   h1 { font-size: var(--text-2xl); }
   h2 { font-size: var(--text-xl); }
 
-  /* Catalogue grid — single column */
-  .catalogue__grid {
-    grid-template-columns: 1fr;
-  }
+  /* Catalogue */
+  .catalogue__grid         { grid-template-columns: 1fr; }
+  .catalogue__grid--continue { grid-template-columns: 1fr; }
+  .catalogue__controls     { flex-direction: column; align-items: stretch; }
+  .search                  { max-width: none; }
 
-  /* Catalogue continue watching — single column */
-  .catalogue__grid--continue {
-    grid-template-columns: 1fr;
-  }
+  /* Playlist */
+  .playlist-page__title     { font-size: var(--text-2xl); }
+  .playlist-item__thumbnail { display: none; }
 
-  /* Catalogue controls — stack vertically */
-  .catalogue__controls {
-    flex-direction: column;
-    align-items: stretch;
-  }
+  /* Player */
+  .player-page__title   { font-size: var(--text-xl); }
+  .player-page__actions { flex-direction: column; align-items: flex-start; }
 
-  .search {
-    max-width: none;
-  }
+  /* Article */
+  .article-page__title { font-size: var(--text-2xl); letter-spacing: 0; }
+  .article-page__body  { font-size: var(--text-base); }
+
+  /* Account */
+  .account-page__sidebar { padding: var(--space-lg); }
+
+  /* Toast */
+  .toast-container { left: var(--space-md); right: var(--space-md); bottom: var(--space-md); }
+  .toast           { max-width: none; }
+
+  /* Playlist builder */
+  .playlist-builder-item__thumb { width: 48px; }
+
+  /* ----------------------------------------
+     ADMIN — small mobile
+     ---------------------------------------- */
+
+  .admin-content { padding: var(--space-md); }
+  .admin-topbar  { padding: 0 var(--space-lg); }
+  .admin-topbar__title { font-size: var(--text-sm); max-width: 140px; }
+
+  /* Hide secondary topbar actions to save space */
+  .admin-topbar__actions .btn--ghost,
+  .admin-topbar__actions .btn--secondary { display: none; }
 
   /* Stat grid — single column */
-  .stat-grid {
-    grid-template-columns: 1fr;
-  }
+  .stat-grid { grid-template-columns: 1fr !important; }
 
-  /* Playlist page title */
-  .playlist-page__title {
-    font-size: var(--text-2xl);
-  }
-
-  /* Playlist items — hide thumbnail on very small screens */
-  .playlist-item__thumbnail {
-    display: none;
-  }
-
-  /* Player page title */
-  .player-page__title {
-    font-size: var(--text-xl);
-  }
-
-  /* Player actions — stack vertically */
-  .player-page__actions {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  /* Article title */
-  .article-page__title {
-    font-size: var(--text-2xl);
-    letter-spacing: 0;
-  }
-
-  /* Article body — slightly smaller text */
-  .article-page__body {
-    font-size: var(--text-base);
-  }
-
-  /* Account sidebar padding */
-  .account-page__sidebar {
-    padding: var(--space-lg);
-  }
-
-  /* Admin topbar — tighter */
-  .admin-topbar {
-    padding: 0 var(--space-lg);
-  }
-
-  .admin-topbar__title {
-    font-size: var(--text-sm);
-    max-width: 140px;
-  }
-
-  /* Admin content list — stack thumbnail on top */
-  .content-list-item__thumbnail {
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    max-width: 200px;
-  }
-
-  /* Modal — full width */
+  /* Modals — near full screen */
   .modal {
-    padding: var(--space-lg);
+    width: calc(100vw - var(--space-2xl)) !important;
+    max-width: none !important;
+    max-height: 90vh;
+    overflow-y: auto;
   }
 
-  /* Buttons in modal footer — stack */
-  .modal .form [style*="flex"] {
-    flex-direction: column;
-  }
+  /* Data table — hide plan column too on very small */
+  .data-table th:nth-child(2),
+  .data-table td:nth-child(2) { display: none; }
 
-  /* Toast — full width */
-  .toast-container {
-    left: var(--space-md);
-    right: var(--space-md);
-    bottom: var(--space-md);
-  }
+  /* Content list thumbnail */
+  .content-list-item__thumbnail { width: 72px; }
 
-  .toast {
-    max-width: none;
-  }
-
-  /* Chart cards — less padding */
-  .chart-card {
-    padding: var(--space-md);
-  }
-
-  /* Data table — hide more columns on very small screens */
-  .data-table th:nth-child(3),
-  .data-table td:nth-child(3) {
-    display: none;
-  }
-
-  /* Playlist builder items — smaller */
-  .playlist-builder-item__thumb {
-    width: 48px;
-  }
+  /* Chart cards */
+  .chart-card { padding: var(--space-md); }
 
 }
 
@@ -310,24 +212,13 @@
    ========================== */
 @media (max-width: 380px) {
 
-  /* Auth card panel padding */
-  .auth-panel {
-    padding: var(--space-md);
-  }
+  .auth-panel { padding: var(--space-md); }
 
-  /* Landing pitch — hide description to save space */
-  .landing-pitch__description {
-    display: none;
-  }
+  /* Landing */
+  .landing-pitch__description { display: none; }
+  .landing-logo img { height: 72px; }
 
-  /* Landing logo */
-  .landing-logo img {
-    height: 72px;
-  }
-
-  /* Stat card value — scale down large numbers */
-  .stat-card__value {
-    font-size: var(--text-3xl);
-  }
+  /* Stat card value */
+  .stat-card__value { font-size: var(--text-3xl); }
 
 }

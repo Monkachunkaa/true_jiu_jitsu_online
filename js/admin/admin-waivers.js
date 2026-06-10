@@ -11,29 +11,13 @@ let allWaivers = [];
 
 /* ----------------------------------------------------------
    Helpers
-   ---------------------------------------------------------- */
-function formatDate(iso) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric',
-    hour: 'numeric', minute: '2-digit',
-  });
-}
 
-function showToast(message, type = 'success') {
-  let container = document.getElementById('toast-container');
-  if (!container) {
-    container = document.createElement('div');
-    container.id = 'toast-container';
-    container.className = 'toast-container';
-    document.body.appendChild(container);
-  }
-  const toast = document.createElement('div');
-  toast.className = `toast toast--${type}`;
-  toast.textContent = message;
-  container.appendChild(toast);
-  setTimeout(() => toast.remove(), 3500);
-}
+   showToast is defined in admin-auth.js, loaded before this
+   file on every admin page.
+
+   For waivers we need the time shown, so we use formatDate
+   with includeTime=true (also from admin-auth.js).
+   ---------------------------------------------------------- */
 
 function typeBadge(type) {
   return type === 'onboarding'
@@ -154,7 +138,7 @@ function openWaiverModal(waiverId) {
     <div style="display:flex;flex-direction:column;gap:0;">
       ${row('Signature Name', `<em style="font-family:Georgia,serif;font-size:var(--text-lg);">${waiver.signature_name}</em>`)}
       ${waiver.guardian_name ? row('Guardian Name', waiver.guardian_name) : ''}
-      ${row('Signed At',    formatDate(waiver.signed_at))}
+      ${row('Signed At',    formatDate(waiver.signed_at, true))}
       ${row('Type',         waiver.submission_type)}
       ${row('IP Address',   waiver.ip_address || '—')}
     </div>

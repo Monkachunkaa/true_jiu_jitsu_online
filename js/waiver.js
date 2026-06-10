@@ -107,7 +107,7 @@ function validateStep2() {
    ---------------------------------------------------------- */
 function validateStep3() {
   const sig      = document.getElementById('w-signature').value.trim();
-  const isMinor  = document.getElementById('w-is-minor').checked;
+  const isMinor  = isMinorFromDob(document.getElementById('w-dob').value);
   const guardian = document.getElementById('w-guardian').value.trim();
 
   if (!sig) { setError(3, 'Please type your full name to sign.'); return false; }
@@ -131,7 +131,6 @@ function buildPayload() {
     firstName:               document.getElementById('w-first-name').value.trim(),
     lastName:                document.getElementById('w-last-name').value.trim(),
     dateOfBirth:             document.getElementById('w-dob').value,
-    isMinor:                 document.getElementById('w-is-minor').checked,
     phone:                   document.getElementById('w-phone').value.trim(),
     email:                   document.getElementById('w-email').value.trim(),
     emergencyContactName:    document.getElementById('w-ec-name').value.trim(),
@@ -208,18 +207,34 @@ function wireWaiverSections() {
 
 
 /* ----------------------------------------------------------
-   Minor toggle
+   Calculate whether a person is a minor from their DOB.
+   Returns true if they are under 18 today.
    ---------------------------------------------------------- */
-function wireMinorToggle() {
-  const toggle      = document.getElementById('w-is-minor');
-  const minorFields = document.getElementById('minor-fields');
-  const guardianEl  = document.getElementById('guardian-field');
+function isMinorFromDob(dobValue) {
+  if (!dobValue) return false;
+  const today = new Date();
+  const dob   = new Date(dobValue);
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+  return age < 18;
+}
 
-  toggle?.addEventListener('change', () => {
-    const isMinor = toggle.checked;
-    if (minorFields) minorFields.style.display = isMinor ? '' : 'none';
-    if (guardianEl)  guardianEl.style.display  = isMinor ? '' : 'none';
-  });
+
+/* ----------------------------------------------------------
+   Wire up DOB field — auto show/hide guardian field
+   ---------------------------------------------------------- */
+function wireDobGuardianCheck(dobId, guardianFieldId) {
+  const dobInput    = document.getElementById(dobId);
+  const guardianEl  = document.getElementById(guardianFieldId);
+  if (!dobInput || !guardianEl) return;
+
+  const check = () => {
+    guardianEl.style.display = isMinorFromDob(dobInput.value) ? '' : 'none';
+  };
+
+  dobInput.addEventListener('change', check);
+  dobInput.addEventListener('blur',   check);
 }
 
 
@@ -230,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.body.classList.add('page-ready');
   showPanel(1);
   wireWaiverSections();
-  wireMinorToggle();
+  wireDobGuardianCheck('w-dob', 'guardian-field');
 
   // Step 1 → 2
   document.getElementById('next-1')?.addEventListener('click', () => {

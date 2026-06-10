@@ -182,8 +182,8 @@ function validateStep3() {
    Step 4 validation
    ---------------------------------------------------------- */
 function validateStep4() {
-  const sig     = document.getElementById('o-signature').value.trim();
-  const isMinor = document.getElementById('o-is-minor').checked;
+  const sig      = document.getElementById('o-signature').value.trim();
+  const isMinor  = isMinorFromDob(document.getElementById('o-dob').value);
   const guardian = document.getElementById('o-guardian').value.trim();
 
   if (!sig) { setError(4, 'Please type your full name to sign.'); return false; }
@@ -210,7 +210,6 @@ async function submitWaiver() {
     firstName:               document.getElementById('o-first-name').value.trim(),
     lastName:                document.getElementById('o-last-name').value.trim(),
     dateOfBirth:             document.getElementById('o-dob').value,
-    isMinor:                 document.getElementById('o-is-minor').checked,
     phone:                   document.getElementById('o-phone').value.trim(),
     email:                   document.getElementById('o-email').value.trim(),
     emergencyContactName:    document.getElementById('o-ec-name').value.trim(),
@@ -320,13 +319,33 @@ function wireWaiverSections() {
 
 
 /* ----------------------------------------------------------
-   Minor toggle
+   Calculate whether a person is a minor from their DOB.
    ---------------------------------------------------------- */
-function wireMinorToggle() {
-  document.getElementById('o-is-minor')?.addEventListener('change', (e) => {
-    const isMinor = e.target.checked;
-    document.getElementById('o-guardian-field').style.display = isMinor ? '' : 'none';
-  });
+function isMinorFromDob(dobValue) {
+  if (!dobValue) return false;
+  const today = new Date();
+  const dob   = new Date(dobValue);
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+  return age < 18;
+}
+
+
+/* ----------------------------------------------------------
+   Wire up DOB field — auto show/hide guardian field
+   ---------------------------------------------------------- */
+function wireDobGuardianCheck(dobId, guardianFieldId) {
+  const dobInput   = document.getElementById(dobId);
+  const guardianEl = document.getElementById(guardianFieldId);
+  if (!dobInput || !guardianEl) return;
+
+  const check = () => {
+    guardianEl.style.display = isMinorFromDob(dobInput.value) ? '' : 'none';
+  };
+
+  dobInput.addEventListener('change', check);
+  dobInput.addEventListener('blur',   check);
 }
 
 
@@ -337,7 +356,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.body.classList.add('page-ready');
   showPanel(1);
   wireWaiverSections();
-  wireMinorToggle();
+  wireDobGuardianCheck('o-dob', 'o-guardian-field');
 
   // Load plans in background so step 2 is ready
   loadPlans();

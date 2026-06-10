@@ -11,6 +11,58 @@
 
 
 /* ----------------------------------------------------------
+   SHARED CONSTANTS
+   Defined once here so there's a single place to update them.
+   ---------------------------------------------------------- */
+
+// Monthly price for an online video subscription, in cents.
+// Used in dashboard MRR and analytics calculations.
+const ONLINE_SUBSCRIPTION_PRICE_CENTS = 899;
+
+
+/* ----------------------------------------------------------
+   showToast — display a brief status notification.
+
+   message  — string to display
+   type     — 'success' (default) | 'error'
+
+   Defined here because admin-auth.js is loaded on every admin
+   page, making showToast available everywhere without duplication.
+   ---------------------------------------------------------- */
+function showToast(message, type = 'success') {
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container           = document.createElement('div');
+    container.id        = 'toast-container';
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
+  const toast       = document.createElement('div');
+  toast.className   = `toast toast--${type}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), type === 'success' ? 3500 : 5000);
+}
+
+
+/* ----------------------------------------------------------
+   formatDate — format an ISO date string for display.
+
+   iso          — ISO 8601 date string
+   includeTime  — if true, appends hour:minute (for waivers)
+   ---------------------------------------------------------- */
+function formatDate(iso, includeTime = false) {
+  if (!iso) return '\u2014'; // em dash
+  const opts = { month: 'short', day: 'numeric', year: 'numeric' };
+  if (includeTime) {
+    opts.hour   = 'numeric';
+    opts.minute = '2-digit';
+  }
+  return new Date(iso).toLocaleDateString('en-US', opts);
+}
+
+
+/* ----------------------------------------------------------
    Auth guard — call this on every admin page.
    Returns { session, user } if authorized, redirects if not.
    ---------------------------------------------------------- */
@@ -246,6 +298,60 @@ function safeModalClose(overlayId, closeFn) {
    ---------------------------------------------------------- */
 function getAdminActions() {
   return document.getElementById('admin-topbar-actions');
+}
+
+
+/* ----------------------------------------------------------
+   confirmAction — inline, theme-consistent alternative to
+   the native browser confirm() dialog.
+
+   Replaces a button with a "Are you sure? [Confirm] [Cancel]"
+   row so destructive actions stay within the dark UI.
+
+   Usage:
+     confirmAction(buttonEl, 'Cancel membership?', async () => {
+       await doTheDangerousThing();
+     });
+
+   The button's original text is restored if the user cancels
+   or after the action completes.
+   ---------------------------------------------------------- */
+function confirmAction(triggerBtn, promptText, onConfirm) {
+  // Prevent double-triggering
+  if (triggerBtn.dataset.confirming === 'true') return;
+  triggerBtn.dataset.confirming = 'true';
+
+  const originalHTML = triggerBtn.outerHTML;
+
+  // Build the confirmation row
+  const wrap       = document.createElement('span');
+  wrap.style.cssText = 'display:inline-flex;align-items:center;gap:6px;white-space:nowrap;';
+  wrap.innerHTML = `
+    <span style="font-size:var(--text-xs);color:var(--color-light-gray);">${promptText}</span>
+    <button class="btn btn--danger btn--sm" data-confirm-yes style="padding:3px 10px;">Yes</button>
+    <button class="btn btn--ghost btn--sm"  data-confirm-no  style="padding:3px 10px;">No</button>
+  `;
+
+  triggerBtn.replaceWith(wrap);
+
+  // Restore the original button
+  function restore() {
+    const temp  = document.createElement('span');
+    temp.innerHTML = originalHTML;
+    const restored = temp.firstChild;
+    delete restored.dataset.confirming;
+    wrap.replaceWith(restored);
+  }
+
+  wrap.querySelector('[data-confirm-yes]').addEventListener('click', async () => {
+    wrap.innerHTML = '<span style="font-size:var(--text-xs);color:var(--color-gray);">Working…</span>';
+    await onConfirm();
+    // The caller's onConfirm usually re-renders the table, which removes this element.
+    // If it's still in the DOM for some reason, restore it.
+    if (wrap.isConnected) restore();
+  });
+
+  wrap.querySelector('[data-confirm-no]').addEventListener('click', restore);
 }
 
 
