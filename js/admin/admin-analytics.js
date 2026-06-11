@@ -10,6 +10,10 @@
 
    NOTE: showToast, formatDate, and ONLINE_SUBSCRIPTION_PRICE_CENTS
    are all defined in admin-auth.js, loaded before this file.
+
+   Admin accounts are fetched from the admins table and
+   excluded from all revenue and member count calculations
+   so test/admin usage doesn't skew the numbers.
    ========================================================== */
 
 
@@ -456,10 +460,13 @@ function buildPage(content) {
   buildPage(content);
   setChartDefaults();
 
-  /* Fetch all data in parallel */
+  /* Fetch all data in parallel.
+     We fetch admin emails alongside member data so we can
+     strip admin accounts from revenue and count figures. */
   const [
     { data: gymMembers },
-    { data: onlineMembers },
+    { data: allOnlineMembers },
+    { data: adminRows },
     { data: plans },
     { count: videoCount },
     { count: publishedVideos },
@@ -475,10 +482,16 @@ function buildPage(content) {
       .select('id, subscription_status, plan_id, discount_percent, joined_at, cancelled_at')
       .order('joined_at'),
 
+    // Include email so we can match against the admin list
     window.supabaseClient
       .from('members')
-      .select('id, subscription_status, subscribed_at, cancelled_at')
+      .select('id, email, subscription_status, subscribed_at, cancelled_at')
       .order('subscribed_at'),
+
+    // Admin emails — used to exclude test/admin accounts from revenue figures
+    window.supabaseClient
+      .from('admins')
+      .select('email'),
 
     window.supabaseClient
       .from('membership_plans')
@@ -496,11 +509,24 @@ function buildPage(content) {
     window.supabaseClient.from('video_progress').select('video_id, completed'),
   ]);
 
-  /* Calculate MRR using the shared price constant from admin-auth.js */
+  /* Build a Set of admin emails for O(1) lookup */
+  const adminEmails = new Set(
+    (adminRows || []).map(a => (a.email || '').toLowerCase())
+  );
+
+  /* Strip admin accounts from online members so their subscriptions
+     don't show up in active counts or inflate revenue figures */
+  const onlineMembers = (allOnlineMembers || []).filter(
+    m => !adminEmails.has((m.email || '').toLowerCase())
+  );
+
+  /* Calculate MRR — gym members are not filtered by admin status
+     since gym_members are always real people (admins manage the
+     gym but aren't gym members themselves) */
   const planMap = Object.fromEntries((plans || []).map(p => [p.id, p]));
 
-  const activeGym    = (gymMembers    || []).filter(m => m.subscription_status === 'active').length;
-  const activeOnline = (onlineMembers || []).filter(m => m.subscription_status === 'active').length;
+  const activeGym    = (gymMembers  || []).filter(m => m.subscription_status === 'active').length;
+  const activeOnline = onlineMembers.filter(m => m.subscription_status === 'active').length;
 
   const gymMRR = (gymMembers || [])
     .filter(m => m.subscription_status === 'active' && m.plan_id)
@@ -525,31 +551,31 @@ function buildPage(content) {
 
   /* Render all sections */
   renderStatCards(document.getElementById('stat-cards'), {
-    totalActive:       activeGym + activeOnline,
+    totalActive:        activeGym + activeOnline,
     activeGym,
     activeOnline,
     gymMRR,
     onlineMRR,
     totalMRR,
-    videoCount:        videoCount        || 0,
-    publishedVideos:   publishedVideos   || 0,
-    playlistCount:     playlistCount     || 0,
+    videoCount:         videoCount         || 0,
+    publishedVideos:    publishedVideos    || 0,
+    playlistCount:      playlistCount      || 0,
     publishedPlaylists: publishedPlaylists || 0,
   });
 
   renderMembersOverTime(
     document.getElementById('chart-members-over-time'),
     gymMembers    || [],
-    onlineMembers || []
+    onlineMembers           // already filtered
   );
 
   renderNewVsChurned(
     document.getElementById('chart-new-vs-churned'),
     gymMembers    || [],
-    onlineMembers || []
+    onlineMembers           // already filtered
   );
 
-  // Pass activeOnline so the chart includes online subscription revenue
+  // Pass activeOnline (admin-excluded) so the chart reflects real revenue
   renderRevenueByPlan(
     document.getElementById('chart-revenue-by-plan'),
     gymMembers || [],

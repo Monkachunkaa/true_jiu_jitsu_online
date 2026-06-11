@@ -125,6 +125,13 @@ function renderAdminShell(activePage = '', pageTitle = '') {
 
       <p class="admin-sidebar__label" style="margin-top:var(--space-lg);">Members</p>
 
+      <a href="/pages/admin/leads.html"
+         class="admin-nav__item ${activePage === 'leads' ? 'admin-nav__item--active' : ''}"
+         data-page="leads">
+        ${iconLeads()}
+        <span>Leads</span>
+      </a>
+
       <a href="/pages/admin/gym-members.html"
          class="admin-nav__item ${activePage === 'members' ? 'admin-nav__item--active' : ''}"
          data-page="members">
@@ -379,6 +386,9 @@ function iconPlaylist() {
 }
 function iconMembers() {
   return `<svg class="admin-nav__icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>`;
+}
+function iconLeads() {
+  return `<svg class="admin-nav__icon" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>`;
 }
 function iconAnalytics() {
   return `<svg class="admin-nav__icon" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`;

@@ -104,7 +104,7 @@ exports.handler = async (event) => {
      Create the Stripe Checkout session.
      If the member has a discount, create a coupon and apply it.
      ---------------------------------------------------------- */
-  const siteUrl = process.env.SITE_URL || 'https://truejiujitsuonline.netlify.app';
+  const siteUrl = process.env.SITE_URL;
 
   const sessionParams = {
     customer:      customerId,

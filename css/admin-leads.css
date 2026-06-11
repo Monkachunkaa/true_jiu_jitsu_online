@@ -1,0 +1,219 @@
+/* ==========================================================
+   admin-leads.css — Leads pipeline Kanban board
+   True Jiu Jitsu Online
+   ========================================================== */
+
+
+/* ==========================
+   BOARD LAYOUT
+   Three equal columns side
+   by side, scrollable.
+   ========================== */
+.leads-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-lg);
+  align-items: start;
+}
+
+
+/* ==========================
+   COLUMN
+   ========================== */
+.leads-col {
+  background: var(--color-dark-gray);
+  border: 1px solid var(--color-mid-gray);
+  border-radius: var(--border-radius-lg);
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
+}
+
+.leads-col__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--color-mid-gray);
+}
+
+.leads-col__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.leads-col__title {
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-white);
+  flex: 1;
+}
+
+.leads-col__count {
+  font-size: var(--text-xs);
+  color: var(--color-gray);
+  background: var(--color-dark);
+  border: 1px solid var(--color-mid-gray);
+  border-radius: 999px;
+  padding: 1px 8px;
+  min-width: 24px;
+  text-align: center;
+}
+
+/* Cards container — accepts drops */
+.leads-col__cards {
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  flex: 1;
+  transition: background var(--transition-fast);
+}
+
+.leads-col__cards.drag-over {
+  background: rgba(196, 30, 42, 0.06);
+  border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
+}
+
+.leads-col__empty {
+  font-size: var(--text-sm);
+  color: var(--color-gray);
+  text-align: center;
+  padding: var(--space-xl) var(--space-md);
+  font-style: italic;
+}
+
+
+/* ==========================
+   LEAD CARD
+   ========================== */
+.lead-card {
+  background: var(--color-dark);
+  border: 1px solid var(--color-mid-gray);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-md);
+  cursor: grab;
+  transition: border-color var(--transition-fast),
+              box-shadow   var(--transition-fast),
+              opacity      var(--transition-fast);
+}
+
+.lead-card:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: var(--shadow-md);
+}
+
+.lead-card.is-dragging {
+  opacity: 0.4;
+  cursor: grabbing;
+}
+
+.lead-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xs);
+}
+
+.lead-card__name {
+  font-weight: 600;
+  font-size: var(--text-base);
+  color: var(--color-white);
+  margin: 0;
+}
+
+.lead-card__detail {
+  font-size: var(--text-sm);
+  color: var(--color-gray);
+  margin: 2px 0;
+}
+
+.lead-card__detail a {
+  color: var(--color-red-accessible);
+  text-decoration: none;
+}
+
+.lead-card__detail a:hover {
+  text-decoration: underline;
+}
+
+.lead-card__interest {
+  display: inline-block;
+  font-size: 11px;
+  text-transform: capitalize;
+  color: var(--color-light-gray);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--color-mid-gray);
+  border-radius: 999px;
+  padding: 2px 10px;
+  margin: var(--space-xs) 0;
+}
+
+.lead-card__notes {
+  font-size: var(--text-sm);
+  color: var(--color-gray);
+  margin: var(--space-sm) 0 0;
+  line-height: 1.5;
+  font-style: italic;
+  /* Clamp to 3 lines so long notes don't dominate the board */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.lead-card__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--color-mid-gray);
+}
+
+.lead-card__source {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-gray);
+}
+
+.lead-card__age {
+  font-size: var(--text-xs);
+  color: var(--color-gray);
+}
+
+/* Stage move buttons + convert */
+.lead-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-top: var(--space-sm);
+  align-items: center;
+}
+
+
+/* ==========================
+   RESPONSIVE
+   Stack columns on mobile
+   ========================== */
+@media (max-width: 900px) {
+  .leads-board {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .lead-card__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .lead-card__actions .btn {
+    justify-content: center;
+  }
+}
