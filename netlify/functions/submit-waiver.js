@@ -316,6 +316,48 @@ exports.handler = async (event) => {
   }
 
   /* ----------------------------------------------------------
+     Auto-convert any matching lead.
+
+     If a lead exists with the same email address, link it to
+     the gym_member record and mark it converted. This means
+     contact form leads are automatically moved off the
+     pipeline the moment the person signs a waiver — no
+     manual conversion step needed.
+
+     We match on email only, taking the most recent
+     non-archived, non-converted lead to avoid touching
+     historical records.
+     ---------------------------------------------------------- */
+  if (gymMemberId && email) {
+    try {
+      const { data: matchingLead } = await supabase
+        .from('leads')
+        .select('id')
+        .ilike('email', email)
+        .is('archived_at', null)
+        .neq('stage', 'converted')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (matchingLead) {
+        await supabase
+          .from('leads')
+          .update({
+            gym_member_id: gymMemberId,
+            stage:         'converted',
+          })
+          .eq('id', matchingLead.id);
+
+        console.log(`Lead ${matchingLead.id} auto-converted for email ${email}`);
+      }
+    } catch (err) {
+      // Non-fatal — waiver and member record are already saved
+      console.error('Lead auto-conversion failed:', err.message);
+    }
+  }
+
+  /* ----------------------------------------------------------
      Send emails — non-fatal if they fail
      ---------------------------------------------------------- */
   try {

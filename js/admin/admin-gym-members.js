@@ -1088,7 +1088,10 @@ function wireAllModals() {
   safeModalClose('add-member-overlay', closeAddModal);
 
   document.getElementById('close-choice-modal')?.addEventListener('click', closeChoiceModal);
-  document.getElementById('choice-fill-form')?.addEventListener('click', openAddModal);
+  document.getElementById('choice-fill-form')?.addEventListener('click', () => {
+    closeChoiceModal();
+    window.open('/join', '_blank');
+  });
   document.getElementById('choice-send-link')?.addEventListener('click', openSendLinkModal);
   safeModalClose('add-choice-overlay', closeChoiceModal);
 

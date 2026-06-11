@@ -99,7 +99,8 @@
 
   const [
     { data: gymMembers },
-    { data: onlineMembers },
+    { data: allOnlineMembers },
+    { data: adminRows },
     { data: plans },
   ] = await Promise.all([
     window.supabaseClient
@@ -107,13 +108,23 @@
       .select('id, subscription_status, plan_id, discount_percent, joined_at'),
     window.supabaseClient
       .from('members')
-      .select('id, subscription_status, subscribed_at'),
+      .select('id, email, subscription_status, subscribed_at'),
+    // Admin emails — excluded from online member counts and revenue
+    // to match the same logic used on the analytics page
+    window.supabaseClient
+      .from('admins')
+      .select('email'),
     window.supabaseClient
       .from('membership_plans')
       .select('id, price_cents'),
   ]);
 
   const planMap = Object.fromEntries((plans || []).map(p => [p.id, p]));
+
+  const adminEmails   = new Set((adminRows || []).map(a => (a.email || '').toLowerCase()));
+  const onlineMembers = (allOnlineMembers || []).filter(
+    m => !adminEmails.has((m.email || '').toLowerCase())
+  );
 
   const activeGym    = (gymMembers || []).filter(m => m.subscription_status === 'active').length;
   const pastDueGym   = (gymMembers || []).filter(m => m.subscription_status === 'past_due').length;
@@ -250,9 +261,9 @@
   document.getElementById('dash-close-choice').addEventListener('click', closeChoice);
   safeModalClose('dash-choice-overlay', closeChoice);
 
-  // Option A: navigate to gym-members and open the add form directly
+  // Option A: open the public onboarding form — full waiver + billing in one flow
   document.getElementById('dash-choice-fill-form').addEventListener('click', () => {
-    window.location.href = '/pages/admin/gym-members.html?action=add';
+    window.open('/join', '_blank');
   });
 
   // Option B: navigate to gym-members and open the send-link modal directly
