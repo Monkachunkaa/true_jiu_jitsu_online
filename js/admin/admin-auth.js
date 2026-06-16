@@ -198,7 +198,7 @@ function renderAdminShell(activePage = '', pageTitle = '') {
     <div class="admin-sidebar__footer">
       <a href="/pages/catalogue.html" class="admin-nav__item" style="margin-bottom:4px;">
         ${iconBack()}
-        <span>View Site</span>
+        <span>View Video Catalogue</span>
       </a>
       <button class="admin-nav__item" id="admin-signout-btn" style="width:100%;background:none;border:none;cursor:pointer;text-align:left;">
         ${iconSignOut()}

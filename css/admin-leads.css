@@ -167,6 +167,78 @@
   overflow: hidden;
 }
 
+.lead-card__notes--empty {
+  color: var(--color-mid-gray);
+  font-style: italic;
+}
+
+/* Notes wrap — positions the edit pencil relative to the note text */
+.lead-card__notes-wrap {
+  margin-top: var(--space-sm);
+}
+
+.lead-card__notes-display {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-xs);
+}
+
+.lead-card__notes-display .lead-card__notes {
+  /* Override the margin since the wrapper handles spacing */
+  margin-top: 0;
+  flex: 1;
+}
+
+/* Small pencil edit button */
+.lead-card__notes-edit-btn {
+  background: none;
+  border: none;
+  color: var(--color-gray);
+  cursor: pointer;
+  padding: 2px;
+  flex-shrink: 0;
+  border-radius: var(--border-radius);
+  opacity: 0;
+  transition: opacity var(--transition-fast), color var(--transition-fast);
+  line-height: 1;
+}
+
+/* Only show the pencil on card hover so it doesn't clutter the UI */
+.lead-card:hover .lead-card__notes-edit-btn {
+  opacity: 1;
+}
+
+.lead-card__notes-edit-btn:hover {
+  color: var(--color-white);
+}
+
+/* Inline textarea editor */
+.lead-card__notes-textarea {
+  width: 100%;
+  background: var(--color-dark);
+  border: 1px solid var(--color-mid-gray);
+  border-radius: var(--border-radius);
+  color: var(--color-light-gray);
+  font-size: var(--text-sm);
+  font-family: var(--font-body);
+  line-height: 1.5;
+  padding: var(--space-sm);
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.lead-card__notes-textarea:focus {
+  outline: none;
+  border-color: var(--color-red);
+}
+
+.lead-card__notes-editor-actions {
+  display: flex;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+  justify-content: flex-end;
+}
+
 .lead-card__footer {
   display: flex;
   justify-content: space-between;

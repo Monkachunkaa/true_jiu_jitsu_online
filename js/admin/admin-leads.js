@@ -12,8 +12,7 @@
    When a lead converts (signs a waiver), submit-waiver.js
    links their gym_member_id onto this record automatically
    via email match, and the stage is set to 'converted'.
-   Converted and archived leads are hidden from the board
-   but accessible via the filter toggle.
+   Converted and archived leads are hidden from the board.
    ========================================================== */
 
 let allLeads = [];
@@ -77,9 +76,7 @@ function renderBoard(leads) {
     cardsWrap.innerHTML = '';
 
     if (!stageLeads.length) {
-      cardsWrap.innerHTML = `
-        <div class="leads-col__empty">No leads here yet</div>
-      `;
+      cardsWrap.innerHTML = `<div class="leads-col__empty">No leads here yet</div>`;
       return;
     }
 
@@ -95,11 +92,10 @@ function renderBoard(leads) {
    ---------------------------------------------------------- */
 function buildCard(lead) {
   const card = document.createElement('div');
-  card.className   = 'lead-card';
-  card.dataset.id  = lead.id;
-  card.draggable   = true;
+  card.className  = 'lead-card';
+  card.dataset.id = lead.id;
+  card.draggable  = true;
 
-  const stage  = stageConfig(lead.stage);
   const source = SOURCE_LABELS[lead.source] || lead.source;
 
   card.innerHTML = `
@@ -110,7 +106,7 @@ function buildCard(lead) {
           &bull;&bull;&bull;
         </button>
         <div class="row-overflow__menu">
-          <button class="row-overflow__item js-edit-lead" data-id="${lead.id}">Edit</button>
+          <button class="row-overflow__item js-edit-lead" data-id="${lead.id}">Edit details</button>
           ${lead.gym_member_id
             ? `<button class="row-overflow__item js-view-member" data-id="${lead.gym_member_id}">View member record</button>`
             : ''
@@ -123,23 +119,47 @@ function buildCard(lead) {
     ${lead.email ? `<p class="lead-card__detail"><a href="mailto:${lead.email}">${lead.email}</a></p>` : ''}
     ${lead.phone ? `<p class="lead-card__detail">${lead.phone}</p>` : ''}
     ${lead.interest ? `<p class="lead-card__interest">${lead.interest}</p>` : ''}
-    ${lead.notes
-      ? `<p class="lead-card__notes">${lead.notes}</p>`
-      : ''
-    }
+
+    <!-- Notes — shows current note or a placeholder, with an edit button -->
+    <div class="lead-card__notes-wrap">
+      <div class="lead-card__notes-display js-notes-display">
+        ${lead.notes
+          ? `<p class="lead-card__notes">${lead.notes}</p>`
+          : `<p class="lead-card__notes lead-card__notes--empty">No notes yet</p>`
+        }
+        <button class="lead-card__notes-edit-btn js-edit-notes" title="Edit note" aria-label="Edit note">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </button>
+      </div>
+      <!-- Inline note editor — hidden until pencil is clicked -->
+      <div class="lead-card__notes-editor js-notes-editor" style="display:none;">
+        <textarea class="lead-card__notes-textarea js-notes-textarea" rows="3" placeholder="Add a note…">${lead.notes || ''}</textarea>
+        <div class="lead-card__notes-editor-actions">
+          <button class="btn btn--primary btn--sm js-notes-save">Save</button>
+          <button class="btn btn--ghost btn--sm js-notes-cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
 
     <div class="lead-card__footer">
       <span class="lead-card__source">${source}</span>
       <span class="lead-card__age">${timeAgo(lead.created_at)}</span>
     </div>
 
-    <!-- Stage move buttons — quicker than drag on mobile -->
+    <!-- Card action buttons -->
     <div class="lead-card__actions">
       ${buildMoveButtons(lead)}
       ${lead.gym_member_id
         ? `<span class="badge badge--active" style="font-size:10px;">Converted</span>`
-        : `<button class="btn btn--ghost btn--sm js-convert-lead" data-id="${lead.id}"
-             title="Mark as converted — links to a gym member record">Convert</button>`
+        : (lead.email
+            ? `<button class="btn btn--ghost btn--sm js-send-onboarding" data-id="${lead.id}" title="Send onboarding link to ${lead.email}">
+                 &#x2197; Send Onboarding Link
+               </button>`
+            : ''
+          )
       }
     </div>
   `;
@@ -155,13 +175,13 @@ function buildCard(lead) {
     menu.classList.toggle('is-open');
   });
 
-  // Edit
+  // Edit details
   card.querySelector('.js-edit-lead')?.addEventListener('click', () => {
     menu.classList.remove('is-open');
     openEditModal(lead.id);
   });
 
-  // View member record — navigate to members page filtered to that ID
+  // View member record
   card.querySelector('.js-view-member')?.addEventListener('click', () => {
     window.location.href = '/pages/admin/gym-members.html';
   });
@@ -170,19 +190,123 @@ function buildCard(lead) {
   card.querySelector('.js-archive-lead')?.addEventListener('click', (e) => {
     e.stopPropagation();
     menu.classList.remove('is-open');
-    const triggerBtn = card.querySelector('.row-overflow__trigger');
-    confirmAction(triggerBtn, 'Archive ' + lead.name + '?', () => archiveLead(lead.id));
+    confirmAction(trigger, 'Archive ' + lead.name + '?', () => archiveLead(lead.id));
   });
 
-  // Convert
-  card.querySelector('.js-convert-lead')?.addEventListener('click', () => {
-    openConvertModal(lead.id);
+  // Send onboarding link
+  card.querySelector('.js-send-onboarding')?.addEventListener('click', (btn) => {
+    sendOnboardingLink(lead, card.querySelector('.js-send-onboarding'));
   });
+
+  // Inline note editing
+  wireNoteEditor(card, lead);
 
   // Drag and drop
   wireDrag(card, lead.id);
 
   return card;
+}
+
+
+/* ----------------------------------------------------------
+   Inline note editor
+   Clicking the pencil icon shows a textarea in-place.
+   Saving updates Supabase and refreshes the display text
+   without a full board re-render so the card stays in place.
+   ---------------------------------------------------------- */
+function wireNoteEditor(card, lead) {
+  const display  = card.querySelector('.js-notes-display');
+  const editor   = card.querySelector('.js-notes-editor');
+  const textarea = card.querySelector('.js-notes-textarea');
+  const editBtn  = card.querySelector('.js-edit-notes');
+  const saveBtn  = card.querySelector('.js-notes-save');
+  const cancelBtn = card.querySelector('.js-notes-cancel');
+
+  function openEditor() {
+    display.style.display = 'none';
+    editor.style.display  = '';
+    textarea.focus();
+    textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+  }
+
+  function closeEditor() {
+    editor.style.display  = 'none';
+    display.style.display = '';
+  }
+
+  async function saveNote() {
+    const newNote = textarea.value.trim() || null;
+
+    saveBtn.disabled    = true;
+    saveBtn.textContent = 'Saving\u2026';
+
+    const { error } = await window.supabaseClient
+      .from('leads')
+      .update({ notes: newNote })
+      .eq('id', lead.id);
+
+    saveBtn.disabled    = false;
+    saveBtn.textContent = 'Save';
+
+    if (error) { showToast('Failed to save note', 'error'); return; }
+
+    // Update local state
+    lead.notes = newNote;
+
+    // Update the display text in-place — no full re-render needed
+    const notesEl = display.querySelector('.lead-card__notes');
+    if (notesEl) {
+      notesEl.textContent = newNote || 'No notes yet';
+      notesEl.classList.toggle('lead-card__notes--empty', !newNote);
+    }
+
+    closeEditor();
+    showToast('Note saved');
+  }
+
+  editBtn.addEventListener('click',  (e) => { e.stopPropagation(); openEditor(); });
+  cancelBtn.addEventListener('click', closeEditor);
+  saveBtn.addEventListener('click',  saveNote);
+
+  // Ctrl/Cmd+Enter to save quickly
+  textarea.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') saveNote();
+    if (e.key === 'Escape') closeEditor();
+  });
+}
+
+
+/* ----------------------------------------------------------
+   Send onboarding link to a lead's email address
+   ---------------------------------------------------------- */
+async function sendOnboardingLink(lead, btn) {
+  if (!lead.email) {
+    showToast('No email address on file for this lead', 'error');
+    return;
+  }
+
+  const originalText  = btn.textContent.trim();
+  btn.disabled        = true;
+  btn.textContent     = 'Sending\u2026';
+
+  const res = await fetch('/.netlify/functions/send-email', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({
+      type: 'gym-onboarding-invite',
+      to:   lead.email,
+      name: lead.name,
+    }),
+  });
+
+  btn.disabled    = false;
+  btn.textContent = originalText;
+
+  if (res.ok) {
+    showToast('Onboarding link sent to ' + lead.email);
+  } else {
+    showToast('Failed to send email \u2014 please try again', 'error');
+  }
 }
 
 
@@ -420,7 +544,7 @@ async function saveEditedLead(e) {
 
   if (error) { showToast('Failed to save changes', 'error'); return; }
 
-  // Update local state
+  // Update local state and re-render so the card reflects the new details
   const lead = allLeads.find(l => l.id === id);
   if (lead) {
     lead.name     = name;
@@ -432,64 +556,6 @@ async function saveEditedLead(e) {
 
   showToast('Changes saved');
   closeEditModal();
-  renderBoard(allLeads);
-  wireCardButtons();
-}
-
-
-/* ----------------------------------------------------------
-   Convert lead modal
-   Links the lead to an existing gym_member_id and marks
-   them as converted. Useful when a lead came in manually
-   and you want to connect them to the member record that
-   was created when they signed a waiver.
-   ---------------------------------------------------------- */
-function openConvertModal(leadId) {
-  document.getElementById('lead-convert-id').value = leadId;
-  document.getElementById('lead-convert-overlay').classList.add('is-open');
-}
-
-function closeConvertModal() {
-  document.getElementById('lead-convert-overlay').classList.remove('is-open');
-}
-
-async function saveLinkToMember() {
-  const leadId = document.getElementById('lead-convert-id').value;
-  const lead   = allLeads.find(l => l.id === leadId);
-  if (!lead) return;
-
-  // If they already have an email, look for a matching gym_member
-  if (!lead.email) {
-    showToast('Add an email to this lead first so we can find their member record', 'error');
-    return;
-  }
-
-  const { data: gymMember } = await window.supabaseClient
-    .from('gym_members')
-    .select('id, name, subscription_status')
-    .ilike('email', lead.email)
-    .not('archived_at', 'is', null)
-    .order('joined_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (!gymMember) {
-    showToast('No member record found with that email \u2014 have they signed a waiver yet?', 'error');
-    return;
-  }
-
-  const { error } = await window.supabaseClient
-    .from('leads')
-    .update({ gym_member_id: gymMember.id, stage: 'converted' })
-    .eq('id', leadId);
-
-  if (error) { showToast('Failed to link member record', 'error'); return; }
-
-  lead.gym_member_id = gymMember.id;
-  lead.stage         = 'converted';
-
-  showToast(lead.name + ' linked to member record');
-  closeConvertModal();
   renderBoard(allLeads);
   wireCardButtons();
 }
@@ -522,7 +588,6 @@ function buildPage(content) {
     actions.appendChild(addBtn);
   }
 
-  // Build column HTML from STAGES config
   const columnsHTML = STAGES.map(stage => `
     <div class="leads-col" data-stage="${stage.id}" id="col-${stage.id}">
       <div class="leads-col__header">
@@ -539,15 +604,6 @@ function buildPage(content) {
     <!-- Kanban board -->
     <div class="leads-board">
       ${columnsHTML}
-    </div>
-
-    <!-- Empty state shown when no active leads exist -->
-    <div id="leads-empty" style="display:none;">
-      <div class="empty-state">
-        <div class="empty-state__icon">&#x1F3AF;</div>
-        <h3>No active leads</h3>
-        <p>Leads from the contact form will appear here automatically. You can also add them manually.</p>
-      </div>
     </div>
 
 
@@ -645,31 +701,6 @@ function buildPage(content) {
         </form>
       </div>
     </div>
-
-
-    <!-- ====================================================
-         CONVERT LEAD MODAL
-         Links a lead to their gym member record by email.
-         ==================================================== -->
-    <div class="modal-overlay" id="lead-convert-overlay">
-      <div class="modal" style="max-width:420px;">
-        <div class="modal__header">
-          <h2 class="modal__title">Convert Lead</h2>
-          <button class="modal__close" id="lead-convert-close" aria-label="Close">&times;</button>
-        </div>
-        <div class="form">
-          <input type="hidden" id="lead-convert-id">
-          <p style="font-size:var(--text-sm);color:var(--color-gray);margin-bottom:var(--space-xl);max-width:none;">
-            This will search for a gym member record with the same email as this lead and link them together.
-            Make sure the lead has an email address and has already signed a waiver.
-          </p>
-          <div style="display:flex;gap:var(--space-md);justify-content:flex-end;">
-            <button type="button" class="btn btn--secondary" id="lead-convert-cancel">Cancel</button>
-            <button type="button" class="btn btn--primary" id="lead-convert-save">Find &amp; Link Member</button>
-          </div>
-        </div>
-      </div>
-    </div>
   `;
 }
 
@@ -707,11 +738,5 @@ function buildPage(content) {
   document.getElementById('lead-edit-cancel')?.addEventListener('click', closeEditModal);
   document.getElementById('lead-edit-form')?.addEventListener('submit', saveEditedLead);
   safeModalClose('lead-edit-overlay', closeEditModal);
-
-  // Convert lead modal
-  document.getElementById('lead-convert-close')?.addEventListener('click', closeConvertModal);
-  document.getElementById('lead-convert-cancel')?.addEventListener('click', closeConvertModal);
-  document.getElementById('lead-convert-save')?.addEventListener('click', saveLinkToMember);
-  safeModalClose('lead-convert-overlay', closeConvertModal);
 
 })();

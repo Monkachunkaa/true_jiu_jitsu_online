@@ -110,13 +110,16 @@ async function deleteWaiver(waiverId) {
     .eq('id', waiverId);
 
   if (error) {
+    console.error('Waiver delete error:', error);
     showToast('Failed to delete waiver', 'error');
     return;
   }
 
   showToast('Waiver deleted');
-  allWaivers = allWaivers.filter(w => w.id !== waiverId);
-  // Re-apply the current search filter so the displayed list stays consistent
+
+  // Re-fetch from Supabase to guarantee local state matches the database,
+  // then re-apply the current search filter.
+  await loadWaivers();
   applyCurrentFilters();
 }
 

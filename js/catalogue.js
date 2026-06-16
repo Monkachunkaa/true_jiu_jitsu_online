@@ -54,6 +54,51 @@ function progressRingSVG(percent) {
 
 
 /* ----------------------------------------------------------
+   Build a standalone video card (for Recent Videos section)
+   ---------------------------------------------------------- */
+function buildVideoCard(item) {
+  const href = `/pages/video.html?id=${item.id}`;
+  const pct  = item.progress
+    ? watchPercent(item.progress.seconds_watched, item.durationSecs)
+    : 0;
+  const hasProgress = pct > 0;
+
+  const card = document.createElement('a');
+  card.className = 'content-card';
+  card.href      = href;
+
+  card.innerHTML = `
+    <div class="content-card__thumbnail-wrap" style="position:relative;">
+      ${item.thumbnailUrl
+        ? `<img src="${item.thumbnailUrl}" alt="${item.title}" class="content-card__thumbnail" loading="lazy">`
+        : `<div class="content-card__thumbnail content-card__thumbnail--placeholder"></div>`
+      }
+      <div class="content-card__play" aria-hidden="true">
+        <div class="content-card__play-icon">
+          <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+        </div>
+      </div>
+      ${hasProgress ? `
+        <div class="content-card__watch-bar">
+          <div class="content-card__watch-fill" style="width:${pct}%"></div>
+        </div>` : ''
+      }
+    </div>
+    <div class="content-card__body">
+      <p class="content-card__type">Video</p>
+      <h3 class="content-card__title">${item.title}</h3>
+      <div class="content-card__meta">
+        ${item.durationSecs ? `<span>${formatDuration(item.durationSecs)}</span>` : ''}
+        ${hasProgress ? `<span>${pct}% watched</span>` : ''}
+      </div>
+    </div>
+  `;
+
+  return card;
+}
+
+
+/* ----------------------------------------------------------
    Build a playlist card
    ---------------------------------------------------------- */
 function buildPlaylistCard(playlist) {
@@ -331,26 +376,29 @@ function initSearch() {
 
 async function triggerSearch() {
   const searchInput    = document.getElementById('catalogue-search');
-  const resultsSection = document.getElementById('search-results-section');
-  const resultsGrid    = document.getElementById('search-results-grid');
-  const resultsCount   = document.getElementById('search-results-count');
-  const playlistsGrid  = document.getElementById('playlists-grid');
-  const continueSection = document.getElementById('continue-watching');
+  const resultsSection    = document.getElementById('search-results-section');
+  const resultsGrid        = document.getElementById('search-results-grid');
+  const resultsCount       = document.getElementById('search-results-count');
+  const playlistsGrid      = document.getElementById('playlists-grid');
+  const continueSection    = document.getElementById('continue-watching');
+  const recentSection      = document.getElementById('recent-videos-section');
 
   const query    = searchInput?.value.trim() || '';
   const tagSlugs = Array.from(_activeTags);
   const isActive = query.length > 0 || tagSlugs.length > 0;
 
   if (!isActive) {
-    // Back to normal playlist view
-    resultsSection.style.display  = 'none';
-    playlistsGrid.style.display   = '';
+    // Back to normal view — restore all sections
+    resultsSection.style.display = 'none';
+    playlistsGrid.style.display  = '';
     if (continueSection.dataset.hasContent) continueSection.style.display = '';
+    if (recentSection.dataset.hasContent)   recentSection.style.display   = '';
     return;
   }
 
-  // Switch to results view
+  // Switch to results view — hide ambient sections
   continueSection.style.display = 'none';
+  recentSection.style.display   = 'none';
   playlistsGrid.style.display   = 'none';
   resultsSection.style.display  = '';
   resultsGrid.innerHTML         = '<div class="spinner" style="margin:var(--space-2xl) auto;"></div>';
@@ -452,7 +500,7 @@ async function triggerSearch() {
 
   loadingEl.style.display = 'none';
 
-  const { playlists, continueWatching } = data;
+  const { playlists, continueWatching, recentVideos } = data;
 
   /* Continue Watching */
   const continueSection = document.getElementById('continue-watching');
@@ -461,6 +509,15 @@ async function triggerSearch() {
     continueWatching.forEach(item => grid.appendChild(buildContinueCard(item)));
     continueSection.style.display      = '';
     continueSection.dataset.hasContent = 'true';
+  }
+
+  /* Recent Videos */
+  const recentSection = document.getElementById('recent-videos-section');
+  if (recentVideos?.length > 0) {
+    const grid = document.getElementById('recent-videos-grid');
+    recentVideos.forEach(item => grid.appendChild(buildVideoCard(item)));
+    recentSection.style.display      = '';
+    recentSection.dataset.hasContent = 'true';
   }
 
   /* Playlists */

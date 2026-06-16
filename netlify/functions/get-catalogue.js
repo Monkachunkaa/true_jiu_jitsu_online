@@ -164,7 +164,28 @@ exports.handler = async (event) => {
     });
 
   /* ----------------------------------------------------------
-     8. Fetch all categories (for future filtering use)
+     8. Fetch recent videos (latest 8 published, for the
+        "New Videos" section on the catalogue page)
+     ---------------------------------------------------------- */
+  const { data: recentVideosRaw } = await supabase
+    .from('videos')
+    .select('id, title, thumbnail_url, duration_seconds, created_at')
+    .eq('published', true)
+    .order('created_at', { ascending: false })
+    .limit(8);
+
+  // Attach progress info so the card can show a watch bar if started
+  const recentVideos = (recentVideosRaw || []).map(v => ({
+    id:            v.id,
+    title:         v.title,
+    thumbnailUrl:  v.thumbnail_url,
+    durationSecs:  v.duration_seconds,
+    createdAt:     v.created_at,
+    progress:      videoProgressMap[v.id] || null,
+  }));
+
+  /* ----------------------------------------------------------
+     9. Fetch all categories (for future filtering use)
      ---------------------------------------------------------- */
   const { data: categories } = await supabase
     .from('categories')
@@ -174,6 +195,7 @@ exports.handler = async (event) => {
   return respond(200, {
     playlists:       enrichedPlaylists,
     continueWatching,
+    recentVideos,
     categories:      categories || [],
   });
 };
