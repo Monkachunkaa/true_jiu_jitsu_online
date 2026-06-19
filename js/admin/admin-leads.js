@@ -1,31 +1,37 @@
 /* ==========================================================
-   admin-leads.js — Leads pipeline (Kanban board)
+   admin-leads.js — Leads table
    True Jiu Jitsu Online
 
-   Displays leads in three draggable columns:
-     New → Contacted → Trial Scheduled
+   Shows all active leads in a sortable table. Leads come
+   from two sources:
+     - contact_form: submitted via truebjj.academy
+     - manual: added directly by the admin
 
-   Leads come from two sources:
-     - contact_form: submitted via truebjj.academy contact form
-     - manual: added directly by the admin here
+   Key features per row:
+     - Stage dropdown (change stage inline)
+     - Inline note editor (pencil icon)
+     - Send onboarding link button
+     - Overflow menu (edit details / archive)
 
    When a lead converts (signs a waiver), submit-waiver.js
-   links their gym_member_id onto this record automatically
-   via email match, and the stage is set to 'converted'.
-   Converted and archived leads are hidden from the board.
+   links their gym_member_id and sets stage to 'converted'
+   automatically. Converted and archived leads are hidden
+   from the default view but accessible via toggle.
    ========================================================== */
 
-let allLeads = [];
+let allLeads       = [];
+let showingArchived = false;
+let stageFilter     = '';
 
 
 /* ----------------------------------------------------------
-   Stage config — single source of truth for column order,
-   labels, and colors used throughout the board.
+   Stage config
    ---------------------------------------------------------- */
 const STAGES = [
-  { id: 'new',              label: 'New',              color: '#60a5fa' },
-  { id: 'contacted',        label: 'Contacted',        color: '#f59e0b' },
-  { id: 'trial_scheduled',  label: 'Trial Scheduled',  color: '#a78bfa' },
+  { id: 'new',             label: 'New',             color: '#60a5fa' },
+  { id: 'contacted',       label: 'Contacted',       color: '#f59e0b' },
+  { id: 'trial_scheduled', label: 'Trial Scheduled', color: '#a78bfa' },
+  { id: 'converted',       label: 'Converted',       color: '#2a9d5c' },
 ];
 
 const SOURCE_LABELS = {
@@ -38,136 +44,199 @@ const SOURCE_LABELS = {
    Helpers
    ---------------------------------------------------------- */
 
-function stageConfig(stageId) {
-  return STAGES.find(s => s.id === stageId) || STAGES[0];
+function stageLabel(stageId) {
+  return STAGES.find(s => s.id === stageId)?.label || stageId;
 }
 
-// How long ago a lead came in, as a short human string
+function stageColor(stageId) {
+  return STAGES.find(s => s.id === stageId)?.color || 'var(--color-gray)';
+}
+
+// Human-readable time since a lead came in
 function timeAgo(iso) {
   if (!iso) return '';
-  const diff = Date.now() - new Date(iso).getTime();
+  const diff  = Date.now() - new Date(iso).getTime();
   const mins  = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
   const days  = Math.floor(diff / 86400000);
-  if (mins  < 60)  return mins  + 'm ago';
-  if (hours < 24)  return hours + 'h ago';
-  if (days  < 30)  return days  + 'd ago';
+  if (mins  <  60) return mins  + 'm ago';
+  if (hours <  24) return hours + 'h ago';
+  if (days  <  30) return days  + 'd ago';
   return formatDate(iso);
 }
 
 
 /* ----------------------------------------------------------
-   Render the full Kanban board
+   Apply filters and re-render the table
    ---------------------------------------------------------- */
-function renderBoard(leads) {
-  STAGES.forEach(stage => {
-    const column = document.getElementById('col-' + stage.id);
-    if (!column) return;
+function applyFilters() {
+  const query = (document.getElementById('lead-search')?.value || '').toLowerCase().trim();
 
-    const stageLeads = leads.filter(l => l.stage === stage.id && !l.archived_at);
+  const filtered = allLeads.filter(lead => {
+    // Archived / active gate
+    if (showingArchived !== !!lead.archived_at) return false;
 
-    // Update the count badge on the column header
-    const countEl = document.getElementById('count-' + stage.id);
-    if (countEl) countEl.textContent = stageLeads.length;
+    // In the active view, hide converted leads unless the stage
+    // filter is explicitly set to 'converted'
+    if (!showingArchived && lead.stage === 'converted' && stageFilter !== 'converted') return false;
 
-    // Clear and repopulate cards
-    const cardsWrap = column.querySelector('.leads-col__cards');
-    if (!cardsWrap) return;
-    cardsWrap.innerHTML = '';
+    // Stage filter
+    if (stageFilter && lead.stage !== stageFilter) return false;
 
-    if (!stageLeads.length) {
-      cardsWrap.innerHTML = `<div class="leads-col__empty">No leads here yet</div>`;
-      return;
+    // Search
+    if (query) {
+      const haystack = [lead.name, lead.email, lead.phone, lead.notes].join(' ').toLowerCase();
+      if (!haystack.includes(query)) return false;
     }
 
-    stageLeads.forEach(lead => {
-      cardsWrap.appendChild(buildCard(lead));
-    });
+    return true;
   });
+
+  renderTable(filtered);
 }
 
 
 /* ----------------------------------------------------------
-   Build a single lead card element
+   Render the leads table
    ---------------------------------------------------------- */
-function buildCard(lead) {
-  const card = document.createElement('div');
-  card.className  = 'lead-card';
-  card.dataset.id = lead.id;
-  card.draggable  = true;
+function renderTable(leads) {
+  const container = document.getElementById('leads-table-wrap');
+  if (!container) return;
 
-  const source = SOURCE_LABELS[lead.source] || lead.source;
-
-  card.innerHTML = `
-    <div class="lead-card__header">
-      <p class="lead-card__name">${lead.name}</p>
-      <div class="row-overflow" data-id="${lead.id}">
-        <button class="row-overflow__trigger" aria-label="More options" title="More options">
-          &bull;&bull;&bull;
-        </button>
-        <div class="row-overflow__menu">
-          <button class="row-overflow__item js-edit-lead" data-id="${lead.id}">Edit details</button>
-          ${lead.gym_member_id
-            ? `<button class="row-overflow__item js-view-member" data-id="${lead.gym_member_id}">View member record</button>`
-            : ''
-          }
-          <button class="row-overflow__item row-overflow__item--danger js-archive-lead" data-id="${lead.id}">Archive lead</button>
-        </div>
+  if (!leads.length) {
+    const msg = showingArchived ? 'No archived leads.' : 'No leads yet.';
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state__icon">&#x1F3AF;</div>
+        <h3>${msg}</h3>
+        <p>Leads from the contact form appear here automatically. You can also add them manually.</p>
       </div>
-    </div>
+    `;
+    return;
+  }
 
-    ${lead.email ? `<p class="lead-card__detail"><a href="mailto:${lead.email}">${lead.email}</a></p>` : ''}
-    ${lead.phone ? `<p class="lead-card__detail">${lead.phone}</p>` : ''}
-    ${lead.interest ? `<p class="lead-card__interest">${lead.interest}</p>` : ''}
-
-    <!-- Notes — shows current note or a placeholder, with an edit button -->
-    <div class="lead-card__notes-wrap">
-      <div class="lead-card__notes-display js-notes-display">
-        ${lead.notes
-          ? `<p class="lead-card__notes">${lead.notes}</p>`
-          : `<p class="lead-card__notes lead-card__notes--empty">No notes yet</p>`
-        }
-        <button class="lead-card__notes-edit-btn js-edit-notes" title="Edit note" aria-label="Edit note">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-          </svg>
-        </button>
-      </div>
-      <!-- Inline note editor — hidden until pencil is clicked -->
-      <div class="lead-card__notes-editor js-notes-editor" style="display:none;">
-        <textarea class="lead-card__notes-textarea js-notes-textarea" rows="3" placeholder="Add a note…">${lead.notes || ''}</textarea>
-        <div class="lead-card__notes-editor-actions">
-          <button class="btn btn--primary btn--sm js-notes-save">Save</button>
-          <button class="btn btn--ghost btn--sm js-notes-cancel">Cancel</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="lead-card__footer">
-      <span class="lead-card__source">${source}</span>
-      <span class="lead-card__age">${timeAgo(lead.created_at)}</span>
-    </div>
-
-    <!-- Card action buttons -->
-    <div class="lead-card__actions">
-      ${buildMoveButtons(lead)}
-      ${lead.gym_member_id
-        ? `<span class="badge badge--active" style="font-size:10px;">Converted</span>`
-        : (lead.email
-            ? `<button class="btn btn--ghost btn--sm js-send-onboarding" data-id="${lead.id}" title="Send onboarding link to ${lead.email}">
-                 &#x2197; Send Onboarding Link
-               </button>`
-            : ''
-          )
-      }
+  container.innerHTML = `
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Stage</th>
+            <th>Notes</th>
+            <th>Source</th>
+            <th>Received</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="leads-tbody"></tbody>
+      </table>
     </div>
   `;
 
-  // Overflow menu toggle
-  const trigger = card.querySelector('.row-overflow__trigger');
-  const menu    = card.querySelector('.row-overflow__menu');
-  trigger.addEventListener('click', (e) => {
+  const tbody = document.getElementById('leads-tbody');
+  leads.forEach(lead => tbody.appendChild(buildRow(lead)));
+}
+
+
+/* ----------------------------------------------------------
+   Build a single table row for a lead
+   ---------------------------------------------------------- */
+function buildRow(lead) {
+  const tr = document.createElement('tr');
+  if (!!lead.archived_at) tr.style.opacity = '0.6';
+
+  const source  = SOURCE_LABELS[lead.source] || lead.source || '';
+  const isActive = !lead.archived_at;
+
+  // Build stage options for the inline dropdown
+  const stageOptions = STAGES.map(s =>
+    `<option value="${s.id}" ${lead.stage === s.id ? 'selected' : ''}>${s.label}</option>`
+  ).join('');
+
+  tr.innerHTML = `
+    <td>
+      <p style="margin:0;font-weight:500;color:var(--color-white);">${lead.name}</p>
+      ${lead.email ? `<p style="margin:0;font-size:var(--text-xs);color:var(--color-gray);">${lead.email}</p>` : ''}
+      ${lead.phone ? `<p style="margin:0;font-size:var(--text-xs);color:var(--color-gray);">${lead.phone}</p>` : ''}
+      ${lead.interest ? `<p style="margin:0;font-size:10px;color:var(--color-gray);text-transform:capitalize;">${lead.interest}</p>` : ''}
+    </td>
+    <td>
+      ${isActive
+        ? `<select class="leads-stage-select js-stage-select" data-id="${lead.id}"
+             style="border-color:${stageColor(lead.stage)}20;color:${stageColor(lead.stage)};">
+             ${stageOptions}
+           </select>`
+        : `<span style="font-size:var(--text-sm);color:${stageColor(lead.stage)};">${stageLabel(lead.stage)}</span>`
+      }
+    </td>
+    <td class="leads-notes-cell">
+      <!-- Notes display + inline editor -->
+      <div class="leads-notes-wrap">
+        <div class="leads-notes-display js-notes-display">
+          <span class="leads-notes-text js-notes-text">${lead.notes
+            ? `<span style="color:var(--color-light-gray);">${lead.notes}</span>`
+            : `<span style="color:var(--color-mid-gray);font-style:italic;">No notes</span>`
+          }</span>
+          ${isActive
+            ? `<button class="leads-notes-edit-btn js-edit-notes" title="Edit note" aria-label="Edit note">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>`
+            : ''
+          }
+        </div>
+        <div class="leads-notes-editor js-notes-editor" style="display:none;">
+          <textarea class="leads-notes-textarea js-notes-textarea" rows="2"
+            placeholder="Add a note...">${lead.notes || ''}</textarea>
+          <div class="leads-notes-editor-actions">
+            <button class="btn btn--primary btn--sm js-notes-save">Save</button>
+            <button class="btn btn--ghost btn--sm js-notes-cancel">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </td>
+    <td style="font-size:var(--text-xs);color:var(--color-gray);">${source}</td>
+    <td style="font-size:var(--text-xs);color:var(--color-gray);white-space:nowrap;">${timeAgo(lead.created_at)}</td>
+    <td>
+      <div class="data-table__actions">
+        ${isActive && lead.email && !lead.gym_member_id
+          ? `<button class="btn btn--secondary btn--sm js-send-onboarding" data-id="${lead.id}"
+               title="Send onboarding link to ${lead.email}">
+               &#x2197; Send Link
+             </button>`
+          : ''
+        }
+        ${lead.gym_member_id
+          ? `<span class="badge badge--active" style="font-size:10px;">Converted</span>`
+          : ''
+        }
+        <!-- Overflow menu -->
+        <div class="row-overflow" data-id="${lead.id}">
+          <button class="row-overflow__trigger" aria-label="More options">&bull;&bull;&bull;</button>
+          <div class="row-overflow__menu">
+            ${isActive ? `<button class="row-overflow__item js-edit-lead" data-id="${lead.id}">Edit details</button>` : ''}
+            ${lead.gym_member_id ? `<button class="row-overflow__item js-view-member" data-id="${lead.id}">View member record</button>` : ''}
+            ${isActive
+              ? `<button class="row-overflow__item row-overflow__item--danger js-archive-lead" data-id="${lead.id}">Archive lead</button>`
+              : `<button class="row-overflow__item js-unarchive-lead" data-id="${lead.id}">Unarchive lead</button>`
+            }
+          </div>
+        </div>
+      </div>
+    </td>
+  `;
+
+  // Stage dropdown change
+  tr.querySelector('.js-stage-select')?.addEventListener('change', (e) => {
+    moveLeadToStage(lead.id, e.target.value);
+  });
+
+  // Overflow menu
+  const trigger = tr.querySelector('.row-overflow__trigger');
+  const menu    = tr.querySelector('.row-overflow__menu');
+  trigger?.addEventListener('click', (e) => {
     e.stopPropagation();
     document.querySelectorAll('.row-overflow__menu.is-open').forEach(m => {
       if (m !== menu) m.classList.remove('is-open');
@@ -175,52 +244,56 @@ function buildCard(lead) {
     menu.classList.toggle('is-open');
   });
 
-  // Edit details
-  card.querySelector('.js-edit-lead')?.addEventListener('click', () => {
+  // Edit
+  tr.querySelector('.js-edit-lead')?.addEventListener('click', () => {
     menu.classList.remove('is-open');
     openEditModal(lead.id);
   });
 
   // View member record
-  card.querySelector('.js-view-member')?.addEventListener('click', () => {
+  tr.querySelector('.js-view-member')?.addEventListener('click', () => {
     window.location.href = '/pages/admin/gym-members.html';
   });
 
   // Archive
-  card.querySelector('.js-archive-lead')?.addEventListener('click', (e) => {
+  tr.querySelector('.js-archive-lead')?.addEventListener('click', (e) => {
     e.stopPropagation();
     menu.classList.remove('is-open');
     confirmAction(trigger, 'Archive ' + lead.name + '?', () => archiveLead(lead.id));
   });
 
-  // Send onboarding link
-  card.querySelector('.js-send-onboarding')?.addEventListener('click', (btn) => {
-    sendOnboardingLink(lead, card.querySelector('.js-send-onboarding'));
+  // Unarchive
+  tr.querySelector('.js-unarchive-lead')?.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    menu.classList.remove('is-open');
+    await unarchiveLead(lead.id);
   });
 
-  // Inline note editing
-  wireNoteEditor(card, lead);
+  // Send onboarding link
+  tr.querySelector('.js-send-onboarding')?.addEventListener('click', (e) => {
+    sendOnboardingLink(lead, e.currentTarget);
+  });
 
-  // Drag and drop
-  wireDrag(card, lead.id);
+  // Inline note editor
+  wireNoteEditor(tr, lead);
 
-  return card;
+  return tr;
 }
 
 
 /* ----------------------------------------------------------
-   Inline note editor
-   Clicking the pencil icon shows a textarea in-place.
-   Saving updates Supabase and refreshes the display text
-   without a full board re-render so the card stays in place.
+   Inline note editor — works the same as before but
+   attached to a table row instead of a card.
    ---------------------------------------------------------- */
-function wireNoteEditor(card, lead) {
-  const display  = card.querySelector('.js-notes-display');
-  const editor   = card.querySelector('.js-notes-editor');
-  const textarea = card.querySelector('.js-notes-textarea');
-  const editBtn  = card.querySelector('.js-edit-notes');
-  const saveBtn  = card.querySelector('.js-notes-save');
-  const cancelBtn = card.querySelector('.js-notes-cancel');
+function wireNoteEditor(row, lead) {
+  const display   = row.querySelector('.js-notes-display');
+  const editor    = row.querySelector('.js-notes-editor');
+  const textarea  = row.querySelector('.js-notes-textarea');
+  const editBtn   = row.querySelector('.js-edit-notes');
+  const saveBtn   = row.querySelector('.js-notes-save');
+  const cancelBtn = row.querySelector('.js-notes-cancel');
+
+  if (!editBtn) return; // archived rows have no edit button
 
   function openEditor() {
     display.style.display = 'none';
@@ -238,7 +311,7 @@ function wireNoteEditor(card, lead) {
     const newNote = textarea.value.trim() || null;
 
     saveBtn.disabled    = true;
-    saveBtn.textContent = 'Saving\u2026';
+    saveBtn.textContent = 'Saving...';
 
     const { error } = await window.supabaseClient
       .from('leads')
@@ -250,25 +323,23 @@ function wireNoteEditor(card, lead) {
 
     if (error) { showToast('Failed to save note', 'error'); return; }
 
-    // Update local state
+    // Update local state and refresh the display text in-place
     lead.notes = newNote;
-
-    // Update the display text in-place — no full re-render needed
-    const notesEl = display.querySelector('.lead-card__notes');
-    if (notesEl) {
-      notesEl.textContent = newNote || 'No notes yet';
-      notesEl.classList.toggle('lead-card__notes--empty', !newNote);
+    const notesText = row.querySelector('.js-notes-text');
+    if (notesText) {
+      notesText.innerHTML = newNote
+        ? `<span style="color:var(--color-light-gray);">${newNote}</span>`
+        : `<span style="color:var(--color-mid-gray);font-style:italic;">No notes</span>`;
     }
 
     closeEditor();
     showToast('Note saved');
   }
 
-  editBtn.addEventListener('click',  (e) => { e.stopPropagation(); openEditor(); });
+  editBtn.addEventListener('click',   (e) => { e.stopPropagation(); openEditor(); });
   cancelBtn.addEventListener('click', closeEditor);
-  saveBtn.addEventListener('click',  saveNote);
+  saveBtn.addEventListener('click',   saveNote);
 
-  // Ctrl/Cmd+Enter to save quickly
   textarea.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') saveNote();
     if (e.key === 'Escape') closeEditor();
@@ -277,7 +348,63 @@ function wireNoteEditor(card, lead) {
 
 
 /* ----------------------------------------------------------
-   Send onboarding link to a lead's email address
+   Move a lead to a new stage
+   ---------------------------------------------------------- */
+async function moveLeadToStage(leadId, newStage) {
+  const lead = allLeads.find(l => l.id === leadId);
+  if (!lead || lead.stage === newStage) return;
+
+  const { error } = await window.supabaseClient
+    .from('leads')
+    .update({ stage: newStage })
+    .eq('id', leadId);
+
+  if (error) { showToast('Failed to update stage', 'error'); return; }
+
+  lead.stage = newStage;
+  // Update the select color in-place without a full re-render
+  const select = document.querySelector(`.js-stage-select[data-id="${leadId}"]`);
+  if (select) {
+    select.style.borderColor = stageColor(newStage) + '20';
+    select.style.color       = stageColor(newStage);
+  }
+}
+
+
+/* ----------------------------------------------------------
+   Archive / unarchive
+   ---------------------------------------------------------- */
+async function archiveLead(leadId) {
+  const { error } = await window.supabaseClient
+    .from('leads')
+    .update({ archived_at: new Date().toISOString() })
+    .eq('id', leadId);
+
+  if (error) { showToast('Failed to archive lead', 'error'); return; }
+
+  const lead = allLeads.find(l => l.id === leadId);
+  if (lead) lead.archived_at = new Date().toISOString();
+  showToast((lead?.name || 'Lead') + ' archived');
+  applyFilters();
+}
+
+async function unarchiveLead(leadId) {
+  const { error } = await window.supabaseClient
+    .from('leads')
+    .update({ archived_at: null })
+    .eq('id', leadId);
+
+  if (error) { showToast('Failed to unarchive lead', 'error'); return; }
+
+  const lead = allLeads.find(l => l.id === leadId);
+  if (lead) lead.archived_at = null;
+  showToast((lead?.name || 'Lead') + ' unarchived');
+  applyFilters();
+}
+
+
+/* ----------------------------------------------------------
+   Send onboarding link
    ---------------------------------------------------------- */
 async function sendOnboardingLink(lead, btn) {
   if (!lead.email) {
@@ -285,9 +412,15 @@ async function sendOnboardingLink(lead, btn) {
     return;
   }
 
+  if (!emailThrottle.check('onboarding-link', lead.email)) {
+    const secs = emailThrottle.secondsRemaining('onboarding-link', lead.email);
+    showToast('Already sent -- wait ' + secs + 's before resending', 'error');
+    return;
+  }
+
   const originalText  = btn.textContent.trim();
   btn.disabled        = true;
-  btn.textContent     = 'Sending\u2026';
+  btn.textContent     = 'Sending...';
 
   const res = await fetch('/.netlify/functions/send-email', {
     method:  'POST',
@@ -303,138 +436,11 @@ async function sendOnboardingLink(lead, btn) {
   btn.textContent = originalText;
 
   if (res.ok) {
+    emailThrottle.record('onboarding-link', lead.email);
     showToast('Onboarding link sent to ' + lead.email);
   } else {
-    showToast('Failed to send email \u2014 please try again', 'error');
+    showToast('Failed to send email -- please try again', 'error');
   }
-}
-
-
-/* ----------------------------------------------------------
-   Build prev/next stage move buttons for a card
-   ---------------------------------------------------------- */
-function buildMoveButtons(lead) {
-  const currentIndex = STAGES.findIndex(s => s.id === lead.stage);
-  const parts = [];
-
-  if (currentIndex > 0) {
-    const prev = STAGES[currentIndex - 1];
-    parts.push(`
-      <button class="btn btn--ghost btn--sm js-move-stage"
-        data-id="${lead.id}" data-stage="${prev.id}"
-        title="Move back to ${prev.label}">
-        &larr; ${prev.label}
-      </button>
-    `);
-  }
-
-  if (currentIndex < STAGES.length - 1) {
-    const next = STAGES[currentIndex + 1];
-    parts.push(`
-      <button class="btn btn--secondary btn--sm js-move-stage"
-        data-id="${lead.id}" data-stage="${next.id}"
-        title="Move to ${next.label}">
-        ${next.label} &rarr;
-      </button>
-    `);
-  }
-
-  return parts.join('');
-}
-
-
-/* ----------------------------------------------------------
-   Wire drag-and-drop on a card
-   ---------------------------------------------------------- */
-function wireDrag(card, leadId) {
-  card.addEventListener('dragstart', (e) => {
-    e.dataTransfer.setData('text/plain', leadId);
-    card.classList.add('is-dragging');
-  });
-
-  card.addEventListener('dragend', () => {
-    card.classList.remove('is-dragging');
-    document.querySelectorAll('.leads-col__cards').forEach(c => c.classList.remove('drag-over'));
-  });
-}
-
-
-/* ----------------------------------------------------------
-   Wire drop zones on each column
-   ---------------------------------------------------------- */
-function wireDropZones() {
-  document.querySelectorAll('.leads-col__cards').forEach(zone => {
-    const stageId = zone.closest('.leads-col').dataset.stage;
-
-    zone.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      zone.classList.add('drag-over');
-    });
-
-    zone.addEventListener('dragleave', () => {
-      zone.classList.remove('drag-over');
-    });
-
-    zone.addEventListener('drop', async (e) => {
-      e.preventDefault();
-      zone.classList.remove('drag-over');
-      const leadId = e.dataTransfer.getData('text/plain');
-      if (!leadId) return;
-      await moveLeadToStage(leadId, stageId);
-    });
-  });
-}
-
-
-/* ----------------------------------------------------------
-   Move a lead to a new stage — update Supabase + re-render
-   ---------------------------------------------------------- */
-async function moveLeadToStage(leadId, newStage) {
-  const lead = allLeads.find(l => l.id === leadId);
-  if (!lead || lead.stage === newStage) return;
-
-  const { error } = await window.supabaseClient
-    .from('leads')
-    .update({ stage: newStage })
-    .eq('id', leadId);
-
-  if (error) { showToast('Failed to move lead', 'error'); return; }
-
-  lead.stage = newStage;
-  renderBoard(allLeads);
-  wireCardButtons();
-}
-
-
-/* ----------------------------------------------------------
-   Re-wire move buttons after every render
-   (cards are rebuilt on render so listeners need rewiring)
-   ---------------------------------------------------------- */
-function wireCardButtons() {
-  document.querySelectorAll('.js-move-stage').forEach(btn => {
-    btn.addEventListener('click', () => {
-      moveLeadToStage(btn.dataset.id, btn.dataset.stage);
-    });
-  });
-}
-
-
-/* ----------------------------------------------------------
-   Archive a lead
-   ---------------------------------------------------------- */
-async function archiveLead(leadId) {
-  const { error } = await window.supabaseClient
-    .from('leads')
-    .update({ archived_at: new Date().toISOString() })
-    .eq('id', leadId);
-
-  if (error) { showToast('Failed to archive lead', 'error'); return; }
-
-  const lead = allLeads.find(l => l.id === leadId);
-  showToast((lead?.name || 'Lead') + ' archived');
-  lead.archived_at = new Date().toISOString();
-  renderBoard(allLeads);
-  wireCardButtons();
 }
 
 
@@ -463,7 +469,7 @@ async function saveNewLead(e) {
 
   const btn       = document.getElementById('lead-add-save');
   btn.disabled    = true;
-  btn.textContent = 'Saving\u2026';
+  btn.textContent = 'Saving...';
 
   const { data, error } = await window.supabaseClient
     .from('leads')
@@ -487,8 +493,7 @@ async function saveNewLead(e) {
   showToast(name + ' added');
   allLeads.unshift(data);
   closeAddModal();
-  renderBoard(allLeads);
-  wireCardButtons();
+  applyFilters();
 }
 
 
@@ -526,7 +531,7 @@ async function saveEditedLead(e) {
 
   const btn       = document.getElementById('lead-edit-save');
   btn.disabled    = true;
-  btn.textContent = 'Saving\u2026';
+  btn.textContent = 'Saving...';
 
   const { error } = await window.supabaseClient
     .from('leads')
@@ -544,7 +549,6 @@ async function saveEditedLead(e) {
 
   if (error) { showToast('Failed to save changes', 'error'); return; }
 
-  // Update local state and re-render so the card reflects the new details
   const lead = allLeads.find(l => l.id === id);
   if (lead) {
     lead.name     = name;
@@ -556,8 +560,37 @@ async function saveEditedLead(e) {
 
   showToast('Changes saved');
   closeEditModal();
-  renderBoard(allLeads);
-  wireCardButtons();
+  applyFilters();
+}
+
+
+/* ----------------------------------------------------------
+   Setup filter bar listeners
+   ---------------------------------------------------------- */
+function setupFilters() {
+  document.getElementById('lead-search')?.addEventListener('input', applyFilters);
+
+  document.getElementById('lead-stage-filter')?.addEventListener('change', (e) => {
+    stageFilter = e.target.value;
+    applyFilters();
+  });
+
+  document.getElementById('lead-archive-toggle')?.addEventListener('click', () => {
+    showingArchived = !showingArchived;
+    stageFilter     = ''; // reset stage filter when switching views
+    document.getElementById('lead-stage-filter').value = '';
+
+    const btn = document.getElementById('lead-archive-toggle');
+    btn.textContent = showingArchived ? 'Show Active' : 'Show Archived';
+    btn.classList.toggle('btn--ghost',     showingArchived);
+    btn.classList.toggle('btn--secondary', !showingArchived);
+
+    // Stage filter irrelevant in archived view
+    const stageSelect = document.getElementById('lead-stage-filter');
+    if (stageSelect) stageSelect.disabled = showingArchived;
+
+    applyFilters();
+  });
 }
 
 
@@ -588,22 +621,31 @@ function buildPage(content) {
     actions.appendChild(addBtn);
   }
 
-  const columnsHTML = STAGES.map(stage => `
-    <div class="leads-col" data-stage="${stage.id}" id="col-${stage.id}">
-      <div class="leads-col__header">
-        <span class="leads-col__dot" style="background:${stage.color};"></span>
-        <h3 class="leads-col__title">${stage.label}</h3>
-        <span class="leads-col__count" id="count-${stage.id}">0</span>
-      </div>
-      <div class="leads-col__cards"></div>
-    </div>
-  `).join('');
+  // Build stage filter options
+  const stageFilterOptions = STAGES
+    .filter(s => s.id !== 'converted') // converted shown via its own filter option
+    .map(s => `<option value="${s.id}">${s.label}</option>`)
+    .join('');
 
   content.innerHTML = `
 
-    <!-- Kanban board -->
-    <div class="leads-board">
-      ${columnsHTML}
+    <!-- Filter bar -->
+    <div style="display:flex;flex-wrap:wrap;gap:var(--space-md);align-items:center;margin-bottom:var(--space-lg);" class="admin-filter-bar">
+      <input class="form__input" type="text" id="lead-search"
+        placeholder="Search by name, email, phone..." style="max-width:240px;flex-shrink:0;">
+      <select class="form__select" id="lead-stage-filter" style="max-width:160px;">
+        <option value="">All Stages</option>
+        ${stageFilterOptions}
+        <option value="converted">Converted</option>
+      </select>
+      <button class="btn btn--secondary btn--sm" id="lead-archive-toggle" style="margin-left:auto;">
+        Show Archived
+      </button>
+    </div>
+
+    <!-- Leads table -->
+    <div id="leads-table-wrap">
+      <div class="spinner" style="margin:var(--space-2xl) auto;"></div>
     </div>
 
 
@@ -644,7 +686,7 @@ function buildPage(content) {
           <div class="form__group">
             <label class="form__label" for="lead-add-notes">Notes</label>
             <textarea class="form__textarea" id="lead-add-notes" rows="2"
-              placeholder="Anything worth remembering about this person&hellip;"></textarea>
+              placeholder="Anything worth remembering..."></textarea>
           </div>
           <div style="display:flex;gap:var(--space-md);justify-content:flex-end;">
             <button type="button" class="btn btn--secondary" id="lead-add-cancel">Cancel</button>
@@ -717,9 +759,8 @@ function buildPage(content) {
   buildPage(content);
 
   await loadLeads();
-  renderBoard(allLeads);
-  wireDropZones();
-  wireCardButtons();
+  applyFilters();
+  setupFilters();
 
   // Close overflow menus on outside click
   document.addEventListener('click', () => {

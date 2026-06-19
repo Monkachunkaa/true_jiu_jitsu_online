@@ -35,9 +35,9 @@ let allWaiverCounts = {};
 /* ----------------------------------------------------------
    Helpers
 
-   formatDate, showToast, and confirmAction are defined in
-   admin-auth.js, which is loaded before this file on every
-   admin page.
+   formatDate, showToast, confirmAction, and emailThrottle
+   are defined in admin-auth.js, which is loaded before this
+   file on every admin page.
    ---------------------------------------------------------- */
 
 function formatPrice(cents) {
@@ -146,7 +146,6 @@ function applyFilters() {
   const query = (document.getElementById('member-search')?.value || '').toLowerCase().trim();
 
   const filtered = allGymMembers.filter(m => {
-    // Gate on archived state first
     const isArchived = !!m.archived_at;
     if (showingArchived !== isArchived) return false;
 
@@ -155,7 +154,6 @@ function applyFilters() {
       || (m.email || '').toLowerCase().includes(query)
       || (m.phone || '').toLowerCase().includes(query);
 
-    // Status filter only applies to active (non-archived) view
     const matchesStatus = showingArchived || !activeStatusFilter
       || m.subscription_status === activeStatusFilter;
 
@@ -215,7 +213,6 @@ function renderMembers(members) {
 
     const isArchived = !!member.archived_at;
 
-    // Show "Send Billing Link" for anyone not yet active or cancelled (non-archived only)
     const showBillingBtn = !isArchived && (
       member.subscription_status === 'visitor' ||
       member.subscription_status === 'pending' ||
@@ -229,7 +226,6 @@ function renderMembers(members) {
       : formatDate(member.joined_at);
 
     const tr = document.createElement('tr');
-    // Mute archived rows slightly so they read as historical
     if (isArchived) tr.style.opacity = '0.6';
 
     tr.innerHTML = `
@@ -260,7 +256,6 @@ function renderMembers(members) {
             ? `<button class="btn btn--danger btn--sm js-cancel-member" data-id="${member.id}">Cancel</button>`
             : ''
           }
-          <!-- Overflow menu -->
           <div class="row-overflow" data-id="${member.id}">
             <button class="row-overflow__trigger" aria-label="More options" title="More options">
               &bull;&bull;&bull;
@@ -294,11 +289,9 @@ function renderMembers(members) {
     });
   });
 
-  // Overflow menu — toggle on trigger click, close on outside click
   tbody.querySelectorAll('.row-overflow').forEach(wrap => {
     const trigger = wrap.querySelector('.row-overflow__trigger');
     const menu    = wrap.querySelector('.row-overflow__menu');
-
     trigger.addEventListener('click', (e) => {
       e.stopPropagation();
       document.querySelectorAll('.row-overflow__menu.is-open').forEach(m => {
@@ -313,12 +306,11 @@ function renderMembers(members) {
       .forEach(m => m.classList.remove('is-open'));
   });
 
-  // Archive — confirm text is context-aware for active members
   tbody.querySelectorAll('.js-archive-member').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       btn.closest('.row-overflow__menu').classList.remove('is-open');
-      const member = allGymMembers.find(m => m.id === btn.dataset.id);
+      const member  = allGymMembers.find(m => m.id === btn.dataset.id);
       if (!member) return;
       const trigger = btn.closest('.row-overflow').querySelector('.row-overflow__trigger');
       const prompt  = member.subscription_status === 'active'
@@ -328,7 +320,6 @@ function renderMembers(members) {
     });
   });
 
-  // Unarchive — no confirmation needed, it's a safe action
   tbody.querySelectorAll('.js-unarchive-member').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
@@ -357,7 +348,6 @@ function setupFilters() {
     btn.classList.toggle('btn--secondary', !showingArchived);
     btn.classList.toggle('btn--ghost',     showingArchived);
 
-    // Status filter is irrelevant in archived view — disable it visually
     const statusFilter = document.getElementById('status-filter');
     if (statusFilter) statusFilter.disabled = showingArchived;
 
@@ -400,9 +390,16 @@ async function sendOnboardingLink() {
     return;
   }
 
+  // Throttle -- prevent accidental double-sends within 60 seconds
+  if (!emailThrottle.check('onboarding-link', email)) {
+    const secs = emailThrottle.secondsRemaining('onboarding-link', email);
+    showToast('Already sent -- wait ' + secs + 's before resending', 'error');
+    return;
+  }
+
   const btn       = document.getElementById('send-link-btn');
   btn.disabled    = true;
-  btn.textContent = 'Sending\u2026';
+  btn.textContent = 'Sending...';
 
   const res = await fetch('/.netlify/functions/send-email', {
     method:  'POST',
@@ -411,10 +408,11 @@ async function sendOnboardingLink() {
   });
 
   if (res.ok) {
+    emailThrottle.record('onboarding-link', email);
     showToast('Onboarding link sent to ' + email);
     closeSendLinkModal();
   } else {
-    showToast('Failed to send email \u2014 please try again', 'error');
+    showToast('Failed to send email -- please try again', 'error');
     btn.disabled    = false;
     btn.textContent = 'Send Link';
   }
@@ -453,7 +451,7 @@ async function saveMember(e) {
 
   const saveBtn       = document.getElementById('save-member-btn');
   saveBtn.disabled    = true;
-  saveBtn.textContent = 'Saving\u2026';
+  saveBtn.textContent = 'Saving...';
 
   const { error } = await window.supabaseClient.from('gym_members').insert({
     name,
@@ -529,7 +527,7 @@ async function saveEditedMember(e) {
 
   const saveBtn       = document.getElementById('save-edit-member-btn');
   saveBtn.disabled    = true;
-  saveBtn.textContent = 'Saving\u2026';
+  saveBtn.textContent = 'Saving...';
 
   const currentMember   = allGymMembers.find(m => m.id === editingId);
   const discountChanged = discountPercent !== (currentMember?.discount_percent || null)
@@ -561,7 +559,7 @@ async function saveEditedMember(e) {
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
       body:    JSON.stringify({ gymMemberId: editingId, discountPercent, discountMonths }),
     });
-    if (!res.ok) showToast('Saved, but discount update failed \u2014 check Stripe manually', 'error');
+    if (!res.ok) showToast('Saved, but discount update failed -- check Stripe manually', 'error');
   }
 
   showToast('Changes saved');
@@ -578,12 +576,19 @@ async function saveEditedMember(e) {
 async function sendBillingLink(memberId, btn) {
   const member = allGymMembers.find(m => m.id === memberId);
   if (!member) return;
-  if (!member.email)   { showToast('This member has no email \u2014 add one first', 'error'); return; }
-  if (!member.plan_id) { showToast('No plan assigned \u2014 assign a plan first',   'error'); return; }
+  if (!member.email)   { showToast('This member has no email -- add one first', 'error'); return; }
+  if (!member.plan_id) { showToast('No plan assigned -- assign a plan first',   'error'); return; }
+
+  // Throttle -- prevent accidental double-sends within 60 seconds
+  if (!emailThrottle.check('billing-link', member.email)) {
+    const secs = emailThrottle.secondsRemaining('billing-link', member.email);
+    showToast('Already sent -- wait ' + secs + 's before resending', 'error');
+    return;
+  }
 
   const originalText  = btn.textContent;
   btn.disabled        = true;
-  btn.textContent     = 'Sending\u2026';
+  btn.textContent     = 'Sending...';
 
   const { data: { session } } = await window.supabaseClient.auth.getSession();
 
@@ -615,26 +620,24 @@ async function sendBillingLink(memberId, btn) {
     }),
   });
 
-  showToast(
-    emailRes.ok ? 'Billing link sent to ' + member.email : 'Link created but email failed',
-    emailRes.ok ? 'success' : 'error'
-  );
+  if (emailRes.ok) {
+    emailThrottle.record('billing-link', member.email);
+    showToast('Billing link sent to ' + member.email);
+  } else {
+    showToast('Link created but email failed', 'error');
+  }
   btn.disabled    = false;
   btn.textContent = originalText;
 }
 
 
 /* ----------------------------------------------------------
-   Archive member — soft delete.
-   Cancels any active Stripe subscription, stamps archived_at,
-   and hides the member from the default view. The record and
-   all linked waivers are preserved permanently.
+   Archive member
    ---------------------------------------------------------- */
 async function archiveMember(memberId) {
   const member = allGymMembers.find(m => m.id === memberId);
   if (!member) return;
 
-  // Cancel Stripe subscription first if one exists
   if (member.stripe_subscription_id) {
     const { data: { session } } = await window.supabaseClient.auth.getSession();
     const res = await fetch('/.netlify/functions/admin-revoke-member', {
@@ -643,7 +646,7 @@ async function archiveMember(memberId) {
       body:    JSON.stringify({ gymMemberId: memberId }),
     });
     if (!res.ok) {
-      showToast('Failed to cancel subscription \u2014 member not archived', 'error');
+      showToast('Failed to cancel subscription -- member not archived', 'error');
       return;
     }
   }
@@ -663,8 +666,7 @@ async function archiveMember(memberId) {
 
 
 /* ----------------------------------------------------------
-   Unarchive member — restores a member to the active view.
-   Clears archived_at. Does not reinstate any subscription.
+   Unarchive member
    ---------------------------------------------------------- */
 async function unarchiveMember(memberId) {
   const { error } = await window.supabaseClient
@@ -723,7 +725,7 @@ function populatePlanDropdown(selectId, selectedId) {
   allPlans.filter(p => p.active).forEach(plan => {
     const opt       = document.createElement('option');
     opt.value       = plan.id;
-    opt.textContent = plan.name + ' \u2014 ' + formatPrice(plan.price_cents) + '/mo';
+    opt.textContent = plan.name + ' -- ' + formatPrice(plan.price_cents) + '/mo';
     if (plan.id === selectedId) opt.selected = true;
     select.appendChild(opt);
   });
@@ -731,9 +733,7 @@ function populatePlanDropdown(selectId, selectedId) {
 
 
 /* ----------------------------------------------------------
-   Update the stat cards.
-   Archived members are excluded — they're not active members
-   and shouldn't affect counts or MRR.
+   Update the stat cards
    ---------------------------------------------------------- */
 function updateStats() {
   const live = allGymMembers.filter(m => !m.archived_at);
@@ -753,7 +753,6 @@ function updateStats() {
   document.getElementById('stat-active-gym').textContent = active;
   document.getElementById('stat-mrr').textContent        = '$' + (mrr / 100).toFixed(0);
 
-  // Total waivers on file — sum across all members (including archived)
   const totalWaivers = Object.values(allWaiverCounts).reduce((s, n) => s + n, 0);
   document.getElementById('stat-with-online').textContent = totalWaivers;
 
@@ -764,9 +763,7 @@ function updateStats() {
 
 
 /* ----------------------------------------------------------
-   Load all data from Supabase in parallel.
-   Fetches ALL gym_members (archived and non-archived) so the
-   toggle can switch views without a second network request.
+   Load all data from Supabase in parallel
    ---------------------------------------------------------- */
 async function loadData() {
   const [
@@ -850,7 +847,6 @@ function buildPage(content) {
         <option value="pending">Pending</option>
         <option value="cancelled">Cancelled</option>
       </select>
-      <!-- Deliberate toggle — placed after the main filters so it feels separate -->
       <button class="btn btn--secondary btn--sm" id="show-archived-toggle"
         style="margin-left:auto;" title="Show or hide archived members">
         Show Archived
@@ -1037,7 +1033,7 @@ function buildPage(content) {
   const params = new URLSearchParams(window.location.search);
 
   if (params.get('billing') === 'success') {
-    showToast('Billing setup complete \u2014 member is now active');
+    showToast('Billing setup complete -- member is now active');
     window.history.replaceState({}, '', window.location.pathname);
   }
 
@@ -1079,7 +1075,7 @@ function buildPage(content) {
 
 
 /* ----------------------------------------------------------
-   Wire all modal event listeners.
+   Wire all modal event listeners
    ---------------------------------------------------------- */
 function wireAllModals() {
   document.getElementById('close-add-member')?.addEventListener('click', closeAddModal);

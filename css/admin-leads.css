@@ -1,196 +1,68 @@
 /* ==========================================================
-   admin-leads.css — Leads pipeline Kanban board
+   admin-leads.css — Leads table styles
    True Jiu Jitsu Online
    ========================================================== */
 
 
 /* ==========================
-   BOARD LAYOUT
-   Three equal columns side
-   by side, scrollable.
+   STAGE DROPDOWN
+   Inline select in the Stage
+   column — color changes to
+   match the selected stage.
    ========================== */
-.leads-board {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-lg);
-  align-items: start;
-}
-
-
-/* ==========================
-   COLUMN
-   ========================== */
-.leads-col {
+.leads-stage-select {
   background: var(--color-dark-gray);
   border: 1px solid var(--color-mid-gray);
-  border-radius: var(--border-radius-lg);
-  display: flex;
-  flex-direction: column;
-  min-height: 200px;
-}
-
-.leads-col__header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-md) var(--space-lg);
-  border-bottom: 1px solid var(--color-mid-gray);
-}
-
-.leads-col__dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.leads-col__title {
-  font-family: var(--font-heading);
+  border-radius: var(--border-radius);
+  padding: 4px 8px;
   font-size: var(--text-sm);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-white);
-  flex: 1;
+  font-family: var(--font-body);
+  cursor: pointer;
+  /* Color set inline per-row via JS to match the stage */
+  transition: border-color var(--transition-fast),
+              color         var(--transition-fast);
+  max-width: 140px;
 }
 
-.leads-col__count {
-  font-size: var(--text-xs);
-  color: var(--color-gray);
-  background: var(--color-dark);
-  border: 1px solid var(--color-mid-gray);
-  border-radius: 999px;
-  padding: 1px 8px;
-  min-width: 24px;
-  text-align: center;
-}
-
-/* Cards container — accepts drops */
-.leads-col__cards {
-  padding: var(--space-md);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-  flex: 1;
-  transition: background var(--transition-fast);
-}
-
-.leads-col__cards.drag-over {
-  background: rgba(196, 30, 42, 0.06);
-  border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
-}
-
-.leads-col__empty {
-  font-size: var(--text-sm);
-  color: var(--color-gray);
-  text-align: center;
-  padding: var(--space-xl) var(--space-md);
-  font-style: italic;
+.leads-stage-select:focus {
+  outline: none;
+  border-color: var(--color-red);
 }
 
 
 /* ==========================
-   LEAD CARD
+   NOTES CELL
+   Wide enough to be readable
+   but not dominant.
    ========================== */
-.lead-card {
-  background: var(--color-dark);
-  border: 1px solid var(--color-mid-gray);
-  border-radius: var(--border-radius-lg);
-  padding: var(--space-md);
-  cursor: grab;
-  transition: border-color var(--transition-fast),
-              box-shadow   var(--transition-fast),
-              opacity      var(--transition-fast);
+.leads-notes-cell {
+  max-width: 260px;
 }
 
-.lead-card:hover {
-  border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: var(--shadow-md);
+.leads-notes-wrap {
+  /* Constrain so long notes don't blow out the column */
+  max-width: 260px;
 }
 
-.lead-card.is-dragging {
-  opacity: 0.4;
-  cursor: grabbing;
-}
-
-.lead-card__header {
+.leads-notes-display {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-xs);
+  gap: 6px;
 }
 
-.lead-card__name {
-  font-weight: 600;
-  font-size: var(--text-base);
-  color: var(--color-white);
-  margin: 0;
-}
-
-.lead-card__detail {
+.leads-notes-text {
   font-size: var(--text-sm);
-  color: var(--color-gray);
-  margin: 2px 0;
-}
-
-.lead-card__detail a {
-  color: var(--color-red-accessible);
-  text-decoration: none;
-}
-
-.lead-card__detail a:hover {
-  text-decoration: underline;
-}
-
-.lead-card__interest {
-  display: inline-block;
-  font-size: 11px;
-  text-transform: capitalize;
-  color: var(--color-light-gray);
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid var(--color-mid-gray);
-  border-radius: 999px;
-  padding: 2px 10px;
-  margin: var(--space-xs) 0;
-}
-
-.lead-card__notes {
-  font-size: var(--text-sm);
-  color: var(--color-gray);
-  margin: var(--space-sm) 0 0;
   line-height: 1.5;
-  font-style: italic;
-  /* Clamp to 3 lines so long notes don't dominate the board */
+  /* Clamp to 2 lines — full text visible on edit */
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-.lead-card__notes--empty {
-  color: var(--color-mid-gray);
-  font-style: italic;
-}
-
-/* Notes wrap — positions the edit pencil relative to the note text */
-.lead-card__notes-wrap {
-  margin-top: var(--space-sm);
-}
-
-.lead-card__notes-display {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-xs);
-}
-
-.lead-card__notes-display .lead-card__notes {
-  /* Override the margin since the wrapper handles spacing */
-  margin-top: 0;
   flex: 1;
 }
 
-/* Small pencil edit button */
-.lead-card__notes-edit-btn {
+/* Pencil edit button — hidden until row is hovered */
+.leads-notes-edit-btn {
   background: none;
   border: none;
   color: var(--color-gray);
@@ -199,21 +71,23 @@
   flex-shrink: 0;
   border-radius: var(--border-radius);
   opacity: 0;
-  transition: opacity var(--transition-fast), color var(--transition-fast);
+  transition: opacity var(--transition-fast),
+              color   var(--transition-fast);
   line-height: 1;
+  margin-top: 2px;
 }
 
-/* Only show the pencil on card hover so it doesn't clutter the UI */
-.lead-card:hover .lead-card__notes-edit-btn {
+/* Show pencil on row hover */
+tr:hover .leads-notes-edit-btn {
   opacity: 1;
 }
 
-.lead-card__notes-edit-btn:hover {
+.leads-notes-edit-btn:hover {
   color: var(--color-white);
 }
 
-/* Inline textarea editor */
-.lead-card__notes-textarea {
+/* Inline textarea that replaces the note display */
+.leads-notes-textarea {
   width: 100%;
   background: var(--color-dark);
   border: 1px solid var(--color-mid-gray);
@@ -225,67 +99,17 @@
   padding: var(--space-sm);
   resize: vertical;
   box-sizing: border-box;
+  min-width: 200px;
 }
 
-.lead-card__notes-textarea:focus {
+.leads-notes-textarea:focus {
   outline: none;
   border-color: var(--color-red);
 }
 
-.lead-card__notes-editor-actions {
+.leads-notes-editor-actions {
   display: flex;
   gap: var(--space-xs);
   margin-top: var(--space-xs);
   justify-content: flex-end;
-}
-
-.lead-card__footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: var(--space-sm);
-  padding-top: var(--space-sm);
-  border-top: 1px solid var(--color-mid-gray);
-}
-
-.lead-card__source {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-gray);
-}
-
-.lead-card__age {
-  font-size: var(--text-xs);
-  color: var(--color-gray);
-}
-
-/* Stage move buttons + convert */
-.lead-card__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-xs);
-  margin-top: var(--space-sm);
-  align-items: center;
-}
-
-
-/* ==========================
-   RESPONSIVE
-   Stack columns on mobile
-   ========================== */
-@media (max-width: 900px) {
-  .leads-board {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 480px) {
-  .lead-card__actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .lead-card__actions .btn {
-    justify-content: center;
-  }
 }

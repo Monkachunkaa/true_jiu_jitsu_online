@@ -318,6 +318,56 @@ function getAdminActions() {
 
 
 /* ----------------------------------------------------------
+   emailThrottle — prevents sending the same email type to
+   the same address more than once within a cooldown window.
+
+   Keyed by "type:email" so different email types to the same
+   address are tracked independently. The cooldown is stored
+   in memory (resets on page reload), which is fine for an
+   admin tool — we're guarding against accidental double-clicks,
+   not persistent abuse.
+
+   Usage:
+     if (!emailThrottle.check('billing-link', member.email)) {
+       showToast('Just sent — wait a minute before resending', 'error');
+       return;
+     }
+     // ... send the email ...
+     emailThrottle.record('billing-link', member.email);
+
+   COOLDOWN_MS — how long to block resends (default: 60 seconds)
+   ---------------------------------------------------------- */
+const emailThrottle = (() => {
+  const COOLDOWN_MS = 60 * 1000; // 60 seconds
+  const _sent = {}; // { 'type:email': timestamp }
+
+  return {
+    // Returns true if it's safe to send, false if still in cooldown
+    check(type, email) {
+      const key  = type + ':' + (email || '').toLowerCase();
+      const last = _sent[key];
+      return !last || (Date.now() - last) >= COOLDOWN_MS;
+    },
+
+    // Call this immediately after a successful send
+    record(type, email) {
+      const key = type + ':' + (email || '').toLowerCase();
+      _sent[key] = Date.now();
+    },
+
+    // How many seconds remain in the cooldown (0 if clear)
+    secondsRemaining(type, email) {
+      const key  = type + ':' + (email || '').toLowerCase();
+      const last = _sent[key];
+      if (!last) return 0;
+      const remaining = COOLDOWN_MS - (Date.now() - last);
+      return remaining > 0 ? Math.ceil(remaining / 1000) : 0;
+    },
+  };
+})();
+
+
+/* ----------------------------------------------------------
    confirmAction — inline, theme-consistent alternative to
    the native browser confirm() dialog.
 

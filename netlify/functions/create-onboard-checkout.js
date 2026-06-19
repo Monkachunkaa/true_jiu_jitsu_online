@@ -62,12 +62,39 @@ exports.handler = async (event) => {
 
   if (memberError || !member) return respond(404, { error: 'Member not found' });
 
-  if (member.subscription_status !== 'pending') {
-    return respond(400, { error: 'Member already has an active or cancelled subscription' });
+  /* ----------------------------------------------------------
+     Block only genuinely active members — anyone with a live
+     Stripe subscription that is currently active or past_due.
+     Everyone else (pending, visitor, cancelled, inactive) is
+     allowed through so returning members can resubscribe.
+
+     If a cancelled member comes back through onboarding, we
+     reset their status to pending and clear the old Stripe
+     subscription ID so a fresh subscription gets created.
+     ---------------------------------------------------------- */
+  const isCurrentlyActive = member.stripe_subscription_id
+    && (member.subscription_status === 'active' || member.subscription_status === 'past_due');
+
+  if (isCurrentlyActive) {
+    return respond(400, { error: 'This member already has an active subscription.' });
   }
 
-  if (member.stripe_subscription_id) {
-    return respond(400, { error: 'Member already has a Stripe subscription' });
+  // If they have a cancelled/inactive record, reset it so
+  // a fresh Stripe subscription gets created cleanly
+  if (member.subscription_status === 'cancelled' || member.subscription_status === 'inactive') {
+    await supabase
+      .from('gym_members')
+      .update({
+        subscription_status:    'pending',
+        stripe_subscription_id: null,
+        cancelled_at:           null,
+      })
+      .eq('id', gymMemberId);
+
+    // Refresh member object so the rest of the function
+    // sees the updated state
+    member.subscription_status    = 'pending';
+    member.stripe_subscription_id = null;
   }
 
   /* ----------------------------------------------------------
@@ -111,7 +138,7 @@ exports.handler = async (event) => {
   /* ----------------------------------------------------------
      Build Stripe Checkout session
      ---------------------------------------------------------- */
-  const siteUrl = process.env.SITE_URL || 'https://truejiujitsuonline.netlify.app';
+  const siteUrl = process.env.SITE_URL;
 
   const sessionParams = {
     customer: customerId,
