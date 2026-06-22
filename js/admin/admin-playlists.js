@@ -133,20 +133,45 @@ async function openBuilder(playlistId = null) {
       .from('playlist_items')
       .select(`
         id, position, video_id, article_id,
-        videos ( id, title, thumbnail_url ),
+        videos ( id, title, thumbnail_url, cloudflare_video_id ),
         articles ( id, title, thumbnail_url )
       `)
       .eq('playlist_id', playlistId)
       .order('position');
 
     playlistItems = (items || []).map(item => ({
-      tempId:      item.id,
-      videoId:     item.video_id,
-      articleId:   item.article_id,
-      title:       item.videos?.title || item.articles?.title || 'Unknown',
+      tempId:       item.id,
+      videoId:      item.video_id,
+      articleId:    item.article_id,
+      title:        item.videos?.title || item.articles?.title || 'Unknown',
       thumbnailUrl: item.videos?.thumbnail_url || item.articles?.thumbnail_url || null,
-      type:        item.video_id ? 'video' : 'article',
+      cfVideoId:    item.videos?.cloudflare_video_id || null,
+      type:         item.video_id ? 'video' : 'article',
     }));
+
+    // Fetch signed thumbnails for video items that have no custom thumbnail
+    const needsThumbnail = playlistItems.filter(i => i.type === 'video' && !i.thumbnailUrl && i.cfVideoId);
+    if (needsThumbnail.length) {
+      try {
+        const { data: { session } } = await window.supabaseClient.auth.getSession();
+        const res = await fetch('/.netlify/functions/admin-get-thumbnails', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body:    JSON.stringify({ videoIds: needsThumbnail.map(i => i.cfVideoId) }),
+        });
+        if (res.ok) {
+          const { thumbnails } = await res.json();
+          playlistItems.forEach(i => {
+            if (!i.thumbnailUrl && i.cfVideoId && thumbnails[i.cfVideoId]) {
+              i.thumbnailUrl = thumbnails[i.cfVideoId];
+            }
+          });
+        }
+      } catch (err) {
+        // Non-fatal — items render without thumbnails
+        console.error('Playlist builder thumbnail fetch failed:', err);
+      }
+    }
   } else {
     document.getElementById('playlist-title').value       = '';
     document.getElementById('playlist-description').value = '';
@@ -289,6 +314,7 @@ function setupContentSearch() {
           articleId:    item.type === 'article' ? item.id : null,
           title:        item.title,
           thumbnailUrl: item.thumbnail_url || null,
+          cfVideoId:    item.type === 'video' ? (item.cloudflare_video_id || null) : null,
           type:         item.type,
         });
         renderBuilderItems();
@@ -418,7 +444,7 @@ async function loadPlaylists() {
 
 async function loadContent() {
   const [{ data: videos, error: vErr }, { data: articles, error: aErr }] = await Promise.all([
-    window.supabaseClient.from('videos').select('id, title, thumbnail_url').eq('published', true).order('title'),
+    window.supabaseClient.from('videos').select('id, title, thumbnail_url, cloudflare_video_id').eq('published', true).order('title'),
     window.supabaseClient.from('articles').select('id, title, thumbnail_url').eq('published', true).order('title'),
   ]);
   if (vErr || aErr) showToast('Failed to load content library', 'error');

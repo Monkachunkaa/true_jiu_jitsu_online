@@ -10,6 +10,7 @@
    ========================================================== */
 
 const { createClient } = require('@supabase/supabase-js');
+const { generateSignedThumbnailUrl } = require('./_cloudflare-signing');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -77,7 +78,7 @@ exports.handler = async (event) => {
     .from('playlist_items')
     .select(`
       id, position, video_id, article_id,
-      videos   ( id, title, thumbnail_url, duration_seconds ),
+      videos   ( id, title, thumbnail_url, cloudflare_video_id, duration_seconds ),
       articles ( id, title, thumbnail_url )
     `)
     .eq('playlist_id', playlistId)
@@ -111,12 +112,19 @@ exports.handler = async (event) => {
       ? videoProgressMap[item.video_id]
       : articleProgressMap[item.article_id];
 
+    // Use custom thumbnail; fall back to signed Cloudflare thumbnail for videos
+    let thumbnailUrl = content?.thumbnail_url || null;
+    if (!thumbnailUrl && isVideo && content?.cloudflare_video_id) {
+      try { thumbnailUrl = generateSignedThumbnailUrl(content.cloudflare_video_id); }
+      catch (e) { /* non-fatal */ }
+    }
+
     return {
       position:       item.position,
       type:           isVideo ? 'video' : 'article',
       id:             content?.id || null,
       title:          content?.title || 'Untitled',
-      thumbnailUrl:   content?.thumbnail_url || null,
+      thumbnailUrl,
       durationSecs:   isVideo ? content?.duration_seconds || null : null,
       completed:      progress?.completed || false,
       secondsWatched: isVideo ? (progress?.seconds_watched || 0) : null,

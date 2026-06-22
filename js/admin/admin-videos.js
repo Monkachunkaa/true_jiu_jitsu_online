@@ -514,7 +514,7 @@ function buildPage(content) {
                 placeholder="Optional description…"></textarea>
             </div>
             <div class="form__group">
-              <label class="form__label">Thumbnail</label>
+              <label class="form__label">Thumbnail <span style="color:var(--color-gray);font-weight:400;font-size:var(--text-xs);">(optional — a frame from the video will be used if skipped)</span></label>
               <div id="new-video-thumbnail-wrap"></div>
             </div>
             <div class="form__group">
@@ -557,7 +557,7 @@ function buildPage(content) {
             <textarea class="form__textarea" id="edit-video-description" rows="3"></textarea>
           </div>
           <div class="form__group">
-            <label class="form__label">Thumbnail</label>
+            <label class="form__label">Thumbnail <span style="color:var(--color-gray);font-weight:400;font-size:var(--text-xs);">(optional — a frame from the video will be used if none is set)</span></label>
             <div id="edit-video-thumbnail-wrap"></div>
           </div>
           <div class="form__group">

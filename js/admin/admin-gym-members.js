@@ -572,13 +572,70 @@ async function saveEditedMember(e) {
 
 
 /* ----------------------------------------------------------
+   Assign plan + send billing link modal.
+   Opens when Send Billing Link is clicked for a member
+   with no plan assigned. Saves the plan to Supabase first,
+   then proceeds with sending the billing link.
+   ---------------------------------------------------------- */
+let _billingMemberId = null;
+let _billingBtn      = null;
+
+function openAssignPlanModal(memberId, btn) {
+  _billingMemberId = memberId;
+  _billingBtn      = btn;
+  populatePlanDropdown('assign-plan-select');
+  document.getElementById('assign-plan-overlay').classList.add('is-open');
+}
+
+function closeAssignPlanModal() {
+  document.getElementById('assign-plan-overlay').classList.remove('is-open');
+  _billingMemberId = null;
+  _billingBtn      = null;
+}
+
+async function saveAssignedPlanAndSend() {
+  const planId = document.getElementById('assign-plan-select').value;
+  if (!planId) { showToast('Please select a plan', 'error'); return; }
+
+  const saveBtn       = document.getElementById('assign-plan-send-btn');
+  saveBtn.disabled    = true;
+  saveBtn.textContent = 'Saving...';
+
+  // Persist the plan on the member record first
+  const { error } = await window.supabaseClient
+    .from('gym_members')
+    .update({ plan_id: planId })
+    .eq('id', _billingMemberId);
+
+  if (error) {
+    showToast('Failed to assign plan', 'error');
+    saveBtn.disabled    = false;
+    saveBtn.textContent = 'Assign & Send';
+    return;
+  }
+
+  // Update local state so sendBillingLink reads the new plan
+  const member = allGymMembers.find(m => m.id === _billingMemberId);
+  if (member) member.plan_id = planId;
+
+  const memberId = _billingMemberId;
+  const btn      = _billingBtn;
+  closeAssignPlanModal();
+
+  // Now send the billing link with the plan in place
+  await sendBillingLink(memberId, btn || { textContent: 'Send Billing Link', disabled: false });
+}
+
+
+/* ----------------------------------------------------------
    Send billing link to a visitor or pending member
    ---------------------------------------------------------- */
 async function sendBillingLink(memberId, btn) {
   const member = allGymMembers.find(m => m.id === memberId);
   if (!member) return;
   if (!member.email)   { showToast('This member has no email -- add one first', 'error'); return; }
-  if (!member.plan_id) { showToast('No plan assigned -- assign a plan first',   'error'); return; }
+  // No plan assigned -- open the plan picker modal instead of blocking
+  if (!member.plan_id) { openAssignPlanModal(memberId, btn); return; }
 
   // Throttle -- prevent accidental double-sends within 60 seconds
   if (!emailThrottle.check('billing-link', member.email)) {
@@ -861,6 +918,35 @@ function buildPage(content) {
 
 
     <!-- ====================================================
+         ASSIGN PLAN MODAL
+         Opens when Send Billing Link is clicked for a
+         member with no plan. Assigns the plan and sends
+         the link in one step.
+         ==================================================== -->
+    <div class="modal-overlay" id="assign-plan-overlay">
+      <div class="modal" style="max-width:400px;">
+        <div class="modal__header">
+          <h2 class="modal__title">Choose a Plan</h2>
+          <button class="modal__close" id="assign-plan-close" aria-label="Close">&times;</button>
+        </div>
+        <div class="form">
+          <p style="font-size:var(--text-sm);color:var(--color-gray);margin-bottom:var(--space-xl);max-width:none;">
+            This member doesn&rsquo;t have a plan yet. Choose one below and a billing link will be sent immediately.
+          </p>
+          <div class="form__group">
+            <label class="form__label" for="assign-plan-select">Membership Plan *</label>
+            <select class="form__select" id="assign-plan-select"></select>
+          </div>
+          <div style="display:flex;gap:var(--space-md);justify-content:flex-end;">
+            <button type="button" class="btn btn--secondary" id="assign-plan-cancel">Cancel</button>
+            <button type="button" class="btn btn--primary" id="assign-plan-send-btn">Assign &amp; Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ====================================================
          CHOICE MODAL
          ==================================================== -->
     <div class="modal-overlay" id="add-choice-overlay">
@@ -1083,6 +1169,11 @@ function wireAllModals() {
   document.getElementById('cancel-add-member')?.addEventListener('click', closeAddModal);
   document.getElementById('add-member-form')?.addEventListener('submit', saveMember);
   safeModalClose('add-member-overlay', closeAddModal);
+
+  document.getElementById('assign-plan-close')?.addEventListener('click', closeAssignPlanModal);
+  document.getElementById('assign-plan-cancel')?.addEventListener('click', closeAssignPlanModal);
+  document.getElementById('assign-plan-send-btn')?.addEventListener('click', saveAssignedPlanAndSend);
+  safeModalClose('assign-plan-overlay', closeAssignPlanModal);
 
   document.getElementById('close-choice-modal')?.addEventListener('click', closeChoiceModal);
   document.getElementById('choice-fill-form')?.addEventListener('click', () => {
