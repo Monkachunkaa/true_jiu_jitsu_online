@@ -154,7 +154,7 @@ exports.handler = async (event) => {
         type:          'gym_membership',
       },
     },
-    success_url: `${siteUrl}/pages/onboard-success.html`,
+    success_url: 'https://truebjj.academy',
     cancel_url:  `${siteUrl}/join?billing=cancelled`,
   };
 

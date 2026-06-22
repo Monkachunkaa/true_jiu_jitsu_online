@@ -123,7 +123,7 @@ exports.handler = async (event) => {
         type:          'gym_membership',
       },
     },
-    success_url: `${siteUrl}/pages/admin/gym-members.html?billing=success`,
+    success_url: 'https://truebjj.academy',
     cancel_url:  `${siteUrl}/pages/admin/gym-members.html?billing=cancelled`,
   };
 

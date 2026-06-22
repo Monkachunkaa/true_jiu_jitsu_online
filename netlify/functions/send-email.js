@@ -27,6 +27,25 @@ const FROM_ADDRESS = process.env.SES_FROM_ADDRESS
 const FROM_RAW     = process.env.SES_FROM_ADDRESS || null;
 const SITE_URL     = process.env.SITE_URL || 'https://online.truebjj.academy';
 
+/* ----------------------------------------------------------
+   Shared email header — white logo on dark background.
+   Referenced by absolute URL so all email clients can load it.
+   The logo PNG must be deployed at:
+     https://online.truebjj.academy/img/true_jiu_jitsu_logo_white.png
+   ---------------------------------------------------------- */
+const EMAIL_LOGO_HEADER = `
+  <tr>
+    <td style="background-color:#0a0a0a;padding:24px 32px;text-align:center;border-bottom:1px solid #1e1e1e;">
+      <img
+        src="https://online.truebjj.academy/img/true_jiu_jitsu_logo_white_png.png"
+        alt="True Jiu Jitsu"
+        width="160"
+        style="display:block;margin:0 auto;max-width:160px;height:auto;"
+      >
+    </td>
+  </tr>
+`;
+
 
 /* ----------------------------------------------------------
    Email templates
@@ -48,6 +67,9 @@ function buildWelcomeEmail(name) {
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#111111;padding:30px 0;">
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#1e1e1e;border-radius:6px;overflow:hidden;border:1px solid #2a2a2a;">
+
+        <!-- Logo -->
+        ${EMAIL_LOGO_HEADER}
 
         <!-- Header -->
         <tr>
@@ -143,6 +165,9 @@ function buildPaymentFailedEmail(name) {
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#1e1e1e;border-radius:6px;overflow:hidden;border:1px solid #2a2a2a;">
 
+        <!-- Logo -->
+        ${EMAIL_LOGO_HEADER}
+
         <!-- Header -->
         <tr>
           <td style="background-color:#0a0a0a;padding:28px 32px;border-bottom:3px solid #c41e2a;">
@@ -236,6 +261,9 @@ function buildCancelledEmail(name) {
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#1e1e1e;border-radius:6px;overflow:hidden;border:1px solid #2a2a2a;">
 
+        <!-- Logo -->
+        ${EMAIL_LOGO_HEADER}
+
         <!-- Header -->
         <tr>
           <td style="background-color:#0a0a0a;padding:28px 32px;border-bottom:3px solid #2a2a2a;">
@@ -325,6 +353,7 @@ function buildAnnouncementEmail(name, subject, message) {
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#111111;padding:30px 0;">
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#1e1e1e;border-radius:6px;overflow:hidden;border:1px solid #2a2a2a;">
+        ${EMAIL_LOGO_HEADER}
         <tr>
           <td style="background-color:#0a0a0a;padding:28px 32px;border-bottom:3px solid #c41e2a;">
             <p style="margin:0;font-size:11px;text-transform:uppercase;letter-spacing:0.15em;color:#c41e2a;">True Jiu Jitsu</p>
@@ -372,6 +401,7 @@ function buildGymBillingInviteEmail(name, extra = {}) {
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#111111;padding:30px 0;">
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#1e1e1e;border-radius:6px;overflow:hidden;border:1px solid #2a2a2a;">
+        ${EMAIL_LOGO_HEADER}
         <tr>
           <td style="background-color:#0a0a0a;padding:28px 32px;border-bottom:3px solid #c41e2a;">
             <p style="margin:0;font-size:11px;text-transform:uppercase;letter-spacing:0.15em;color:#c41e2a;">True Jiu Jitsu</p>
@@ -424,6 +454,7 @@ function buildGymWelcomeEmail(name) {
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#111111;padding:30px 0;">
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#1e1e1e;border-radius:6px;overflow:hidden;border:1px solid #2a2a2a;">
+        ${EMAIL_LOGO_HEADER}
         <tr><td style="background-color:#0a0a0a;padding:28px 32px;border-bottom:3px solid #c41e2a;">
           <p style="margin:0;font-size:11px;text-transform:uppercase;letter-spacing:0.15em;color:#c41e2a;">True Jiu Jitsu</p>
           <h1 style="margin:8px 0 0;font-size:22px;font-weight:700;color:#ffffff;text-transform:uppercase;">You're all set, ${firstName}</h1>
@@ -454,6 +485,7 @@ function buildGymPaymentFailedEmail(name) {
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#111111;padding:30px 0;">
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#1e1e1e;border-radius:6px;overflow:hidden;border:1px solid #2a2a2a;">
+        ${EMAIL_LOGO_HEADER}
         <tr><td style="background-color:#0a0a0a;padding:28px 32px;border-bottom:3px solid #c41e2a;">
           <p style="margin:0;font-size:11px;text-transform:uppercase;letter-spacing:0.15em;color:#c41e2a;">True Jiu Jitsu</p>
           <h1 style="margin:8px 0 0;font-size:22px;font-weight:700;color:#ffffff;text-transform:uppercase;">Payment Failed</h1>
@@ -486,6 +518,7 @@ function buildGymWaiverInviteEmail(name, extra = {}) {
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#111111;padding:30px 0;">
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#1e1e1e;border-radius:6px;overflow:hidden;border:1px solid #2a2a2a;">
+        ${EMAIL_LOGO_HEADER}
         <tr>
           <td style="background-color:#0a0a0a;padding:28px 32px;border-bottom:3px solid #c41e2a;">
             <p style="margin:0;font-size:11px;text-transform:uppercase;letter-spacing:0.15em;color:#c41e2a;">True Jiu Jitsu</p>
@@ -545,6 +578,7 @@ function buildGymOnboardingInviteEmail() {
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#111111;padding:30px 0;">
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#1e1e1e;border-radius:6px;overflow:hidden;border:1px solid #2a2a2a;">
+        ${EMAIL_LOGO_HEADER}
         <tr>
           <td style="background-color:#0a0a0a;padding:28px 32px;border-bottom:3px solid #c41e2a;">
             <p style="margin:0;font-size:11px;text-transform:uppercase;letter-spacing:0.15em;color:#c41e2a;">True Jiu Jitsu</p>
@@ -602,6 +636,7 @@ function buildGymCancelledEmail(name) {
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#111111;padding:30px 0;">
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#1e1e1e;border-radius:6px;overflow:hidden;border:1px solid #2a2a2a;">
+        ${EMAIL_LOGO_HEADER}
         <tr><td style="background-color:#0a0a0a;padding:28px 32px;border-bottom:3px solid #2a2a2a;">
           <p style="margin:0;font-size:11px;text-transform:uppercase;letter-spacing:0.15em;color:#888888;">True Jiu Jitsu</p>
           <h1 style="margin:8px 0 0;font-size:22px;font-weight:700;color:#ffffff;text-transform:uppercase;">Membership Cancelled</h1>

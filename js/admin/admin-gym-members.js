@@ -160,6 +160,13 @@ function applyFilters() {
     return matchesSearch && matchesStatus;
   });
 
+  // Visitors (unbilled) always sort to the top so they're easy to action
+  filtered.sort((a, b) => {
+    const aIsVisitor = a.subscription_status === 'visitor' ? 0 : 1;
+    const bIsVisitor = b.subscription_status === 'visitor' ? 0 : 1;
+    return aIsVisitor - bIsVisitor;
+  });
+
   renderMembers(filtered);
 }
 
@@ -930,17 +937,12 @@ function buildPage(content) {
           <button class="modal__close" id="assign-plan-close" aria-label="Close">&times;</button>
         </div>
         <div class="form">
-          <p style="font-size:var(--text-sm);color:var(--color-gray);margin-bottom:var(--space-xl);max-width:none;">
-            This member doesn&rsquo;t have a plan yet. Choose one below and a billing link will be sent immediately.
-          </p>
           <div class="form__group">
             <label class="form__label" for="assign-plan-select">Membership Plan *</label>
             <select class="form__select" id="assign-plan-select"></select>
           </div>
-          <div style="display:flex;gap:var(--space-md);justify-content:flex-end;">
-            <button type="button" class="btn btn--secondary" id="assign-plan-cancel">Cancel</button>
-            <button type="button" class="btn btn--primary" id="assign-plan-send-btn">Assign &amp; Send</button>
-          </div>
+          <button type="button" class="btn btn--primary" id="assign-plan-send-btn"
+            style="width:100%;">Assign &amp; Send</button>
         </div>
       </div>
     </div>
@@ -1171,7 +1173,6 @@ function wireAllModals() {
   safeModalClose('add-member-overlay', closeAddModal);
 
   document.getElementById('assign-plan-close')?.addEventListener('click', closeAssignPlanModal);
-  document.getElementById('assign-plan-cancel')?.addEventListener('click', closeAssignPlanModal);
   document.getElementById('assign-plan-send-btn')?.addEventListener('click', saveAssignedPlanAndSend);
   safeModalClose('assign-plan-overlay', closeAssignPlanModal);
 
