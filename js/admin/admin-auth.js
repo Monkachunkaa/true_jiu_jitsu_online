@@ -368,6 +368,29 @@ const emailThrottle = (() => {
 
 
 /* ----------------------------------------------------------
+   positionOverflowMenu — called whenever a .row-overflow__menu
+   is toggled open. Checks whether the menu would be clipped
+   by the bottom of the viewport and flips it upward if so.
+
+   Usage — call this immediately after adding 'is-open':
+     menu.classList.add('is-open');
+     positionOverflowMenu(menu);
+   ---------------------------------------------------------- */
+function positionOverflowMenu(menu) {
+  // Reset any previous flip so the measurement is accurate
+  menu.classList.remove('opens-up');
+
+  const rect        = menu.getBoundingClientRect();
+  const spaceBelow  = window.innerHeight - rect.bottom;
+  const spaceNeeded = 8; // px buffer before we flip
+
+  if (spaceBelow < spaceNeeded) {
+    menu.classList.add('opens-up');
+  }
+}
+
+
+/* ----------------------------------------------------------
    confirmAction — inline, theme-consistent alternative to
    the native browser confirm() dialog.
 

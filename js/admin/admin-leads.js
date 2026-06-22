@@ -121,9 +121,9 @@ function renderTable(leads) {
         <thead>
           <tr>
             <th>Name</th>
-            <th>Stage</th>
+            <th>Email</th>
+            <th>Phone</th>
             <th>Notes</th>
-            <th>Source</th>
             <th>Received</th>
             <th>Actions</th>
           </tr>
@@ -145,28 +145,23 @@ function buildRow(lead) {
   const tr = document.createElement('tr');
   if (!!lead.archived_at) tr.style.opacity = '0.6';
 
-  const source  = SOURCE_LABELS[lead.source] || lead.source || '';
   const isActive = !lead.archived_at;
-
-  // Build stage options for the inline dropdown
-  const stageOptions = STAGES.map(s =>
-    `<option value="${s.id}" ${lead.stage === s.id ? 'selected' : ''}>${s.label}</option>`
-  ).join('');
 
   tr.innerHTML = `
     <td>
       <p style="margin:0;font-weight:500;color:var(--color-white);">${lead.name}</p>
-      ${lead.email ? `<p style="margin:0;font-size:var(--text-xs);color:var(--color-gray);">${lead.email}</p>` : ''}
-      ${lead.phone ? `<p style="margin:0;font-size:var(--text-xs);color:var(--color-gray);">${lead.phone}</p>` : ''}
       ${lead.interest ? `<p style="margin:0;font-size:10px;color:var(--color-gray);text-transform:capitalize;">${lead.interest}</p>` : ''}
     </td>
-    <td>
-      ${isActive
-        ? `<select class="leads-stage-select js-stage-select" data-id="${lead.id}"
-             style="border-color:${stageColor(lead.stage)}20;color:${stageColor(lead.stage)};">
-             ${stageOptions}
-           </select>`
-        : `<span style="font-size:var(--text-sm);color:${stageColor(lead.stage)};">${stageLabel(lead.stage)}</span>`
+    <td style="font-size:var(--text-sm);">
+      ${lead.email
+        ? `<a href="mailto:${lead.email}" style="color:var(--color-red-accessible);text-decoration:none;" title="Email ${lead.name}">${lead.email}</a>`
+        : '<span style="color:var(--color-gray);">--</span>'
+      }
+    </td>
+    <td style="font-size:var(--text-sm);">
+      ${lead.phone
+        ? `<a href="tel:${lead.phone}" style="color:var(--color-light-gray);text-decoration:none;" title="Call ${lead.name}">${lead.phone}</a>`
+        : '<span style="color:var(--color-gray);">--</span>'
       }
     </td>
     <td class="leads-notes-cell">
@@ -197,7 +192,6 @@ function buildRow(lead) {
         </div>
       </div>
     </td>
-    <td style="font-size:var(--text-xs);color:var(--color-gray);">${source}</td>
     <td style="font-size:var(--text-xs);color:var(--color-gray);white-space:nowrap;">${timeAgo(lead.created_at)}</td>
     <td>
       <div class="data-table__actions">
@@ -228,11 +222,6 @@ function buildRow(lead) {
     </td>
   `;
 
-  // Stage dropdown change
-  tr.querySelector('.js-stage-select')?.addEventListener('change', (e) => {
-    moveLeadToStage(lead.id, e.target.value);
-  });
-
   // Overflow menu
   const trigger = tr.querySelector('.row-overflow__trigger');
   const menu    = tr.querySelector('.row-overflow__menu');
@@ -242,6 +231,7 @@ function buildRow(lead) {
       if (m !== menu) m.classList.remove('is-open');
     });
     menu.classList.toggle('is-open');
+    if (menu.classList.contains('is-open')) positionOverflowMenu(menu);
   });
 
   // Edit

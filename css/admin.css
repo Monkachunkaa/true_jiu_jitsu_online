@@ -1112,6 +1112,12 @@
   overflow: hidden;
 }
 
+/* Flipped upward when there isn't enough space below */
+.row-overflow__menu.opens-up {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+
 .row-overflow__menu.is-open {
   display: block;
 }
@@ -1139,4 +1145,10 @@
 
 .row-overflow__item--danger:hover {
   background: rgba(196, 30, 42, 0.12);
+}
+
+/* quick-action-card used as a <button> needs text-align reset
+   since buttons default to center unlike <a> tags */
+button.quick-action-card {
+  text-align: left;
 }

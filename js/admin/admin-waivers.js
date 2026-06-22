@@ -104,12 +104,19 @@ function renderWaivers(waivers) {
    Delete a waiver record
    ---------------------------------------------------------- */
 async function deleteWaiver(waiverId) {
-  const { error } = await window.supabaseClient
-    .from('waiver_submissions')
-    .delete()
-    .eq('id', waiverId);
+  const { data: { session } } = await window.supabaseClient.auth.getSession();
 
-  if (error) {
+  const res = await fetch('/.netlify/functions/admin-delete-waiver', {
+    method:  'POST',
+    headers: {
+      'Content-Type':  'application/json',
+      'Authorization': 'Bearer ' + session.access_token,
+    },
+    body: JSON.stringify({ waiverId }),
+  });
+
+  if (!res.ok) {
+    const { error } = await res.json().catch(() => ({}));
     console.error('Waiver delete error:', error);
     showToast('Failed to delete waiver', 'error');
     return;
@@ -117,7 +124,7 @@ async function deleteWaiver(waiverId) {
 
   showToast('Waiver deleted');
 
-  // Re-fetch from Supabase to guarantee local state matches the database,
+  // Re-fetch from Supabase to guarantee local state matches,
   // then re-apply the current search filter.
   await loadWaivers();
   applyCurrentFilters();
