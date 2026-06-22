@@ -38,6 +38,15 @@ function respond(statusCode, body) {
   return { statusCode, headers: CORS_HEADERS, body: JSON.stringify(body) };
 }
 
+const LOGO_ROW = `
+  <tr>
+    <td style="background-color:#0a0a0a;padding:24px 32px;text-align:center;border-bottom:1px solid #1e1e1e;">
+      <img src="https://online.truebjj.academy/img/true_jiu_jitsu_logo_white_png.png"
+        alt="True Jiu Jitsu" width="160"
+        style="display:block;margin:0 auto;max-width:160px;height:auto;">
+    </td>
+  </tr>`;
+
 /* ----------------------------------------------------------
    Build the personalised email HTML for each recipient
    ---------------------------------------------------------- */
@@ -57,6 +66,7 @@ function buildEmail(name, subject, message) {
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0"
         style="max-width:600px;width:100%;background-color:#1e1e1e;border-radius:6px;overflow:hidden;border:1px solid #2a2a2a;">
+        ${LOGO_ROW}
         <tr>
           <td style="background-color:#0a0a0a;padding:28px 32px;border-bottom:3px solid #c41e2a;">
             <p style="margin:0;font-size:11px;text-transform:uppercase;letter-spacing:0.15em;color:#c41e2a;">True Jiu Jitsu</p>
