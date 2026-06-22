@@ -197,8 +197,8 @@ function buildRow(lead) {
       <div class="data-table__actions">
         ${isActive && lead.email && !lead.gym_member_id
           ? `<button class="btn btn--secondary btn--sm js-send-onboarding" data-id="${lead.id}"
-               title="Send onboarding link to ${lead.email}">
-               &#x2197; Send Link
+               title="Send signup/waiver link to ${lead.email}">
+               &#x2197; Send Signup/Waiver
              </button>`
           : ''
         }
@@ -231,7 +231,7 @@ function buildRow(lead) {
       if (m !== menu) m.classList.remove('is-open');
     });
     menu.classList.toggle('is-open');
-    if (menu.classList.contains('is-open')) positionOverflowMenu(menu);
+    if (menu.classList.contains('is-open')) positionOverflowMenu(menu, trigger);
   });
 
   // Edit
@@ -402,8 +402,8 @@ async function sendOnboardingLink(lead, btn) {
     return;
   }
 
-  if (!emailThrottle.check('onboarding-link', lead.email)) {
-    const secs = emailThrottle.secondsRemaining('onboarding-link', lead.email);
+  if (!emailThrottle.check('waiver-invite', lead.email)) {
+    const secs = emailThrottle.secondsRemaining('waiver-invite', lead.email);
     showToast('Already sent -- wait ' + secs + 's before resending', 'error');
     return;
   }
@@ -416,9 +416,10 @@ async function sendOnboardingLink(lead, btn) {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify({
-      type: 'gym-onboarding-invite',
+      type: 'gym-waiver-invite',
       to:   lead.email,
       name: lead.name,
+      extra: { waiverUrl: 'https://online.truebjj.academy/waiver' },
     }),
   });
 
@@ -426,8 +427,8 @@ async function sendOnboardingLink(lead, btn) {
   btn.textContent = originalText;
 
   if (res.ok) {
-    emailThrottle.record('onboarding-link', lead.email);
-    showToast('Onboarding link sent to ' + lead.email);
+    emailThrottle.record('waiver-invite', lead.email);
+    showToast('Signup/waiver link sent to ' + lead.email);
   } else {
     showToast('Failed to send email -- please try again', 'error');
   }

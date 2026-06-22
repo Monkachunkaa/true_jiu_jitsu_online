@@ -298,7 +298,7 @@ function renderMembers(members) {
         if (m !== menu) m.classList.remove('is-open');
       });
       menu.classList.toggle('is-open');
-      if (menu.classList.contains('is-open')) positionOverflowMenu(menu);
+      if (menu.classList.contains('is-open')) positionOverflowMenu(menu, trigger);
     });
   });
 

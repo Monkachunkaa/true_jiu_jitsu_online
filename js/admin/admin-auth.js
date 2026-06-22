@@ -368,25 +368,43 @@ const emailThrottle = (() => {
 
 
 /* ----------------------------------------------------------
-   positionOverflowMenu — called whenever a .row-overflow__menu
-   is toggled open. Checks whether the menu would be clipped
-   by the bottom of the viewport and flips it upward if so.
+   positionOverflowMenu — positions a .row-overflow__menu
+   using fixed coordinates derived from the trigger button.
 
-   Usage — call this immediately after adding 'is-open':
+   Because the menu uses position:fixed it escapes all
+   overflow contexts (table wrappers, scroll containers,
+   anything with overflow:hidden or border-radius clipping).
+
+   The menu is right-aligned to the trigger and flips above
+   it if there isn't enough space below in the viewport.
+
+   Usage — call immediately after toggling 'is-open':
      menu.classList.add('is-open');
-     positionOverflowMenu(menu);
+     positionOverflowMenu(menu, triggerEl);
    ---------------------------------------------------------- */
-function positionOverflowMenu(menu) {
-  // Reset any previous flip so the measurement is accurate
-  menu.classList.remove('opens-up');
+function positionOverflowMenu(menu, trigger) {
+  const triggerRect = trigger.getBoundingClientRect();
+  const menuWidth   = menu.offsetWidth  || 160;
+  const menuHeight  = menu.offsetHeight || 120;
+  const GAP         = 4; // px between trigger and menu
 
-  const rect        = menu.getBoundingClientRect();
-  const spaceBelow  = window.innerHeight - rect.bottom;
-  const spaceNeeded = 8; // px buffer before we flip
+  // Right-align the menu to the trigger's right edge
+  let left = triggerRect.right - menuWidth;
 
-  if (spaceBelow < spaceNeeded) {
-    menu.classList.add('opens-up');
+  // If that would push the menu off the left edge, pin it to the left
+  if (left < 8) left = 8;
+
+  // Open below by default; flip above if not enough space
+  const spaceBelow = window.innerHeight - triggerRect.bottom;
+  let top;
+  if (spaceBelow >= menuHeight + GAP) {
+    top = triggerRect.bottom + GAP;
+  } else {
+    top = triggerRect.top - menuHeight - GAP;
   }
+
+  menu.style.left = left + 'px';
+  menu.style.top  = top  + 'px';
 }
 
 

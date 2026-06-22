@@ -35,7 +35,22 @@ async function loadAllTags() {
 
 
 /* ----------------------------------------------------------
-   Group tags by category
+   Category display order.
+   Any category not listed here will appear after these,
+   sorted alphabetically.
+   ---------------------------------------------------------- */
+const TAG_CATEGORY_ORDER = [
+  'Format',
+  'Position',
+  'Technique',
+  'Level',
+  'Instructor',
+];
+
+
+/* ----------------------------------------------------------
+   Group tags by category, returned in the order defined
+   by TAG_CATEGORY_ORDER above.
    ---------------------------------------------------------- */
 function groupTagsByCategory(tags) {
   const groups = {};
@@ -43,7 +58,17 @@ function groupTagsByCategory(tags) {
     if (!groups[tag.category]) groups[tag.category] = [];
     groups[tag.category].push(tag);
   });
-  return groups;
+
+  // Sort category keys: known categories first (in defined order),
+  // then any remaining categories alphabetically
+  const sorted = {};
+  const known   = TAG_CATEGORY_ORDER.filter(c => groups[c]);
+  const unknown = Object.keys(groups)
+    .filter(c => !TAG_CATEGORY_ORDER.includes(c))
+    .sort();
+
+  [...known, ...unknown].forEach(c => { sorted[c] = groups[c]; });
+  return sorted;
 }
 
 

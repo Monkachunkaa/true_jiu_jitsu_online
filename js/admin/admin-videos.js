@@ -59,8 +59,8 @@ function renderVideoList() {
     item.dataset.id = video.id;
 
     item.innerHTML = `
-      ${video.thumbnail_url
-        ? `<img src="${video.thumbnail_url}" class="content-list-item__thumbnail" alt="${video.title}" loading="lazy">`
+      ${video.thumbnail_url || video._autoThumbnailUrl
+        ? `<img src="${video.thumbnail_url || video._autoThumbnailUrl}" class="content-list-item__thumbnail" alt="${video.title}" loading="lazy">`
         : `<div class="content-list-item__thumbnail" style="background:var(--color-dark-gray);border-radius:var(--border-radius);"></div>`
       }
       <div class="content-list-item__info">
@@ -402,7 +402,8 @@ async function confirmDelete(videoId) {
 
 
 /* ----------------------------------------------------------
-   Load videos
+   Load videos + fetch signed thumbnails for any without
+   a custom thumbnail_url
    ---------------------------------------------------------- */
 async function loadVideos() {
   const { data, error } = await window.supabaseClient
@@ -412,6 +413,40 @@ async function loadVideos() {
 
   if (error) { showToast('Failed to load videos', 'error'); return; }
   allVideos = data || [];
+
+  // Find videos that need a Cloudflare auto-thumbnail
+  const needsThumbnail = allVideos.filter(
+    v => !v.thumbnail_url && v.cloudflare_video_id
+  );
+
+  if (needsThumbnail.length) {
+    try {
+      const { data: { session } } = await window.supabaseClient.auth.getSession();
+      const res = await fetch('/.netlify/functions/admin-get-thumbnails', {
+        method:  'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': 'Bearer ' + session.access_token,
+        },
+        body: JSON.stringify({
+          videoIds: needsThumbnail.map(v => v.cloudflare_video_id),
+        }),
+      });
+
+      if (res.ok) {
+        const { thumbnails } = await res.json();
+        // Attach the signed thumbnail URL to the in-memory video object
+        allVideos.forEach(v => {
+          if (!v.thumbnail_url && thumbnails[v.cloudflare_video_id]) {
+            v._autoThumbnailUrl = thumbnails[v.cloudflare_video_id];
+          }
+        });
+      }
+    } catch (err) {
+      // Non-fatal — list renders fine, just without auto-thumbnails
+      console.error('Auto-thumbnail fetch failed:', err);
+    }
+  }
 }
 
 

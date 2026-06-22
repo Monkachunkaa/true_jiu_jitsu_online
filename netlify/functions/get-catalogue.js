@@ -14,6 +14,7 @@
    ========================================================== */
 
 const { createClient } = require('@supabase/supabase-js');
+const { generateSignedThumbnailUrl } = require('./_cloudflare-signing');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -136,7 +137,7 @@ exports.handler = async (event) => {
     .from('video_progress')
     .select(`
       video_id, seconds_watched, last_watched_at,
-      videos ( id, title, thumbnail_url, duration_seconds )
+      videos ( id, title, thumbnail_url, cloudflare_video_id, duration_seconds )
     `)
     .eq('member_id', memberId)
     .eq('completed', false)
@@ -151,10 +152,17 @@ exports.handler = async (event) => {
         ? (playlists || []).find(p => p.id === playlistItem.playlist_id)
         : null;
 
+      // Use custom thumbnail if available, otherwise generate a signed Cloudflare thumbnail
+      let thumbnailUrl = item.videos.thumbnail_url;
+      if (!thumbnailUrl && item.videos.cloudflare_video_id) {
+        try { thumbnailUrl = generateSignedThumbnailUrl(item.videos.cloudflare_video_id); }
+        catch (e) { /* non-fatal — thumbnail just stays null */ }
+      }
+
       return {
         videoId:        item.video_id,
         title:          item.videos.title,
-        thumbnailUrl:   item.videos.thumbnail_url,
+        thumbnailUrl,
         durationSecs:   item.videos.duration_seconds,
         secondsWatched: item.seconds_watched,
         lastWatchedAt:  item.last_watched_at,
@@ -169,20 +177,28 @@ exports.handler = async (event) => {
      ---------------------------------------------------------- */
   const { data: recentVideosRaw } = await supabase
     .from('videos')
-    .select('id, title, thumbnail_url, duration_seconds, created_at')
+    .select('id, title, thumbnail_url, cloudflare_video_id, duration_seconds, created_at')
     .eq('published', true)
     .order('created_at', { ascending: false })
     .limit(8);
 
-  // Attach progress info so the card can show a watch bar if started
-  const recentVideos = (recentVideosRaw || []).map(v => ({
-    id:            v.id,
-    title:         v.title,
-    thumbnailUrl:  v.thumbnail_url,
-    durationSecs:  v.duration_seconds,
-    createdAt:     v.created_at,
-    progress:      videoProgressMap[v.id] || null,
-  }));
+  // Attach progress and resolve thumbnails.
+  // Custom thumbnail takes precedence; fall back to a signed Cloudflare thumbnail.
+  const recentVideos = (recentVideosRaw || []).map(v => {
+    let thumbnailUrl = v.thumbnail_url;
+    if (!thumbnailUrl && v.cloudflare_video_id) {
+      try { thumbnailUrl = generateSignedThumbnailUrl(v.cloudflare_video_id); }
+      catch (e) { /* non-fatal */ }
+    }
+    return {
+      id:           v.id,
+      title:        v.title,
+      thumbnailUrl,
+      durationSecs: v.duration_seconds,
+      createdAt:    v.created_at,
+      progress:     videoProgressMap[v.id] || null,
+    };
+  });
 
   /* ----------------------------------------------------------
      9. Fetch all categories (for future filtering use)

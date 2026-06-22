@@ -12,7 +12,7 @@
    ========================================================== */
 
 const { createClient } = require('@supabase/supabase-js');
-const crypto           = require('crypto');
+const { generateSignedPlaybackUrl, generateSignedThumbnailUrl } = require('./_cloudflare-signing');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -28,44 +28,6 @@ const CORS_HEADERS = {
 
 function respond(statusCode, body) {
   return { statusCode, headers: CORS_HEADERS, body: JSON.stringify(body) };
-}
-
-/* ----------------------------------------------------------
-   Generate a Cloudflare Stream signed URL.
-
-   Cloudflare expects a JWT signed with the RSA private key.
-   The token payload includes the video ID and expiry time.
-   ---------------------------------------------------------- */
-function generateSignedUrl(cloudflareVideoId) {
-  const keyId       = process.env.CLOUDFLARE_STREAM_KEY_ID;
-  const pemBase64   = process.env.CLOUDFLARE_STREAM_SIGNING_KEY;
-
-  // The PEM is stored as base64 in the env var
-  const pem = Buffer.from(pemBase64, 'base64').toString('utf8');
-
-  // Token expires in 1 hour
-  const expiresAt = Math.floor(Date.now() / 1000) + 3600;
-
-  // Build the JWT header and payload
-  const header  = Buffer.from(JSON.stringify({ alg: 'RS256', kid: keyId })).toString('base64url');
-  const payload = Buffer.from(JSON.stringify({
-    sub: cloudflareVideoId,
-    kid: keyId,
-    exp: expiresAt,
-    accessRules: [{ type: 'any', action: 'allow' }],
-  })).toString('base64url');
-
-  const signingInput = `${header}.${payload}`;
-
-  // Sign with the RSA private key
-  const sign      = crypto.createSign('RSA-SHA256');
-  sign.update(signingInput);
-  const signature = sign.sign(pem, 'base64url');
-
-  const token = `${signingInput}.${signature}`;
-
-  // Return the signed iframe embed URL
-  return `https://iframe.cloudflarestream.com/${token}`;
 }
 
 /* ----------------------------------------------------------
@@ -144,10 +106,15 @@ exports.handler = async (event) => {
     }
   }
 
-  // Generate the signed URL
+  // Generate signed URLs for playback and thumbnail
   let signedUrl;
+  let signedThumbnailUrl;
   try {
-    signedUrl = generateSignedUrl(video.cloudflare_video_id);
+    signedUrl          = generateSignedPlaybackUrl(video.cloudflare_video_id);
+    // Only generate a signed thumbnail if no custom one was uploaded
+    signedThumbnailUrl = video.thumbnail_url
+      ? null
+      : generateSignedThumbnailUrl(video.cloudflare_video_id);
   } catch (err) {
     console.error('Signed URL generation failed:', err);
     return respond(500, { error: 'Failed to generate video URL' });
@@ -168,7 +135,8 @@ exports.handler = async (event) => {
       title:           video.title,
       description:     video.description,
       durationSeconds: durationSeconds,
-      thumbnailUrl:    video.thumbnail_url,
+      // Custom thumbnail takes precedence; fall back to signed Cloudflare thumbnail
+      thumbnailUrl:    video.thumbnail_url || signedThumbnailUrl,
       tags:            (video.video_tags || []).map(t => t.tags).filter(Boolean),
     },
     progress: progress || { seconds_watched: 0, completed: false },

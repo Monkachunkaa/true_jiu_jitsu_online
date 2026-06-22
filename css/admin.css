@@ -1100,22 +1100,17 @@
 
 .row-overflow__menu {
   display: none;
-  position: absolute;
-  right: 0;
-  top: calc(100% + 4px);
+  /* Fixed positioning escapes all overflow contexts including
+     table wrappers. Coordinates are set via JS using the
+     trigger's getBoundingClientRect(). */
+  position: fixed;
   background: var(--color-dark-gray);
   border: 1px solid var(--color-mid-gray);
   border-radius: var(--border-radius);
-  min-width: 140px;
-  z-index: 100;
+  min-width: 160px;
+  z-index: 9999;
   box-shadow: var(--shadow-md);
   overflow: hidden;
-}
-
-/* Flipped upward when there isn't enough space below */
-.row-overflow__menu.opens-up {
-  top: auto;
-  bottom: calc(100% + 4px);
 }
 
 .row-overflow__menu.is-open {

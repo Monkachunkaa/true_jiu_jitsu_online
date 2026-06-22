@@ -473,6 +473,67 @@ function buildGymPaymentFailedEmail(name) {
   };
 }
 
+function buildGymWaiverInviteEmail(name, extra = {}) {
+  const firstName = name?.split(' ')[0] || 'there';
+  const waiverUrl = extra.waiverUrl || 'https://online.truebjj.academy/waiver';
+
+  return {
+    subject: 'Sign your waiver — True Jiu Jitsu',
+    html: `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#111111;font-family:Arial,sans-serif;color:#f0f0f0;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#111111;padding:30px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#1e1e1e;border-radius:6px;overflow:hidden;border:1px solid #2a2a2a;">
+        <tr>
+          <td style="background-color:#0a0a0a;padding:28px 32px;border-bottom:3px solid #c41e2a;">
+            <p style="margin:0;font-size:11px;text-transform:uppercase;letter-spacing:0.15em;color:#c41e2a;">True Jiu Jitsu</p>
+            <h1 style="margin:8px 0 0;font-size:22px;font-weight:700;color:#ffffff;text-transform:uppercase;letter-spacing:0.05em;">You're Welcome to Come In</h1>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px;">
+            <p style="margin:0 0 16px;font-size:15px;color:#cccccc;line-height:1.7;">
+              Hi ${firstName} &mdash; before your first visit, we just need you to sign a quick participation waiver. It only takes a minute.
+            </p>
+            <p style="margin:0 0 28px;font-size:15px;color:#cccccc;line-height:1.7;">
+              Once that's done, you're all set to come in and try a class on us.
+            </p>
+            <table cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+              <tr><td style="background-color:#c41e2a;border-radius:4px;">
+                <a href="${waiverUrl}" style="display:inline-block;padding:14px 32px;color:#ffffff;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;">Sign Waiver</a>
+              </td></tr>
+            </table>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr><td style="border-top:1px solid #2a2a2a;padding-top:20px;">
+                <p style="margin:0;font-size:12px;color:#555555;">If you have any questions, feel free to contact us directly. We look forward to seeing you.</p>
+              </td></tr>
+            </table>
+          </td>
+        </tr>
+        <tr><td style="background-color:#0a0a0a;padding:20px 32px;border-top:1px solid #2a2a2a;">
+          <p style="margin:0;font-size:12px;color:#555555;text-align:center;">True Jiu Jitsu &nbsp;&middot;&nbsp; Hickory, NC</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`,
+    text: [
+      `Hi ${firstName},`,
+      ``,
+      `Before your first visit, please sign our participation waiver:`,
+      ``,
+      waiverUrl,
+      ``,
+      `Once that's done, you're all set to come in and try a class on us.`,
+      ``,
+      `We look forward to seeing you.`,
+    ].join('\n'),
+  };
+}
+
+
 function buildGymOnboardingInviteEmail() {
   const joinUrl = `${SITE_URL}/join`;
   return {
@@ -578,6 +639,7 @@ async function sendEmail({ to, name, type, extra = {} }) {
   else if (type === 'gym-payment-failed') template = buildGymPaymentFailedEmail(name);
   else if (type === 'gym-cancelled')   template = buildGymCancelledEmail(name);
   else if (type === 'gym-billing-invite') template = buildGymBillingInviteEmail(name, extra);
+  else if (type === 'gym-waiver-invite')   template = buildGymWaiverInviteEmail(name, extra);
   else if (type === 'gym-onboarding-invite') template = buildGymOnboardingInviteEmail();
   else throw new Error(`Unknown email type: ${type}`);
 
