@@ -13,6 +13,7 @@
 let allPlaylists   = [];
 let allVideos      = [];
 let allArticles    = [];
+let allVideoTagMap = {};  // { video_id: [{ id, name, category }] }
 let editingId      = null;
 let playlistItems  = [];   // items currently in the playlist being edited
 
@@ -269,25 +270,51 @@ function renderBuilderItems() {
 
 
 /* ----------------------------------------------------------
-   Content search — find videos and articles to add
+   Content search — find videos and articles to add.
+   Videos can be filtered by tag using a dropdown.
    ---------------------------------------------------------- */
 function setupContentSearch() {
-  const input   = document.getElementById('content-search-input');
-  const results = document.getElementById('content-search-results');
+  const input      = document.getElementById('content-search-input');
+  const results    = document.getElementById('content-search-results');
+  const tagFilter  = document.getElementById('content-tag-filter');
 
-  input.addEventListener('input', () => {
-    const query = input.value.toLowerCase().trim();
+  // Populate the tag filter dropdown with all unique tags from loaded videos
+  function populateTagFilter() {
+    const seen = new Map(); // id -> name
+    Object.values(allVideoTagMap).forEach(tags => {
+      tags.forEach(t => { if (!seen.has(t.id)) seen.set(t.id, t.name); });
+    });
+
+    // Sort tags alphabetically by name
+    const sorted = [...seen.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+    sorted.forEach(([id, name]) => {
+      const opt       = document.createElement('option');
+      opt.value       = id;
+      opt.textContent = name;
+      tagFilter.appendChild(opt);
+    });
+  }
+
+  populateTagFilter();
+
+  function runSearch() {
+    const query      = input.value.toLowerCase().trim();
+    const filterTag  = tagFilter.value; // tag UUID or ''
     results.innerHTML = '';
 
-    if (!query) return;
-
+    // Filter videos — must match search query AND selected tag
     const matchingVideos = allVideos
-      .filter(v => v.title.toLowerCase().includes(query))
-      .slice(0, 5);
+      .filter(v => {
+        const matchesText = !query || v.title.toLowerCase().includes(query);
+        const matchesTag  = !filterTag || (allVideoTagMap[v.id] || []).some(t => t.id === filterTag);
+        return matchesText && matchesTag;
+      })
+      .slice(0, 8);
 
-    const matchingArticles = allArticles
-      .filter(a => a.title.toLowerCase().includes(query))
-      .slice(0, 5);
+    // Articles are text-only — no tag filter applied
+    const matchingArticles = !filterTag
+      ? allArticles.filter(a => !query || a.title.toLowerCase().includes(query)).slice(0, 5)
+      : [];
 
     const allMatches = [
       ...matchingVideos.map(v => ({ ...v, type: 'video' })),
@@ -303,9 +330,20 @@ function setupContentSearch() {
       const row = document.createElement('button');
       row.className = 'content-search-result';
       row.type      = 'button';
+
+      // Show tags on video results so it's easy to confirm the right video
+      const tagPills = item.type === 'video' && allVideoTagMap[item.id]?.length
+        ? allVideoTagMap[item.id].map(t =>
+            `<span style="font-size:10px;background:rgba(255,255,255,0.07);border-radius:999px;padding:1px 7px;color:var(--color-gray);">${t.name}</span>`
+          ).join('')
+        : '';
+
       row.innerHTML = `
         <span class="content-search-result__type">${item.type === 'video' ? '🎬' : '📝'}</span>
-        <span class="content-search-result__title">${item.title}</span>
+        <span class="content-search-result__title">
+          ${item.title}
+          ${tagPills ? `<span style="display:flex;flex-wrap:wrap;gap:4px;margin-top:3px;">${tagPills}</span>` : ''}
+        </span>
         <span class="content-search-result__add">+ Add</span>
       `;
       row.addEventListener('click', () => {
@@ -319,11 +357,15 @@ function setupContentSearch() {
         });
         renderBuilderItems();
         input.value       = '';
+        tagFilter.value   = '';
         results.innerHTML = '';
       });
       results.appendChild(row);
     });
-  });
+  }
+
+  input.addEventListener('input', runSearch);
+  tagFilter.addEventListener('change', runSearch);
 }
 
 
@@ -443,13 +485,24 @@ async function loadPlaylists() {
 }
 
 async function loadContent() {
-  const [{ data: videos, error: vErr }, { data: articles, error: aErr }] = await Promise.all([
+  const [{ data: videos, error: vErr }, { data: articles, error: aErr }, { data: videoTagRows }] = await Promise.all([
     window.supabaseClient.from('videos').select('id, title, thumbnail_url, cloudflare_video_id').eq('published', true).order('title'),
     window.supabaseClient.from('articles').select('id, title, thumbnail_url').eq('published', true).order('title'),
+    // Fetch video_tags so we can filter videos by tag in the playlist builder
+    window.supabaseClient.from('video_tags').select('video_id, tags(id, name, category)'),
   ]);
   if (vErr || aErr) showToast('Failed to load content library', 'error');
+
   allVideos   = videos   || [];
   allArticles = articles || [];
+
+  // Build a map of video_id -> tag array for fast lookup
+  allVideoTagMap = {};
+  (videoTagRows || []).forEach(row => {
+    if (!row.video_id || !row.tags) return;
+    if (!allVideoTagMap[row.video_id]) allVideoTagMap[row.video_id] = [];
+    allVideoTagMap[row.video_id].push(row.tags);
+  });
 }
 
 
@@ -507,7 +560,12 @@ function buildPage(content) {
           <!-- Content search -->
           <div class="form__group">
             <label class="form__label" for="content-search-input">Add Videos or Articles</label>
-            <input class="form__input" type="text" id="content-search-input" placeholder="Search by title…" autocomplete="off">
+            <div style="display:flex;gap:var(--space-sm);margin-bottom:var(--space-sm);">
+              <select class="form__select" id="content-tag-filter" style="max-width:180px;flex-shrink:0;">
+                <option value="">All Tags</option>
+              </select>
+              <input class="form__input" type="text" id="content-search-input" placeholder="Search by title…" autocomplete="off">
+            </div>
             <div id="content-search-results" class="content-search-results"></div>
           </div>
 

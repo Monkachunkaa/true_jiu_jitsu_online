@@ -382,18 +382,30 @@ async function saveEditedVideo(e) {
 
 /* ----------------------------------------------------------
    Delete video
+   Removes child records first to avoid FK constraint errors:
+     - video_tags        (tags assigned to this video)
+     - playlist_items    (if video is in any playlist)
+     - video_progress    (member watch history)
+   Then deletes the video row itself.
    ---------------------------------------------------------- */
 async function confirmDelete(videoId) {
   const video = allVideos.find(v => v.id === videoId);
   if (!video) return;
 
-  // Find the delete button and use inline confirmation instead of browser confirm()
   const btn = document.querySelector(`.js-delete-video[data-id="${videoId}"]`);
   if (!btn) return;
 
   confirmAction(btn, `Delete "${video.title}"?`, async () => {
+    // Delete child rows first so the FK constraint doesn't block the video delete
+    await Promise.all([
+      window.supabaseClient.from('video_tags').delete().eq('video_id', videoId),
+      window.supabaseClient.from('playlist_items').delete().eq('video_id', videoId),
+      window.supabaseClient.from('video_progress').delete().eq('video_id', videoId),
+    ]);
+
     const { error } = await window.supabaseClient.from('videos').delete().eq('id', videoId);
     if (error) { showToast('Failed to delete video', 'error'); return; }
+
     showToast('Video deleted');
     allVideos = allVideos.filter(v => v.id !== videoId);
     renderVideoList();

@@ -41,6 +41,7 @@ async function loadAllTags() {
    ---------------------------------------------------------- */
 const TAG_CATEGORY_ORDER = [
   'Format',
+  'Curriculum',
   'Position',
   'Technique',
   'Level',
